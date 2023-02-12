@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:tools="http://schemas.android.com/tools"
+    xmlns:android="http://schemas.android.com/apk/res/android" >
+    <item
+        android:id="@+id/item_modules"
+        android:title="@string/add_modules"
+        android:showAsAction="ifRoom|withText"
+        android:icon="@drawable/ic_plus"
+        tools:ignore="AppCompatResource" />
+    <item
+        android:id="@+id/item_share"
+        android:title="@string/share_the_app"
+        android:showAsAction="ifRoom|withText"
+        android:icon="@drawable/ic_share"
+        tools:ignore="AppCompatResource" />
+    <item
+        android:id="@+id/item_rate"
+        android:title="@string/rate_the_app"
+        android:showAsAction="ifRoom|withText"
+        android:icon="@drawable/ic_star"
+        tools:ignore="AppCompatResource" />
+    <item
+        android:id="@+id/item_feedback"
+        android:title="@string/feedback"
+        android:showAsAction="ifRoom|withText"
+        android:icon="@drawable/ic_feedback"
+        tools:ignore="AppCompatResource" />
+</menu>

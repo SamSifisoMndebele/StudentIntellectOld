@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    tools:showIn="navigation_view">
+
+    <group android:checkableBehavior="single">
+        <item
+            android:id="@+id/nav_materials"
+            android:icon="@drawable/ic_books"
+            android:title="@string/materials" />
+        <item
+            android:id="@+id/nav_materials_upload"
+            android:icon="@drawable/ic_upload_file"
+            android:title="@string/upload_materials" />
+        <item
+            android:id="@+id/action_timetable"
+            android:icon="@drawable/ic_timetable"
+            android:title="@string/my_timetable"/>
+    </group>
+
+    <item
+        android:id="@+id/labels_item"
+        android:title="Other" >
+        <menu>
+            <item
+                android:id="@+id/action_blackboard"
+                android:icon="@drawable/ic_blackboard"
+                android:title="@string/action_blackboard"
+                android:checkable="false"/>
+            <item
+                android:id="@+id/action_info"
+                android:icon="@drawable/ic_info_icon"
+                android:title="@string/action_info"
+                android:checkable="false"/>
+        </menu>
+    </item>
+
+    <item android:checkableBehavior="single"
+        android:id="@+id/logout_group"
+        android:title="@null">
+        <menu>
+            <item
+                android:id="@+id/action_logout"
+                android:icon="@drawable/ic_logout"
+                android:title="@string/logout"
+                android:checkable="false"/>
+        </menu>
+    </item>
+
+</menu>

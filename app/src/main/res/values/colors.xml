@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <color name="primaryColor">#37A18E</color>
+    <color name="primaryVariantColor">#009688</color>
+    <color name="onPrimaryColor">@color/white</color>
+    <color name="secondaryColor">#00897B</color>
+    <color name="secondaryVariantColor">#00695C</color>
+    <color name="onSecondaryColor">@color/light_grey</color>
+
+    <color name="black">#000</color>
+    <color name="white">#FFFFFF</color>
+    <color name="light_grey">#f2f2f2</color>
+    <color name="grey">#808080</color>
+    <color name="red">#D32F2F</color>
+    <color name="green">#689F38</color>
+    <color name="purple">#512DA8</color>
+    <color name="blue">#0288D1</color>
+    <color name="yellow">#FBC02D</color>
+    <color name="transparent">#00FFFFFF</color>
+    <color name="dark_transparent">#26808080</color>
+    <color name="grey_transparent">#33808080</color>
+    <color name="red_transparent">#1AFF0000</color>
+</resources>

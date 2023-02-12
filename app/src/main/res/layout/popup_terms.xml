@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/light_grey">
+
+    <com.avidco.studentintellect.pdfviewer.PDFView
+        android:id="@+id/pdf_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/transparent"
+        android:backgroundTint="@color/transparent" />
+
+    <Button
+        android:id="@+id/accept"
+        android:layout_width="match_parent"
+        android:layout_marginVertical="4dp"
+        android:layout_marginHorizontal="8dp"
+        android:layout_gravity="bottom"
+        android:layout_height="wrap_content"
+        android:text="@string/accept"/>
+
+    <ImageButton
+        android:id="@+id/terms_close"
+        android:layout_width="36dp"
+        android:layout_height="36dp"
+        android:padding="8dp"
+        android:layout_margin="4dp"
+        android:layout_gravity="end"
+        android:background="@drawable/ic_cancel"
+        android:contentDescription="@null" />
+    <ProgressBar
+        android:layout_gravity="center"
+        android:id="@+id/progress_bar"
+        android:layout_width="50dp"
+        android:layout_height="50dp"/>
+</FrameLayout>

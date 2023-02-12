@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/transparent">
+
+    <com.avidco.studentintellect.pdfviewer.PDFView
+        android:id="@+id/pdf_view"
+        android:background="@color/transparent"
+        android:backgroundTint="@color/transparent"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
+
+    <com.daimajia.numberprogressbar.NumberProgressBar
+        android:id="@+id/progress_bar"
+        android:layout_width="match_parent"
+        android:visibility="gone"
+        android:layout_height="wrap_content"
+        android:progressBackgroundTint="@color/transparent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:progress_unreached_color="#CCCCCC"
+        app:progress_reached_color="@color/primaryColor"
+        app:progress_unreached_bar_height="3dp"
+        app:progress_reached_bar_height="4dp"
+        app:progress_text_size="12sp"
+        app:progress_text_color="@color/primaryColor"
+        app:progress_text_offset="0.5dp"
+        app:progress_max="100"/>
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

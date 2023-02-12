@@ -1,0 +1,124 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Base application theme. -->
+    <style name="Theme.StudentIntellect" parent="Theme.Material3.DayNight.NoActionBar">
+        <!-- Primary brand color. -->
+        <item name="colorPrimary">@color/primaryColor</item>
+        <item name="colorPrimaryVariant">@color/primaryVariantColor</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <!-- Secondary brand color. -->
+        <item name="colorSecondary">@color/secondaryColor</item>
+        <item name="colorSecondaryVariant">@color/secondaryVariantColor</item>
+        <item name="colorOnSecondary">@color/white</item>
+        <!-- Status bar color. -->
+        <item name="android:windowTranslucentStatus">true</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar" tools:targetApi="m">true</item>
+        <!-- Customize your theme here. -->
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+
+
+        <!--<item name="colorSecondaryContainer">@color/red</item>
+        <item name="colorOnSecondaryContainer">@color/purple</item>-->
+        <item name="colorTertiaryContainer">#BF37A18E</item>
+        <item name="colorOnTertiaryContainer">#004D40</item>
+        <!--<item name="colorSurface">@color/yellow</item>-->
+        <item name="colorOnSurface">#094A3F</item>
+        <item name="colorOnSurfaceVariant">#004D40</item>
+        <item name="colorOutline">#00796B</item>
+        <item name="textAppearanceTitleSmall">@style/TextAppearance.App.TitleSmall</item>
+        <item name="textAppearanceLabelLarge">@style/TextAppearance.App.LabelLarge</item>
+        <item name="bottomSheetDialogTheme">@style/CustomBottomSheetDialog</item>
+    </style>
+
+    <style name="TextAppearance.App.Title" parent="TextAppearance.Material3.TitleLarge">
+        <item name="fontFamily">@font/bold</item>
+        <item name="android:fontFamily">@font/bold</item>
+        <item name="android:textColor">#00695C</item>
+    </style>
+
+    <style name="TextAppearance.App.TitleSmall" parent="TextAppearance.Material3.TitleSmall">
+        <item name="fontFamily">@font/jura_medium</item>
+        <item name="android:fontFamily">@font/jura_medium</item>
+    </style>
+
+    <style name="TextAppearance.App.LabelLarge" parent="TextAppearance.Material3.LabelLarge">
+        <item name="fontFamily">@font/jura_bold</item>
+        <item name="android:fontFamily">@font/jura_bold</item>
+    </style>
+
+    <style name="Widget.App.NavigationView" parent="Widget.Material3.NavigationView">
+        <item name="itemIconTint">@color/navigation_item_color</item>
+        <item name="itemTextColor">@color/navigation_item_color</item>
+        <item name="itemShapeFillColor">@color/navigation_item_background_color</item>
+    </style>
+
+
+    <!--Bottom sheets styles-->
+    <style name="CustomBottomSheetDialog" parent="@style/ThemeOverlay.Material3.BottomSheetDialog">
+        <item name="bottomSheetStyle">@style/CustomBottomSheet</item>
+    </style>
+
+    <style name="CustomBottomSheet" parent="Widget.Material3.BottomSheet">
+        <item name="shapeAppearanceOverlay">@style/CustomShapeAppearanceBottomSheetDialog</item>
+    </style>
+
+    <style name="CustomShapeAppearanceBottomSheetDialog" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSizeTopRight">16dp</item>
+        <item name="cornerSizeTopLeft">16dp</item>
+        <item name="cornerSizeBottomRight">0dp</item>
+        <item name="cornerSizeBottomLeft">0dp</item>
+    </style>
+
+    <style name="DialogAnimation">
+        <item name="android:windowEnterAnimation">@anim/slide_in_bottom</item>
+        <item name="android:windowExitAnimation">@anim/slide_out_bottom</item>
+    </style>
+
+
+    <!--Image Shape Appearances-->
+    <style name="rounded_square">
+        <item name="cornerSize">36dp</item>
+    </style>
+
+    <style name="rounded_square_28dp">
+        <item name="cornerSize">28dp</item>
+    </style>
+
+    <style name="rounded_square_16dp">
+        <item name="cornerSize">16dp</item>
+    </style>
+
+    <style name="rounded_square_24dp">
+        <item name="cornerSize">24dp</item>
+    </style>
+
+    <style name="rounded_square_32dp">
+        <item name="cornerSize">32dp</item>
+    </style>
+
+    <style name="rounded_square_8dp">
+        <item name="cornerSize">8dp</item>
+    </style>
+
+    <style name="rounded_square_item">
+        <item name="cornerSizeBottomRight">16dp</item>
+        <item name="cornerSizeTopRight">16dp</item>
+        <item name="cornerSizeTopLeft">4dp</item>
+        <item name="cornerSizeBottomLeft">4dp</item>
+    </style>
+
+    <!--Splash screen style-->
+    <style name="Theme.StudentIntellect.Splash" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_launcher_icon</item>
+        <item name="postSplashScreenTheme">@style/Theme.StudentIntellect</item>
+        <item name="android:windowSplashScreenBrandingImage" tools:targetApi="s">@drawable/ic_launcher_branding</item>
+    </style>
+
+    <style name="Theme.StudentIntellect.LoadingBackground">
+        <item name="android:background">#F7CDCDCD</item>
+    </style>
+
+
+</resources>

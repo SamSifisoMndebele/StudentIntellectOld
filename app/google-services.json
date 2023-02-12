@@ -1,0 +1,71 @@
+{
+  "project_info": {
+    "project_number": "888190263110",
+    "project_id": "avidco-student-intellect",
+    "storage_bucket": "avidco-student-intellect.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:888190263110:android:bd9299dc9bf307ff9a8f47",
+        "android_client_info": {
+          "package_name": "com.avidco.studentintellect"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "888190263110-1t70eibuhrtlkihh0q4pc0kt438paf79.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.avidco.studentintellect",
+            "certificate_hash": "2265e0a67f7620bd0fdee95abd37a520fc42b49e"
+          }
+        },
+        {
+          "client_id": "888190263110-69bhbh2tqkfa38dg850gts4po3c15an3.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.avidco.studentintellect",
+            "certificate_hash": "c4c3f93a74f5f39cc80b72c93a0c1b44bd7be240"
+          }
+        },
+        {
+          "client_id": "888190263110-92d1trito2ao5thof7ujogl1qrqh90ck.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.avidco.studentintellect",
+            "certificate_hash": "9f981a5f7a19e1bb6f56f83e9e090a834f9bf5e4"
+          }
+        },
+        {
+          "client_id": "888190263110-ub9bfguv838e3ij6hhfqs2jrlncae5tq.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyANIvJg9wWyYkgdx58FPGYtEEutfNwTk80"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "888190263110-ub9bfguv838e3ij6hhfqs2jrlncae5tq.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "888190263110-2k18kkmg8h4beimj25jmucj16b6sdhbp.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.avidco.studentintellect"
+              }
+            }
+          ]
+        }
+      },
+      "admob_app_id": "ca-app-pub-2845958345291323~2621549784"
+    }
+  ],
+  "configuration_version": "1"
+}

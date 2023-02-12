@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/mobile_navigation"
+    app:startDestination="@+id/nav_materials">
+
+    <fragment
+        android:id="@+id/nav_materials"
+        android:name="com.avidco.studentintellect.ui.home.ModulesListFragment"
+        android:label="@string/my_modules_title"
+        tools:layout="@layout/fragment_modules"/>
+    <fragment
+        android:id="@+id/nav_materials_upload"
+        android:name="com.avidco.studentintellect.ui.upload.UploadFragment"
+        android:label="@string/upload_materials_title"
+        tools:layout="@layout/fragment_material_upload"/>
+    <fragment
+        android:id="@+id/profileFragment"
+        android:name="com.avidco.studentintellect.ui.profile.ProfileFragment"
+        android:label="Profile"
+        tools:layout="@layout/fragment_profile"/>
+</navigation>

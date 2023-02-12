@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/bottom_navigation"
+    app:startDestination="@id/LoginFragment">
+
+    <fragment
+        android:id="@+id/LoginFragment"
+        android:name="com.avidco.studentintellect.auth.LoginFragment"
+        android:label=" "
+        tools:layout="@layout/fragment_login">
+
+        <action
+            android:id="@+id/action_LoginFragment_to_RegisterFragment"
+            app:destination="@id/RegisterFragment" />
+        <action
+            android:id="@+id/action_LoginFragment_to_passwordFragment"
+            app:destination="@id/passwordFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/RegisterFragment"
+        android:name="com.avidco.studentintellect.auth.RegisterFragment"
+        android:label=" "
+        tools:layout="@layout/fragment_register">
+
+    </fragment>
+    <fragment
+        android:id="@+id/passwordFragment"
+        android:name="com.avidco.studentintellect.auth.PasswordFragment"
+        android:label=" "
+        tools:layout="@layout/fragment_password"/>
+</navigation>

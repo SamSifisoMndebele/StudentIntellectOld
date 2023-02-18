@@ -16,6 +16,7 @@
         <item
             android:id="@+id/action_timetable"
             android:icon="@drawable/ic_timetable"
+            app:actionViewClass="android.widget.ImageView"
             android:title="@string/my_timetable"/>
     </group>
 

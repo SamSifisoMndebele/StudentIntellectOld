@@ -18,9 +18,9 @@ import android.widget.FrameLayout
 import android.widget.Toast
 import com.avidco.studentintellect.R
 import com.avidco.studentintellect.databinding.FragmentPdfBinding
-import com.avidco.studentintellect.pdfviewer.scroll.MyScrollHandle
-import com.avidco.studentintellect.pdfviewer.util.FitPolicy
-import com.avidco.studentintellect.ui.MainActivity
+import com.avidco.studentintellect.utils.pdfviewer.scroll.MyScrollHandle
+import com.avidco.studentintellect.utils.pdfviewer.util.FitPolicy
+import com.avidco.studentintellect.activities.ui.MainActivity
 import com.google.android.gms.ads.AdSize
 import com.google.android.gms.common.ConnectionResult
 import com.google.android.gms.common.GoogleApiAvailability

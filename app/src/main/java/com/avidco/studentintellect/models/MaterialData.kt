@@ -7,40 +7,40 @@ import com.google.firebase.Timestamp
 
 data class MaterialData(
     val id: String = "",
-    val withSolutions: Boolean = false,
-    val size: MaterialSize? = MaterialSize(),
+    val materialFile: FileData = FileData(),
+    val solutionsFile: FileData? = null,
     val downloads: Int = 0,
-    val uploader: Uploader? = Uploader(),
-    val dateAdded: Timestamp? = Timestamp.now(),
+    val updatedTime: Timestamp? = Timestamp.now(),
 ) : Parcelable {
     constructor(parcel: Parcel) : this(
         parcel.readString()!!,
-        parcel.readByte() != 0.toByte(),
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            parcel.readParcelable(MaterialSize::class.java.classLoader, MaterialSize::class.java)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU){
+            parcel.readParcelable(FileData::class.java.classLoader, FileData::class.java)!!
         } else {
-            parcel.readParcelable(MaterialSize::class.java.classLoader)
+            @Suppress("DEPRECATION")
+            parcel.readParcelable(FileData::class.java.classLoader)!!
+        },
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU){
+            parcel.readParcelable(FileData::class.java.classLoader, FileData::class.java)
+        } else {
+            @Suppress("DEPRECATION")
+            parcel.readParcelable(FileData::class.java.classLoader)
         },
         parcel.readInt(),
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            parcel.readParcelable(Uploader::class.java.classLoader, Uploader::class.java)
-        } else {
-            parcel.readParcelable(Uploader::class.java.classLoader)
-        },
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU){
             parcel.readParcelable(Timestamp::class.java.classLoader, Timestamp::class.java)
         } else {
+            @Suppress("DEPRECATION")
             parcel.readParcelable(Timestamp::class.java.classLoader)
         }
     )
 
     override fun writeToParcel(parcel: Parcel, flags: Int) {
         parcel.writeString(id)
-        parcel.writeByte(if (withSolutions) 1 else 0)
-        parcel.writeParcelable(size, flags)
+        parcel.writeParcelable(materialFile, flags)
+        parcel.writeParcelable(solutionsFile, flags)
         parcel.writeInt(downloads)
-        parcel.writeParcelable(uploader, flags)
-        parcel.writeParcelable(dateAdded, flags)
+        parcel.writeParcelable(updatedTime, flags)
     }
 
     override fun describeContents(): Int {

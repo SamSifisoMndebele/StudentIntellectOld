@@ -6,7 +6,7 @@
     android:layout_height="match_parent"
     android:background="@color/transparent">
 
-    <com.avidco.studentintellect.pdfviewer.PDFView
+    <com.avidco.studentintellect.utils.pdfviewer.PDFView
         android:id="@+id/pdf_view"
         android:background="@color/transparent"
         android:backgroundTint="@color/transparent"

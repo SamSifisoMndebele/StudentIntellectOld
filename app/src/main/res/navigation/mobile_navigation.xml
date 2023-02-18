@@ -7,17 +7,32 @@
 
     <fragment
         android:id="@+id/nav_materials"
-        android:name="com.avidco.studentintellect.ui.home.ModulesListFragment"
+        android:name="com.avidco.studentintellect.activities.ui.home.ModulesFragment"
         android:label="@string/my_modules_title"
         tools:layout="@layout/fragment_modules"/>
     <fragment
         android:id="@+id/nav_materials_upload"
-        android:name="com.avidco.studentintellect.ui.upload.UploadFragment"
+        android:name="com.avidco.studentintellect.activities.ui.upload.UploadFragment"
         android:label="@string/upload_materials_title"
         tools:layout="@layout/fragment_material_upload"/>
     <fragment
         android:id="@+id/profileFragment"
-        android:name="com.avidco.studentintellect.ui.profile.ProfileFragment"
+        android:name="com.avidco.studentintellect.activities.ui.profile.ProfileFragment"
         android:label="Profile"
         tools:layout="@layout/fragment_profile"/>
+    <fragment
+        android:id="@+id/addModulesFragment"
+        android:name="com.avidco.studentintellect.activities.ui.add.modules.AddModulesFragment"
+        android:label="AddModulesFragment"
+        tools:layout="@layout/fragment_add_modules"/>
+    <fragment
+        android:id="@+id/materialsListFragment"
+        android:name="com.avidco.studentintellect.activities.ui.materials.MaterialsFragment"
+        android:label="MaterialsListFragment"
+        tools:layout="@layout/fragment_materials"/>
+    <fragment
+        android:id="@+id/categoriesFragment"
+        android:name="com.avidco.studentintellect.activities.ui.categories.CategoriesFragment"
+        android:label="CategoriesFragment"
+        tools:layout="@layout/fragment_files"/>
 </navigation>

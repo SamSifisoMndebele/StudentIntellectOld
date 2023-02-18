@@ -10,6 +10,18 @@ import android.widget.Toast
 import kotlin.math.roundToInt
 
 object Extensions {
+
+    fun buildMaterialName(materialTitle: String, materialNumber: String?, materialYear: String?) : String{
+        return if (materialNumber == null) {
+            if (materialYear == null) materialTitle
+            else "$materialTitle $materialYear"
+        }
+        else {
+            if (materialYear == null) "$materialTitle $materialNumber"
+            else "$materialTitle $materialNumber $materialYear"
+        }
+    }
+
     fun Context.shortToast(msg: String?){
         Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
     }

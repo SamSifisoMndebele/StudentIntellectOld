@@ -20,7 +20,7 @@
         android:windowSoftInputMode="stateHidden|adjustPan"
         tools:targetApi="33">
         <activity
-            android:name=".auth.AuthActivity"
+            android:name=".activities.auth.AuthActivity"
             android:exported="true"
             android:hardwareAccelerated="true"
             android:screenOrientation="portrait"
@@ -38,19 +38,7 @@
                 android:value="" />
         </activity>
         <activity
-            android:name=".ui.home.MaterialsListActivity"
-            android:exported="false"
-            android:hardwareAccelerated="true"
-            android:screenOrientation="portrait"
-            android:theme="@style/Theme.StudentIntellect.Splash"
-            android:windowSoftInputMode="stateHidden|adjustPan"
-            tools:ignore="LockedOrientationActivity">
-            <meta-data
-                android:name="android.app.lib_name"
-                android:value="" />
-        </activity>
-        <activity
-            android:name=".ui.pdfview.PdfViewActivity"
+            android:name=".activities.pdfview.PdfViewActivity"
             android:exported="false"
             android:hardwareAccelerated="true"
             android:theme="@style/Theme.StudentIntellect.Splash">
@@ -59,7 +47,7 @@
                 android:value="" />
         </activity>
         <activity
-            android:name=".ui.MainActivity"
+            android:name=".activities.ui.MainActivity"
             android:exported="true"
             android:hardwareAccelerated="true"
             android:screenOrientation="portrait"

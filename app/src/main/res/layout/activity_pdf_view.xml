@@ -1,91 +1,88 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.coordinatorlayout.widget.CoordinatorLayout
+<LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:fitsSystemWindows="true"
+    tools:context=".activities.pdfview.PdfViewActivity"
+    android:id="@+id/linearLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    tools:context=".ui.pdfview.PdfViewActivity">
+    android:layout_marginTop="40dp"
+    android:orientation="vertical">
 
-    <androidx.appcompat.widget.Toolbar
+    <com.google.android.material.appbar.MaterialToolbar
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
-        android:layout_height="40dp"
-        android:background="@null"/>
-
-    <LinearLayout
-        android:id="@+id/linearLayout"
+        app:titleCentered="true"
+        app:titleTextAppearance="@style/TextAppearance.App.Title"
+        android:layout_height="?attr/actionBarSize"
+        android:background="@null" />
+    <com.google.android.material.tabs.TabLayout
+        android:id="@+id/tab_layout"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_marginTop="40dp"
-        android:orientation="vertical">
-        <com.google.android.material.tabs.TabLayout
-            android:id="@+id/tab_layout"
+        android:layout_height="28dp"/>
+
+    <FrameLayout
+        android:id="@+id/crop_view_layout"
+        android:layout_width="match_parent"
+        android:visibility="gone"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+        <com.theartofdev.edmodo.cropper.CropImageView
+            android:id="@+id/cropImageView"
+            android:backgroundTint="#BCBCBC"
+            android:background="#BCBCBC"
             android:layout_width="match_parent"
-            android:layout_height="28dp"/>
+            android:layout_height="match_parent"/>
 
-        <FrameLayout
-            android:id="@+id/crop_view_layout"
-            android:layout_width="match_parent"
-            android:visibility="gone"
-            android:layout_height="0dp"
-            android:layout_weight="1">
-            <com.theartofdev.edmodo.cropper.CropImageView
-                android:id="@+id/cropImageView"
-                android:backgroundTint="#BCBCBC"
-                android:background="#BCBCBC"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"/>
-
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:layout_marginTop="4dp"
-                android:layout_gravity="end"
-                android:layout_marginEnd="4dp">
-                <ImageView
-                    android:id="@+id/save_cropped_image_button"
-                    android:contentDescription="@string/save_cropped_screenshot"
-                    android:layout_width="54dp"
-                    android:layout_height="54dp"
-                    android:padding="8dp"
-                    android:backgroundTint="@color/transparent"
-                    android:src="@drawable/ic_save" />
-                <ImageView
-                    android:id="@+id/share_cropped_image_button"
-                    android:contentDescription="@string/share_cropped_screenshot"
-                    android:layout_width="54dp"
-                    android:layout_height="54dp"
-                    android:padding="8dp"
-                    android:backgroundTint="@color/transparent"
-                    android:src="@drawable/ic_share"
-                    app:fabSize="mini" />
-            </LinearLayout>
-
-            <ImageView
-                android:id="@+id/cancel_cropping_button"
-                android:layout_width="54dp"
-                android:layout_height="54dp"
-                android:src="@drawable/ic_cancel"
-                android:padding="8dp"/>
-        </FrameLayout>
-
-        <androidx.viewpager2.widget.ViewPager2
-            android:id="@+id/view_pager"
-            android:visibility="visible"
-            android:layout_width="match_parent"
-            android:background="@color/transparent"
-            android:backgroundTint="@color/transparent"
-            android:layout_height="0dp"
-            android:layout_weight="1" />
-        <FrameLayout
-            android:id="@+id/adViewContainer"
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:background="@color/transparent"
-            android:backgroundTint="@color/transparent"
-            android:layout_gravity="center_horizontal|bottom"/>
-    </LinearLayout>
+            android:orientation="vertical"
+            android:layout_marginTop="4dp"
+            android:layout_gravity="end"
+            android:layout_marginEnd="4dp">
+            <ImageView
+                android:id="@+id/save_cropped_image_button"
+                android:contentDescription="@string/save_cropped_screenshot"
+                android:layout_width="54dp"
+                android:layout_height="54dp"
+                android:padding="8dp"
+                android:backgroundTint="@color/transparent"
+                android:src="@drawable/ic_save" />
+            <ImageView
+                android:id="@+id/share_cropped_image_button"
+                android:contentDescription="@string/share_cropped_screenshot"
+                android:layout_width="54dp"
+                android:layout_height="54dp"
+                android:padding="8dp"
+                android:backgroundTint="@color/transparent"
+                android:src="@drawable/ic_share"
+                app:fabSize="mini" />
+        </LinearLayout>
 
-</androidx.coordinatorlayout.widget.CoordinatorLayout>
+        <ImageView
+            android:id="@+id/cancel_cropping_button"
+            android:layout_width="54dp"
+            android:layout_height="54dp"
+            android:src="@drawable/ic_cancel"
+            android:padding="8dp"/>
+    </FrameLayout>
+
+    <androidx.viewpager2.widget.ViewPager2
+        android:id="@+id/view_pager"
+        android:visibility="visible"
+        android:layout_width="match_parent"
+        android:background="@color/transparent"
+        android:backgroundTint="@color/transparent"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
+    <FrameLayout
+        android:id="@+id/adViewContainer"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@color/transparent"
+        android:backgroundTint="@color/transparent"
+        android:layout_gravity="center_horizontal|bottom"/>
+</LinearLayout>

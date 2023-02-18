@@ -4,12 +4,14 @@ import android.app.Activity
 import android.app.Dialog
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
+import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
 import android.view.Window
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import com.airbnb.lottie.LottieAnimationView
@@ -27,6 +29,8 @@ class LoadingDialog(private val activity: Activity?) {
     private var loadingText: TextView? = null
     private var doneText: TextView? = null
     private var errorText: TextView? = null
+    private var cancelAction: ImageView? = null
+
     private var shownView = "loadingView"
 
     init {
@@ -51,6 +55,7 @@ class LoadingDialog(private val activity: Activity?) {
             this.loadingText = dialog.findViewById(R.id.progress_text)
             this.doneText = dialog.findViewById(R.id.done_text)
             this.errorText = dialog.findViewById(R.id.error_text)
+            this.cancelAction = dialog.findViewById(R.id.cancel_action)
         }
     }
 
@@ -67,7 +72,7 @@ class LoadingDialog(private val activity: Activity?) {
         }
     }
 
-    fun show(text: String = "") {
+    fun show(text: String? = null) {
         if (activity == null) {
             dismiss()
             return
@@ -75,6 +80,7 @@ class LoadingDialog(private val activity: Activity?) {
             loadingView?.visibility = View.VISIBLE
             doneView?.visibility = View.GONE
             errorView?.visibility = View.GONE
+            cancelAction?.visibility = View.VISIBLE
 
             shownView = "loadingView"
         }
@@ -83,10 +89,10 @@ class LoadingDialog(private val activity: Activity?) {
         if (dialog?.isShowing != true) {
             dialog?.show()
         }
-        loadingText?.text = text
+        if (!text.isNullOrEmpty()) loadingText?.text = text
     }
 
-    fun isDone(text: String = "", onSuccess : (dialog : Dialog?) -> Unit) {
+    fun isDone(text: String? = null, onSuccess : (dialog : Dialog?) -> Unit) {
         if (activity == null) {
             dialog?.dismiss()
             return
@@ -94,12 +100,13 @@ class LoadingDialog(private val activity: Activity?) {
             loadingView?.visibility = View.GONE
             doneView?.visibility = View.VISIBLE
             errorView?.visibility = View.GONE
+            cancelAction?.visibility = View.GONE
 
             shownView = "doneView"
         }
 
         doneAnimationView?.playAnimation()
-        doneText?.text = text
+        if (!text.isNullOrEmpty()) doneText?.text = text
         if (dialog?.isShowing != true) {
             dialog?.show()
         }
@@ -107,23 +114,24 @@ class LoadingDialog(private val activity: Activity?) {
         Handler(Looper.getMainLooper()).postDelayed({
             dismiss()
             onSuccess(this.dialog)
-        },1000)
+        },2000)
     }
 
-    fun isError(text: String = "", onFailure : (dialog : Dialog?) -> Unit) {
+    fun isError(text: String? = null, onFailure : (dialog : Dialog?) -> Unit) {
         if (activity == null) {
             dialog?.dismiss()
             return
         } else {
             loadingView?.visibility = View.GONE
-            doneView?.visibility = View.VISIBLE
-            errorView?.visibility = View.GONE
+            doneView?.visibility = View.GONE
+            errorView?.visibility = View.VISIBLE
+            cancelAction?.visibility = View.GONE
 
-            shownView = "loadingView"
+            shownView = "errorView"
         }
 
-        doneAnimationView?.playAnimation()
-        errorText?.text = text
+        errorAnimationView?.playAnimation()
+        if (!text.isNullOrEmpty()) errorText?.text = text
         if (dialog?.isShowing != true) {
             dialog?.show()
         }
@@ -131,7 +139,13 @@ class LoadingDialog(private val activity: Activity?) {
         Handler(Looper.getMainLooper()).postDelayed({
             dismiss()
             onFailure(this.dialog)
-        },2000)
+        },3500)
+    }
+
+    fun onCancel(onCancel : (dialog : Dialog?) -> Unit) {
+        cancelAction?.setOnClickListener {
+            onCancel(this.dialog)
+        }
     }
 
     fun dismiss() {

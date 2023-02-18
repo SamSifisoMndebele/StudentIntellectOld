@@ -8,7 +8,7 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:paddingHorizontal="16dp"
-    tools:context=".auth.RegisterFragment">
+    tools:context=".activities.auth.RegisterFragment">
 
     <TextView
         android:id="@+id/loginTextView"

@@ -6,7 +6,8 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical"
     android:gravity="center"
-    android:background="@color/grey_transparent">
+    android:fitsSystemWindows="true"
+    android:background="#E6374342">
 
     <LinearLayout
         android:id="@+id/loading_view"
@@ -14,7 +15,7 @@
         android:layout_height="match_parent"
         android:orientation="vertical"
         android:gravity="center"
-        android:background="@color/grey_transparent"
+        android:visibility="visible"
         android:padding="16dp">
 
         <com.airbnb.lottie.LottieAnimationView
@@ -23,14 +24,20 @@
             android:layout_height="200dp"
             android:layout_gravity="center"
             app:lottie_loop="true"
-            app:lottie_rawRes="@raw/loading_animation" />
+            android:scaleX="1.3"
+            android:scaleY="1.3"
+            android:tint="@color/primaryColor"
+            app:tint="@color/primaryColor"
+            app:lottie_rawRes="@raw/loading" />
         <TextView
             android:id="@+id/progress_text"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/loading"
-            android:layout_marginTop="8dp"
-            android:fontFamily="@font/normal" />
+            android:layout_margin="8dp"
+            android:textSize="18sp"
+            android:textColor="#009688"
+            android:fontFamily="@font/bold" />
     </LinearLayout>
     <LinearLayout
         android:id="@+id/done_view"
@@ -38,7 +45,7 @@
         android:layout_height="match_parent"
         android:orientation="vertical"
         android:gravity="center"
-        android:background="@color/grey_transparent"
+        android:visibility="gone"
         android:padding="16dp">
 
         <com.airbnb.lottie.LottieAnimationView
@@ -46,14 +53,16 @@
             android:layout_width="200dp"
             android:layout_height="200dp"
             android:layout_gravity="center"
-            app:lottie_rawRes="@raw/loading_animation" />
+            app:lottie_rawRes="@raw/done" />
 
         <TextView
             android:id="@+id/done_text"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:fontFamily="@font/normal" />
+            android:layout_margin="8dp"
+            android:textSize="18sp"
+            android:textColor="#4CAF50"
+            android:fontFamily="@font/bold" />
     </LinearLayout>
     <LinearLayout
         android:id="@+id/error_view"
@@ -61,7 +70,7 @@
         android:layout_height="match_parent"
         android:orientation="vertical"
         android:gravity="center"
-        android:background="@color/grey_transparent"
+        android:visibility="gone"
         android:padding="16dp">
 
         <com.airbnb.lottie.LottieAnimationView
@@ -69,13 +78,30 @@
             android:layout_width="200dp"
             android:layout_height="200dp"
             android:layout_gravity="center"
-            app:lottie_rawRes="@raw/loading_animation" />
+            app:lottie_rawRes="@raw/error" />
+
 
         <TextView
             android:id="@+id/error_text"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:fontFamily="@font/normal" />
+            android:text="@string/an_error_occurred"
+            android:layout_margin="8dp"
+            android:textSize="18sp"
+            android:textColor="#F44336"
+            android:fontFamily="@font/bold" />
     </LinearLayout>
+
+
+    <ImageView
+        android:id="@+id/cancel_action"
+        android:layout_width="42dp"
+        android:layout_height="42dp"
+        android:padding="12dp"
+        android:background="?attr/selectableItemBackground"
+        android:src="@drawable/ic_close_icon"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentTop="true"
+        app:tint="@color/red"
+        android:contentDescription="@string/cancel" />
 </RelativeLayout>

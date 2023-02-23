@@ -8,11 +8,12 @@
         <item
             android:id="@+id/nav_materials"
             android:icon="@drawable/ic_books"
-            android:title="@string/materials" />
+            android:title="@string/study_materials" />
         <item
-            android:id="@+id/nav_materials_upload"
-            android:icon="@drawable/ic_upload_file"
-            android:title="@string/upload_materials" />
+            android:id="@+id/nav_youtube"
+            android:icon="@drawable/ic_youtube"
+            app:actionViewClass="android.widget.ImageView"
+            android:title="@string/tutorial_videos" />
         <item
             android:id="@+id/action_timetable"
             android:icon="@drawable/ic_timetable"
@@ -21,32 +22,46 @@
     </group>
 
     <item
-        android:id="@+id/labels_item"
-        android:title="Other" >
+        android:id="@+id/apps"
+        android:title="Student Intellect Apps" >
+        <menu>
+            <item
+                android:id="@+id/action_calculator"
+                android:icon="@drawable/ic_intellect_calculator"
+                android:title="@string/intellect_calculator"
+                android:checkable="false"/>
+            <item
+                android:id="@+id/action_map"
+                android:icon="@drawable/ic_map"
+                android:title="On-Campus Map"
+                app:actionViewClass="android.widget.ImageView"
+                android:checkable="false"/>
+        </menu>
+    </item>
+
+    <item
+        android:id="@+id/other_apps"
+        android:title="Other Apps" >
         <menu>
             <item
                 android:id="@+id/action_blackboard"
                 android:icon="@drawable/ic_blackboard"
                 android:title="@string/action_blackboard"
                 android:checkable="false"/>
-            <item
-                android:id="@+id/action_info"
-                android:icon="@drawable/ic_info_icon"
-                android:title="@string/action_info"
-                android:checkable="false"/>
         </menu>
     </item>
 
-    <item android:checkableBehavior="single"
-        android:id="@+id/logout_group"
-        android:title="@null">
-        <menu>
-            <item
-                android:id="@+id/action_logout"
-                android:icon="@drawable/ic_logout"
-                android:title="@string/logout"
-                android:checkable="false"/>
-        </menu>
-    </item>
+    <group android:id="@+id/logout_group">
+        <item
+            android:id="@+id/action_info"
+            android:icon="@drawable/ic_info_icon"
+            android:title="@string/app_info"
+            android:checkable="false"/>
+        <item
+            android:id="@+id/action_logout"
+            android:icon="@drawable/ic_logout"
+            android:title="@string/logout"
+            android:checkable="false"/>
+    </group>
 
 </menu>

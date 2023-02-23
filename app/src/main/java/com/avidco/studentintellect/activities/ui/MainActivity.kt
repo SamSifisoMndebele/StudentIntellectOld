@@ -1,25 +1,36 @@
 package com.avidco.studentintellect.activities.ui
 
-import android.annotation.SuppressLint
+import android.app.Dialog
+import android.app.PendingIntent
+import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import android.view.*
+import android.view.View
+import android.view.ViewGroup
+import android.view.Window
+import android.view.WindowManager
 import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import android.window.OnBackInvokedDispatcher
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.view.menu.MenuBuilder
+import androidx.browser.customtabs.CustomTabColorSchemeParams
+import androidx.browser.customtabs.CustomTabsIntent
 import androidx.cardview.widget.CardView
-import androidx.core.content.res.ResourcesCompat
+import androidx.core.graphics.BitmapCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
-import androidx.core.view.MenuItemCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.NavController
@@ -30,13 +41,15 @@ import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.navigation.ui.setupWithNavController
 import com.avidco.studentintellect.R
 import com.avidco.studentintellect.activities.auth.AuthActivity
-import com.avidco.studentintellect.activities.ui.profile.FeedbackBottomSheetDialog
 import com.avidco.studentintellect.databinding.ActivityMainBinding
 import com.avidco.studentintellect.utils.Utils.appRateCheck
+import com.avidco.studentintellect.utils.Utils.appRatedCheck
 import com.avidco.studentintellect.utils.Utils.askPlayStoreRatings
+import com.avidco.studentintellect.utils.Utils.dpToPx
 import com.avidco.studentintellect.utils.Utils.hideKeyboard
 import com.avidco.studentintellect.utils.Utils.isGooglePlayServicesAvailable
-import com.avidco.studentintellect.utils.Utils.shareApp
+import com.avidco.studentintellect.utils.Utils.openPlayStore
+import com.avidco.studentintellect.utils.Utils.tempDisable
 import com.bumptech.glide.Glide
 import com.google.android.gms.ads.*
 import com.google.android.gms.ads.interstitial.InterstitialAd
@@ -44,6 +57,7 @@ import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.elevation.SurfaceColors
 import com.google.android.material.navigation.NavigationView
+import com.google.android.material.textview.MaterialTextView
 import com.google.android.play.core.appupdate.AppUpdateManager
 import com.google.android.play.core.appupdate.AppUpdateManagerFactory
 import com.google.android.play.core.install.model.AppUpdateType
@@ -66,52 +80,53 @@ class MainActivity : AppCompatActivity() {
     private lateinit var currentUser : FirebaseUser
 
 
+    private lateinit var adRequest : AdRequest
     private var interstitialAd : InterstitialAd? = null
-    internal fun loadInterstitialAd() {
-        InterstitialAd.load(this, getString(R.string.activity_modulesSelectList_interstitialAdUnitId),
-            AdRequest.Builder().build(), object : InterstitialAdLoadCallback() {
+    private fun loadInterstitialAd() {
+        InterstitialAd.load(this, getString(R.string.activity_modulesSelectList_interstitialAdUnitId), adRequest,
+            object : InterstitialAdLoadCallback() {
                 override fun onAdLoaded(ad: InterstitialAd) {
-                    println("Ad was loaded.")
+                    // The interstitialAd reference will be null until
+                    // an ad is loaded.
                     interstitialAd = ad
+                    //nextLevelButton.setEnabled(true)
 
-                    interstitialAd?.fullScreenContentCallback = object: FullScreenContentCallback() {
-                        override fun onAdClicked() {
-                            // Called when a click is recorded for an ad.
-                            println( "Ad was clicked.")
-                        }
-
+                    interstitialAd!!.fullScreenContentCallback = object : FullScreenContentCallback() {
                         override fun onAdDismissedFullScreenContent() {
-                            // Called when ad is dismissed.
-                            // Set the ad reference to null so you don't show the ad a second time.
-                            println( "Ad dismissed fullscreen content.")
-                            //startActivity(Intent(activity, ModulesSelectActivity::class.java))
+                            // Called when fullscreen content is dismissed.
+                            interstitialAd = null
                             loadInterstitialAd()
                             navController.navigate(R.id.addModulesFragment)
                         }
 
                         override fun onAdFailedToShowFullScreenContent(adError: AdError) {
-                            // Called when ad fails to show.
-                            println( "Ad failed to show fullscreen content.")
+                            // Called when fullscreen content failed to show.
+                            interstitialAd = null
                             loadInterstitialAd()
                             navController.navigate(R.id.addModulesFragment)
                         }
 
-                        override fun onAdImpression() {
-                            // Called when an impression is recorded for an ad.
-                            println( "Ad recorded an impression.")
-                        }
-
                         override fun onAdShowedFullScreenContent() {
-                            // Called when ad is shown.
-                            println( "Ad showed fullscreen content.")
+                            // Called when fullscreen content is shown.
                         }
                     }
                 }
 
-                override fun onAdFailedToLoad(adError: LoadAdError) {
+                override fun onAdFailedToLoad(loadAdError: LoadAdError) {
+                    // Handle the error
                     interstitialAd = null
+                    //nextLevelButton.setEnabled(true)
                 }
             })
+    }
+    private fun showInterstitial() {
+        // Show the ad if it"s ready. Otherwise toast and reload the ad.
+        if (interstitialAd != null) {
+            interstitialAd!!.show(this)
+        } else {
+            Toast.makeText(this, "Ad did not load", Toast.LENGTH_SHORT).show()
+            //goToNextLevel()
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -124,9 +139,8 @@ class MainActivity : AppCompatActivity() {
             return
         }
         currentUser = Firebase.auth.currentUser!!
-
         val prefs = getSharedPreferences("pref", Context.MODE_PRIVATE)
-        val modulesViewModel = ViewModelProvider(this)[DataViewModel::class.java]
+        val modulesViewModel = ViewModelProvider(this)[ProfileViewModel::class.java]
         modulesViewModel.init(prefs)
 
         binding = ActivityMainBinding.inflate(layoutInflater)
@@ -140,13 +154,13 @@ class MainActivity : AppCompatActivity() {
         window.navigationBarColor = color
         supportActionBar?.setBackgroundDrawable(ColorDrawable(color))
 
-        /**Check updates*/
+
         if (isGooglePlayServicesAvailable()) {
+            /**Check updates*/
             appUpdateManager = AppUpdateManagerFactory.create(this)
             checkUpdateAvailability()
-        }
-        /**Check app rate*/
-        if (isGooglePlayServicesAvailable()) {
+
+            /**Check app rate*/
             appRateCheck ({
                 askPlayStoreRatings()
             },{})
@@ -188,6 +202,37 @@ class MainActivity : AppCompatActivity() {
             drawerLayout.close()
         }
 
+        navViewMenuItemClickListeners(navView, drawerLayout)
+
+        /**Init ads*/
+        adsInit()
+
+
+
+
+        /*val timetable = navView.menu.findItem(R.id.action_timetable).actionView as TextView
+        timetable.gravity = Gravity.CENTER_VERTICAL;
+        //timetable.setTypeface(null,Typeface.BOLD);
+        timetable.setTextColor(ResourcesCompat.getColor(resources, R.color.primaryVariantColor, theme));
+        timetable.text = "Coming Soon";*/
+        val timetable = navView.menu.findItem(R.id.action_timetable).actionView as ImageView
+        timetable.adjustViewBounds = true
+        timetable.maxHeight = 28.dpToPx().toInt()
+        timetable.setImageResource(R.drawable.ic_coming_soon)
+
+        val youtube = navView.menu.findItem(R.id.nav_youtube).actionView as ImageView
+        youtube.adjustViewBounds = true
+        youtube.maxHeight = 28.dpToPx().toInt()
+        youtube.setImageResource(R.drawable.ic_coming_soon)
+
+        val map = navView.menu.findItem(R.id.action_map).actionView as ImageView
+        map.adjustViewBounds = true
+        map.maxHeight = 28.dpToPx().toInt()
+        map.setImageResource(R.drawable.ic_coming_soon)
+
+    }
+
+    private fun navViewMenuItemClickListeners(navView: NavigationView, drawerLayout: DrawerLayout) {
         navView.menu.findItem(R.id.action_logout).setOnMenuItemClickListener {
             MaterialAlertDialogBuilder(this)
                 .setTitle(getString(R.string.logout_question))
@@ -205,86 +250,135 @@ class MainActivity : AppCompatActivity() {
                 .show()
             true
         }
-        /*val timetable = navView.menu.findItem(R.id.action_timetable).actionView as TextView
-        timetable.gravity = Gravity.CENTER_VERTICAL;
-        //timetable.setTypeface(null,Typeface.BOLD);
-        timetable.setTextColor(ResourcesCompat.getColor(resources, R.color.primaryVariantColor, theme));
-        timetable.text = "Coming Soon";*/
-        val timetable = navView.menu.findItem(R.id.action_timetable).actionView as ImageView
-        timetable.setImageResource(R.drawable.ic_coming_soon)
 
-        /**Init ads*/
-        adsInit()
+        navView.menu.findItem(R.id.action_timetable).setOnMenuItemClickListener {
+            Toast.makeText(this, "This feature is under construction.", Toast.LENGTH_SHORT).show()
+            false
+        }
+        navView.menu.findItem(R.id.nav_youtube).setOnMenuItemClickListener {
+            Toast.makeText(this, "This feature is under construction.", Toast.LENGTH_SHORT).show()
+            false
+        }
+        navView.menu.findItem(R.id.action_map).setOnMenuItemClickListener {
+            Toast.makeText(this, "This feature is under construction.", Toast.LENGTH_SHORT).show()
+            false
+        }
+
+        //Blackboard
+        navView.menu.findItem(R.id.action_blackboard).setOnMenuItemClickListener {
+            drawerLayout.close()
+            try {
+                val blackboardIntent = Intent().apply {
+                    setClassName("com.blackboard.android.bbstudent", "com.blackboard.android.bbstudent.splash.SplashActivity")
+                    addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK)
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
+                startActivity(blackboardIntent)
+            } catch (e: ActivityNotFoundException) {
+                val url = "https://tmlearn.ul.ac.za/"
+                val builder = CustomTabsIntent.Builder()
+                builder.setDefaultColorSchemeParams(CustomTabColorSchemeParams.Builder()
+                    .setToolbarColor(SurfaceColors.SURFACE_1.getColor(this))
+                    .build())
+                builder.setCloseButtonIcon(BitmapFactory.decodeResource(resources, R.drawable.ic_back_arrow))
+                builder.setToolbarCornerRadiusDp(15)
+                builder.setUrlBarHidingEnabled(true)
+                val customTabsIntent = builder.build()
+
+                val showPref = getSharedPreferences("download_apps", Context.MODE_PRIVATE)
+                if (isGooglePlayServicesAvailable() && showPref.getBoolean("download_blackboard", true)) {
+                    MaterialAlertDialogBuilder(this)
+                        .setTitle("Download Blackboard Learn?")
+                        .setNeutralButton("Remind me later"){d,_->
+                            d.dismiss()
+                            customTabsIntent.launchUrl(this, Uri.parse(url))
+                        }
+                        .setNegativeButton(getString(R.string.no)){d,_->
+                            d.dismiss()
+                            customTabsIntent.launchUrl(this, Uri.parse(url))
+                            showPref.edit().putBoolean("download_blackboard", false).apply()
+                        }
+                        .setPositiveButton(getString(R.string.yes)){d,_->
+                            d.dismiss()
+                            startActivity(Intent(Intent.ACTION_VIEW).apply {
+                                data = Uri.parse("market://details?id=com.blackboard.android.bbstudent")
+                            })
+                        }
+                        .show()
+                } else {
+                    customTabsIntent.launchUrl(this, Uri.parse(url))
+                }
+            }
+
+
+
+            false
+        }
+
+        //Intellect Calculator
+        navView.menu.findItem(R.id.action_calculator).setOnMenuItemClickListener {
+            drawerLayout.close()
+            try {
+                val calculatorIntent = Intent().apply {
+                    setClassName("com.avidco.intellectcalculator", "com.avidco.intellectcalculator.MainActivity")
+                    putExtra("displayHomeAsUpEnabled", true)
+                }
+                startActivity(calculatorIntent)
+            } catch (e: ActivityNotFoundException) {
+                startActivity(Intent(Intent.ACTION_VIEW).apply {
+                    data = Uri.parse("market://details?id=com.avidco.intellectcalculator")
+                })
+            }
+            false
+        }
     }
 
     private fun adsInit(){
-        MobileAds.initialize(this) {
-            loadInterstitialAd()
-            val adRequest = AdRequest.Builder().build()
-            binding.contentMain.adView.loadAd(adRequest)
-            binding.contentMain.adView.adListener = object: AdListener() {
-                override fun onAdClicked() {
-                    // Code to be executed when the user clicks on an ad.
-                }
+        MobileAds.initialize(this) {}
+        adRequest = AdRequest.Builder().build()
+        loadInterstitialAd()
+        binding.contentMain.adView.loadAd(adRequest)
+        binding.contentMain.adView.adListener = object: AdListener() {
+            override fun onAdClicked() {
+                // Code to be executed when the user clicks on an ad.
+            }
 
-                override fun onAdClosed() {
-                    // Code to be executed when the user is about to return
-                    // to the app after tapping on an ad.
-                }
+            override fun onAdClosed() {
+                // Code to be executed when the user is about to return
+                // to the app after tapping on an ad.
+            }
 
-                override fun onAdFailedToLoad(adError : LoadAdError) {
-                    // Code to be executed when an ad request fails.
-                }
+            override fun onAdFailedToLoad(adError : LoadAdError) {
+                // Code to be executed when an ad request fails.
+            }
 
-                override fun onAdImpression() {
-                    // Code to be executed when an impression is recorded
-                    // for an ad.
-                }
+            override fun onAdImpression() {
+                // Code to be executed when an impression is recorded
+                // for an ad.
+            }
 
-                override fun onAdLoaded() {
-                    // Code to be executed when an ad finishes loading.
-                }
+            override fun onAdLoaded() {
+                // Code to be executed when an ad finishes loading.
+            }
 
-                override fun onAdOpened() {
-                    // Code to be executed when an ad opens an overlay that
-                    // covers the screen.
-                }
+            override fun onAdOpened() {
+                // Code to be executed when an ad opens an overlay that
+                // covers the screen.
             }
         }
-    }
 
-    @SuppressLint("RestrictedApi")
-    override fun onCreateOptionsMenu(menu: Menu): Boolean {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        menuInflater.inflate(R.menu.main_menu, menu)
-        if (menu is MenuBuilder) menu.setOptionalIconsVisible(true)
-        if (!isGooglePlayServicesAvailable()) {
-            menu.findItem(R.id.item_rate).isVisible = false
-        }
-        return true
-    }
 
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        when(item.itemId){
-            R.id.item_modules -> {
-                if (interstitialAd == null) {
-                    navController.navigate(R.id.addModulesFragment)
-                } else {
-                    interstitialAd!!.show(this)
-                }
-            }
-            R.id.item_share -> {
-                shareApp()
-            }
-            R.id.item_rate -> {
-                askPlayStoreRatings()
-            }
-            R.id.item_feedback -> {
-                val sheet = FeedbackBottomSheetDialog()
-                sheet.show(supportFragmentManager, "FeedbackBottomSheetDialog")
-            }
-        }
-        return super.onOptionsItemSelected(item)
+        val bannerView = AdView(this)
+
+        //val adSize = AdSize(300, 50)
+        val adSize = AdSize.getCurrentOrientationInlineAdaptiveBannerAdSize(this, 320)
+
+        bannerView.adUnitId = getString(R.string.activity_main_bannerAdUnitId)
+        bannerView.setAdSize(adSize)
+
+        bannerView.loadAd(adRequest)
+
+        binding.contentMain.root.addView(bannerView)
     }
 
     override fun onSupportNavigateUp(): Boolean {
@@ -359,5 +453,56 @@ class MainActivity : AppCompatActivity() {
                     )
                 }
             }
+    }
+
+
+
+    fun showFeedbackDialog() {
+        val dialog = Dialog(this)
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
+        dialog.setContentView(R.layout.menu_layout_feedback)
+        val playStore = dialog.findViewById<MaterialTextView>(R.id.rate_app_on_play_store)
+        val googleForm = dialog.findViewById<MaterialTextView>(R.id.fill_google_form)
+
+        if (isGooglePlayServicesAvailable()) {
+            appRatedCheck({
+                playStore.setOnClickListener {
+                    it.tempDisable()
+                    dialog.dismiss()
+                    openPlayStore()
+                }
+            },{
+                playStore.setOnClickListener {
+                    it.tempDisable()
+                    dialog.dismiss()
+                    askPlayStoreRatings()
+                }
+            })
+        } else {
+            playStore.visibility = View.GONE
+        }
+
+        googleForm.setOnClickListener {
+            it.tempDisable()
+            dialog.dismiss()
+
+            val url = "https://docs.google.com/forms/d/e/1FAIpQLSd_oJoesSeXN1pu1oI0cTOU_n6LSE6wwLG-taGB7JD4X3izpQ/viewform?usp=sf_link"
+            val builder = CustomTabsIntent.Builder()
+            builder.setDefaultColorSchemeParams(CustomTabColorSchemeParams.Builder()
+                .setToolbarColor(SurfaceColors.SURFACE_1.getColor(this))
+                .build())
+            builder.setCloseButtonIcon(BitmapFactory.decodeResource(resources, R.drawable.ic_back_arrow))
+            builder.setUrlBarHidingEnabled(true)
+            val customTabsIntent = builder.build()
+            customTabsIntent.launchUrl(this, Uri.parse(url))
+        }
+
+        dialog.show()
+        dialog.window!!.setLayout(
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            ViewGroup.LayoutParams.WRAP_CONTENT
+        )
+        dialog.window!!.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+        dialog.window!!.attributes.windowAnimations = R.style.DialogAnimation
     }
 }

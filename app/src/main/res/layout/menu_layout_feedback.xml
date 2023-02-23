@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="8dp"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="2dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:orientation="vertical">
+
+        <com.google.android.material.textview.MaterialTextView
+            android:id="@+id/rate_app_on_play_store"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:clickable="true"
+            android:focusable="true"
+            android:fontFamily="@font/sofia_pro_medium"
+            android:background="?attr/selectableItemBackground"
+            android:paddingTop="16dp"
+            android:paddingBottom="16dp"
+            android:gravity="center"
+            android:text="@string/rate_play_store"
+            android:textColor="@color/primaryColor"
+            android:textSize="18sp" />
+        <View
+            android:background="@color/grey"
+            android:layout_width="match_parent"
+            android:layout_height="1px"/>
+        <com.google.android.material.textview.MaterialTextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:gravity="center"
+            android:text="@string/feedback_primer"
+            android:lineSpacingExtra="2dp"
+            android:fontFamily="@font/sofia_pro_regular"/>
+
+        <com.google.android.material.textview.MaterialTextView
+            android:id="@+id/fill_google_form"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:clickable="true"
+            android:focusable="true"
+            android:fontFamily="@font/sofia_pro_medium"
+            android:background="?attr/selectableItemBackground"
+            android:paddingBottom="16dp"
+            android:paddingTop="16dp"
+            android:layout_marginBottom="8dp"
+            android:gravity="center"
+            android:text="@string/fill_google_form"
+            android:textColor="@color/primaryColor"
+            android:textSize="18sp" />
+
+    </LinearLayout>
+
+</androidx.cardview.widget.CardView>

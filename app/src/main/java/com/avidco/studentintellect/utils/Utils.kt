@@ -52,7 +52,7 @@ object Utils {
         }
     }
 
-    fun MainActivity.askPlayStoreRatings() {
+    fun Activity.askPlayStoreRatings() {
         val manager = ReviewManagerFactory.create(this)
         val request: Task<ReviewInfo> = manager.requestReviewFlow()
         request.addOnCompleteListener { task ->

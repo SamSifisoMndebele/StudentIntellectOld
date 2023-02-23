@@ -23,16 +23,11 @@
     <fragment
         android:id="@+id/addModulesFragment"
         android:name="com.avidco.studentintellect.activities.ui.add.modules.AddModulesFragment"
-        android:label="AddModulesFragment"
+        android:label="Add Modules"
         tools:layout="@layout/fragment_add_modules"/>
     <fragment
-        android:id="@+id/materialsListFragment"
+        android:id="@+id/materialsFragment"
         android:name="com.avidco.studentintellect.activities.ui.materials.MaterialsFragment"
-        android:label="MaterialsListFragment"
+        android:label="Materials"
         tools:layout="@layout/fragment_materials"/>
-    <fragment
-        android:id="@+id/categoriesFragment"
-        android:name="com.avidco.studentintellect.activities.ui.categories.CategoriesFragment"
-        android:label="CategoriesFragment"
-        tools:layout="@layout/fragment_files"/>
 </navigation>

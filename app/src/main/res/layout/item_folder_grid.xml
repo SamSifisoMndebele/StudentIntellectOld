@@ -8,175 +8,73 @@
     android:layout_marginBottom="4dp"
     app:cardCornerRadius="12dp"
     app:cardElevation="0dp"
+    android:gravity="center_vertical"
     app:cardBackgroundColor="@color/grey_transparent">
 
-    <RelativeLayout
+    <LinearLayout
+        android:id="@+id/item_view"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="center_vertical"
-        android:minHeight="56dp">
-
+        android:minHeight="50dp"
+        android:orientation="vertical">
         <LinearLayout
-            android:id="@+id/item_view"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:minHeight="44dp">
-
-                <ImageView
-                    android:id="@+id/material_image"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:adjustViewBounds="true"
-                    android:layout_weight="3"
-                    android:layout_margin="10dp"
-                    android:contentDescription="@string/select_pdf_file"
-                    android:src="@drawable/ic_folder"/>
-
-
-                <View
-                    android:layout_width="0dp"
-                    android:layout_height="0dp"
-                    android:layout_margin="8dp"
-                    android:layout_weight="2"/>
-
-                <LinearLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:layout_marginTop="4dp"
-                    android:paddingBottom="8dp"
-                    android:layout_gravity="end|top">
-                    <ImageView
-                        android:id="@+id/menu_button"
-                        android:visibility="invisible"
-                        android:layout_width="36dp"
-                        android:layout_height="36dp"
-                        android:layout_marginTop="8dp"
-                        android:layout_marginHorizontal="8dp"
-                        android:paddingVertical="4dp"
-                        android:paddingHorizontal="8dp"
-                        android:background="?attr/selectableItemBackgroundBorderless"
-                        android:clickable="true"
-                        android:focusable="true"
-                        android:contentDescription="@string/menu"
-                        android:src="@drawable/ic_dots" />
-                    <ImageView
-                        android:id="@+id/material_download"
-                        android:layout_width="36dp"
-                        android:layout_height="36dp"
-                        android:layout_marginTop="8dp"
-                        android:focusable="true"
-                        android:clickable="true"
-                        android:background="?attr/selectableItemBackgroundBorderless"
-                        android:layout_marginHorizontal="8dp"
-                        android:paddingVertical="4dp"
-                        android:paddingHorizontal="4dp"
-                        android:adjustViewBounds="true"
-                        android:src="@drawable/ic_pdf_download"
-                        android:layout_gravity="center_vertical|end"
-                        android:contentDescription="@null"
-                        app:tint="@color/primaryColor" />
-                    <ImageView
-                        android:id="@+id/material_downloaded"
-                        android:layout_width="36dp"
-                        android:layout_height="36dp"
-                        android:visibility="gone"
-                        android:layout_marginTop="8dp"
-                        android:layout_marginHorizontal="8dp"
-                        android:paddingVertical="4dp"
-                        android:paddingHorizontal="4dp"
-                        android:adjustViewBounds="true"
-                        android:src="@drawable/ic_pdf_2"
-                        android:layout_gravity="center_vertical|end"
-                        android:contentDescription="@null" />
-                </LinearLayout>
-
-            </LinearLayout>
-            <TextView
-                android:id="@+id/material_title"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:textStyle="bold"
-                android:layout_marginBottom="8dp"
-                android:layout_marginHorizontal="8dp"
-                android:fontFamily="@font/jura_medium"
-                android:textSize="18sp"/>
-        </LinearLayout>
-        <LinearLayout
-            android:id="@+id/progress_layout"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:clickable="false"
-            android:focusable="false"
-            android:visibility="gone"
             android:gravity="center_vertical"
-            android:orientation="vertical"
-            android:layout_alignBottom="@id/item_view"
-            style="@style/Theme.StudentIntellect.LoadingBackground"
-            android:layout_alignTop="@id/item_view">
+            android:orientation="horizontal"
+            android:minHeight="44dp">
 
-            <TextView
-                android:id="@+id/progress_text"
+            <ImageView
+                android:id="@+id/folder_image"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:adjustViewBounds="true"
+                android:layout_weight="3"
+                android:layout_margin="10dp"
+                android:contentDescription="@string/select_pdf_file"
+                android:src="@drawable/ic_folder"/>
+
+
+            <View
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:layout_margin="8dp"
+                android:layout_weight="2"/>
+
+            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:gravity="center"
-                android:layout_marginBottom="4dp"
-                android:layout_marginEnd="8dp"
-                android:layout_marginStart="8dp"
-                android:text="@string/loading"
-                android:textColor="@color/primaryColor"
-                android:textStyle="bold"/>
+                android:orientation="vertical"
+                android:layout_marginTop="4dp"
+                android:paddingBottom="8dp"
+                android:layout_gravity="end|top">
+                <ImageView
+                    android:id="@+id/menu_button"
+                    android:visibility="invisible"
+                    android:layout_width="36dp"
+                    android:layout_height="36dp"
+                    android:layout_marginTop="8dp"
+                    android:layout_marginHorizontal="8dp"
+                    android:paddingVertical="4dp"
+                    android:paddingHorizontal="8dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:contentDescription="@string/menu"
+                    android:src="@drawable/ic_dots" />
 
-            <com.daimajia.numberprogressbar.NumberProgressBar
-                android:id="@+id/progress_bar"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:progressBackgroundTint="@color/transparent"
-                app:progress_max="100"
-                android:layout_marginEnd="8dp"
-                android:layout_marginStart="8dp"
-                app:progress_reached_bar_height="4dp"
-                app:progress_reached_color="@color/primaryColor"
-                app:progress_text_color="@color/primaryColor"
-                app:progress_text_offset="0.5dp"
-                app:progress_text_size="12sp"
-                app:progress_unreached_bar_height="3dp"
-                app:progress_unreached_color="#C2C2C2" />
+            </LinearLayout>
+
         </LinearLayout>
-        <LinearLayout
-            android:id="@+id/error_layout"
+        <TextView
+            android:id="@+id/folder_title"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:clickable="false"
-            android:focusable="false"
-            android:visibility="gone"
-            android:gravity="center_vertical"
-            android:orientation="vertical"
-            android:layout_alignBottom="@id/item_view"
-            android:background="#F7EED4D4"
-            android:layout_alignTop="@id/item_view">
-            <ImageView
-                android:layout_width="64dp"
-                android:layout_height="64dp"
-                android:layout_marginHorizontal="8dp"
-                android:layout_gravity="center"
-                android:src="@drawable/ic_warning"
-                android:contentDescription="@null" />
-            <TextView
-                android:id="@+id/error_text"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="4dp"
-                android:layout_marginHorizontal="8dp"
-                android:textColor="@color/primaryColor"
-                android:textStyle="bold"/>
-        </LinearLayout>
-    </RelativeLayout>
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp"
+            android:layout_marginHorizontal="8dp"
+            android:fontFamily="@font/jura_medium"
+            android:textSize="18sp"/>
+    </LinearLayout>
 
 </com.google.android.material.card.MaterialCardView>

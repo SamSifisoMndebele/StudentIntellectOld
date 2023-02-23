@@ -17,7 +17,7 @@ import androidx.core.app.ActivityCompat
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.RecyclerView
 import com.avidco.studentintellect.R
-import com.avidco.studentintellect.activities.ui.DataViewModel
+import com.avidco.studentintellect.activities.ui.ProfileViewModel
 import com.avidco.studentintellect.activities.ui.FirestoreAdapter
 import com.avidco.studentintellect.activities.ui.MainActivity
 import com.avidco.studentintellect.activities.ui.upload.UploadFragment
@@ -83,7 +83,7 @@ class ModulesAdapter(
                     userModules = tempList
 
                     val prefs = activity.getSharedPreferences("pref", Context.MODE_PRIVATE)
-                    val dataViewModel = ViewModelProvider(activity)[DataViewModel::class.java]
+                    val dataViewModel = ViewModelProvider(activity)[ProfileViewModel::class.java]
                     dataViewModel.setModules(prefs, tempList?.toMutableSet())
                     Firebase.firestore.collection("users")
                         .document(Firebase.auth.currentUser!!.uid)
@@ -122,18 +122,18 @@ class ModulesAdapter(
                 Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED)
         {
             // You can use the API that requires the permission.
-            gotoMaterialsListActivity()
+            gotoMaterialsFragment()
         }
         else {
             requestMultiplePermissions.launch(arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE,
                 Manifest.permission.WRITE_EXTERNAL_STORAGE))
         }
     }
-    fun gotoMaterialsListActivity() {
+    fun gotoMaterialsFragment() {
         val bundle = Bundle().apply {
             putString(MaterialsFragment.MODULE_CODE, clickedModule!!.code.trim())
         }
-        activity.navController.navigate(R.id.categoriesFragment, bundle)
+        activity.navController.navigate(R.id.materialsFragment, bundle)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {

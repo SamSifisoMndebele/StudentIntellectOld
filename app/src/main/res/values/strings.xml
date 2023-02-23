@@ -6,17 +6,12 @@
     <string name="nav_header_email">avidco4u@gmail.com</string>
     <string name="nav_header_desc">Navigation header</string>
 
-    <string name="materials_path" translatable="false">Modules/%s/Materials</string>
-
-
-
     <string name="action_settings">Settings</string>
     <string name="action_blackboard">Blackboard Learn</string>
     <string name="action_info">Info</string>
 
     <string name="web_client_id" translatable="false">888190263110-ub9bfguv838e3ij6hhfqs2jrlncae5tq.apps.googleusercontent.com</string>
     <string name="night_mode" translatable="false">off</string>
-
 
     <string name="onboarding_slide1_title">Create an account</string>
     <string name="onboarding_slide1_subtitle">Connect with people around the world</string>
@@ -726,4 +721,7 @@
     <string name="my_timetable">My Timetable</string>
     <string name="an_error_occurred">An error occurred.</string>
     <string name="type_your_name_s">Type your name(s)</string>
+    <string name="tutorial_videos">Tutorial Videos</string>
+    <string name="intellect_calculator">Intellect Calculator</string>
+    <string name="study_materials">Study Materials</string>
 </resources>

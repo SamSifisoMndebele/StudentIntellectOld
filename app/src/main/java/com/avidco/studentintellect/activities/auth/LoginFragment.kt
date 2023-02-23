@@ -144,8 +144,8 @@ class LoginFragment : Fragment() {
                             Handler(Looper.getMainLooper()).postDelayed({
                                 val prefs = requireActivity().getSharedPreferences("pref", Context.MODE_PRIVATE)
                                 prefs.edit().putInt("user_type", userData.userType)?.apply()
-                                prefs.edit().putStringSet("user_modules", userData.myModules?.split(';')?.toSet()).apply()
-                                prefs.edit().putFloat("user_balance", userData.balance).apply()
+                                prefs.edit().putStringSet("my_modules", userData.myModules?.split(';')?.toSet()).apply()
+                                prefs.edit().putFloat("my_balance", userData.balance).apply()
                                 startActivity(Intent(requireActivity(), MainActivity::class.java))
                                 requireActivity().finishAffinity()
                             }, 1000)
@@ -162,7 +162,7 @@ class LoginFragment : Fragment() {
             .addOnFailureListener {
                 Toast.makeText(requireActivity(), it.message, Toast.LENGTH_SHORT).show()
                 auth.signOut()
-                Toast.makeText(context, "Please try again later.", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, "Please try again later. 2", Toast.LENGTH_SHORT).show()
                // binding.loginWithGoogle.revertAnimation()
                 binding.loginButton.isEnabled = true
                // binding.loginButton.revertAnimation()
@@ -173,8 +173,8 @@ class LoginFragment : Fragment() {
                     if (userData.termsAccepted) {
                         val prefs = requireActivity().getSharedPreferences("pref", Context.MODE_PRIVATE)
                         prefs.edit().putInt("user_type", userData.userType).apply()
-                        prefs.edit().putStringSet("user_modules", userData.myModules?.split(';')?.toSet()).apply()
-                        prefs.edit().putFloat("user_balance", userData.balance).apply()
+                        prefs.edit().putStringSet("my_modules", userData.myModules?.split(';')?.toSet()).apply()
+                        prefs.edit().putFloat("my_balance", userData.balance).apply()
                         val checkMark = BitmapFactory.decodeResource(context?.resources, R.drawable.ic_checked)
                         if (withGoogle){
                            // binding.loginWithGoogle.doneLoadingAnimation(Color.parseColor("#3BB54A"), checkMark)

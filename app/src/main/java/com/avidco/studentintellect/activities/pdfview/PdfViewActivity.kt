@@ -21,7 +21,6 @@ import androidx.core.content.FileProvider
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import com.avidco.studentintellect.R
 import com.avidco.studentintellect.databinding.ActivityPdfViewBinding
-import com.avidco.studentintellect.models.MaterialData
 import com.avidco.studentintellect.utils.Utils.documentsDir
 import com.avidco.studentintellect.utils.Utils.getAdSize
 import com.avidco.studentintellect.utils.Utils.tempDisable
@@ -30,6 +29,7 @@ import com.google.android.gms.ads.AdView
 import com.google.android.gms.ads.MobileAds
 import com.avidco.studentintellect.BuildConfig
 import com.avidco.studentintellect.activities.auth.AuthActivity
+import com.avidco.studentintellect.models.FileData
 import com.avidco.studentintellect.utils.Utils.imagesDir
 import com.google.android.material.elevation.SurfaceColors
 import com.google.android.material.tabs.TabLayoutMediator
@@ -42,7 +42,7 @@ import java.io.*
 class PdfViewActivity : AppCompatActivity() {
 
     lateinit var binding: ActivityPdfViewBinding
-    private lateinit var materialData: MaterialData
+    private lateinit var fileData: FileData
     private lateinit var moduleCode: String
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -67,18 +67,18 @@ class PdfViewActivity : AppCompatActivity() {
         supportActionBar?.setBackgroundDrawable(ColorDrawable(color))
 
 
-        materialData = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            intent.extras?.getParcelable(MATERIAL_DATA, MaterialData::class.java)!!
+        fileData = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            intent.extras?.getParcelable(FILE_DATA, FileData::class.java)!!
         } else {
-            intent.extras?.getParcelable(MATERIAL_DATA)!!
+            intent.extras?.getParcelable(FILE_DATA)!!
         }
         moduleCode = intent.extras?.getString(MODULE_CODE)!!
-        supportActionBar?.title = materialData.id + " | " + moduleCode
+        supportActionBar?.title = fileData.name + " | " + moduleCode
 
-        binding.viewPager.adapter = SectionsPagerAdapter( materialData , moduleCode,this)
+        binding.viewPager.adapter = SectionsPagerAdapter( fileData , moduleCode,this)
         binding.viewPager.offscreenPageLimit = 2
 
-        if (materialData.withSolutions){
+        if (fileData.solutionsUrl != null){
             TabLayoutMediator(binding.tabLayout, binding.viewPager) { tab, position ->
                 tab.text = if (position == 0) "Questions" else "Solutions"
             }.attach()
@@ -126,8 +126,8 @@ class PdfViewActivity : AppCompatActivity() {
                 function()
             } else {
                 i++
-                this.file = if (binding.viewPager.currentItem == 0) File(directory, "${materialData.id}($i).pdf")
-                else File(directory, "${materialData.id} Solutions($i).pdf")
+                this.file = if (binding.viewPager.currentItem == 0) File(directory, "${fileData.name}($i).pdf")
+                else File(directory, "${fileData.name} Solutions($i).pdf")
                 searchFile(this.file, directory) { function() }
             }
         }
@@ -169,10 +169,10 @@ class PdfViewActivity : AppCompatActivity() {
             it.tempDisable()
             dialog.dismiss()
             try {
-                val path = "modules/$moduleCode/materials/${materialData.id}" 
+                val path = "modules/$moduleCode/materials/${fileData.name}"
                 
-                file = if (binding.viewPager.currentItem == 0) File(documentsDir(moduleCode), "${materialData.id}.pdf")
-                else File(documentsDir(moduleCode), "${materialData.id} Solutions.pdf")
+                file = if (binding.viewPager.currentItem == 0) File(documentsDir(moduleCode), "${fileData.name}.pdf")
+                else File(documentsDir(moduleCode), "${fileData.name} Solutions.pdf")
                 searchFile(file, documentsDir(moduleCode)) {
                     val uri = FileProvider.getUriForFile(this, BuildConfig.APPLICATION_ID + ".provider", file)
                     val pdfOpenIntent = Intent(Intent.ACTION_VIEW)
@@ -191,9 +191,9 @@ class PdfViewActivity : AppCompatActivity() {
             it.tempDisable()
             dialog.dismiss()
             try {
-                val path = "modules/$moduleCode/materials/${materialData.id}"
-                file = if (binding.viewPager.currentItem == 0) File(documentsDir(moduleCode), "${materialData.id}.pdf")
-                else File(documentsDir(path), "${materialData.id} Solutions.pdf")
+                val path = "modules/$moduleCode/materials/${fileData.name}"
+                file = if (binding.viewPager.currentItem == 0) File(documentsDir(moduleCode), "${fileData.name}.pdf")
+                else File(documentsDir(path), "${fileData.name} Solutions.pdf")
                 searchFile(file, documentsDir(moduleCode)) {
                     val uri = FileProvider.getUriForFile(this, BuildConfig.APPLICATION_ID + ".provider", file)
                     val intent = Intent(Intent.ACTION_SEND)
@@ -247,7 +247,7 @@ class PdfViewActivity : AppCompatActivity() {
 
         var share = false
         binding.cropImageView.setOnCropImageCompleteListener { _, result ->
-            val filename = File(imagesDir(), "/${materialData.id}_${System.currentTimeMillis()}.png")
+            val filename = File(imagesDir(), "/${fileData.name}_${System.currentTimeMillis()}.png")
             try {
                 val fos = FileOutputStream(filename)
                 result.bitmap.compress(CompressFormat.PNG, 100, fos)
@@ -296,7 +296,7 @@ class PdfViewActivity : AppCompatActivity() {
     }
 
     companion object {
-        const val MATERIAL_DATA = "arg_material_data"
+        const val FILE_DATA = "arg_file_data"
         const val MODULE_CODE = "arg_module_code"
     }
 }

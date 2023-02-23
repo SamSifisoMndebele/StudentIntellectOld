@@ -14,7 +14,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.avidco.studentintellect.R
 import com.avidco.studentintellect.activities.pdfview.PdfViewActivity
 import com.avidco.studentintellect.activities.ui.MainActivity
-import com.avidco.studentintellect.models.MaterialData
+import com.avidco.studentintellect.models.FileData
 import com.avidco.studentintellect.utils.Utils
 import com.avidco.studentintellect.utils.Utils.fileExists
 import com.avidco.studentintellect.utils.Utils.hideKeyboard
@@ -36,19 +36,19 @@ import java.io.File
 import java.text.DateFormat
 import java.util.*
 
-class MaterialsAdapter(val activity: MainActivity, private val moduleCode : String, private val materialIDs : MutableList<String>) :
-    RecyclerView.Adapter<MaterialsAdapter.MaterialViewHolder>(), Filterable {
-    private val pref = activity.getSharedPreferences("view_type", Context.MODE_PRIVATE)
-    private var materialsFiltered = materialIDs.sorted().toMutableList()
+class FilesAdapter(val activity: MainActivity, private val moduleCode : String, private val filesIDs : MutableList<String>) :
+    RecyclerView.Adapter<FilesAdapter.MaterialViewHolder>(), Filterable {
+    private val viewTypePref = activity.getSharedPreferences("view_type", Context.MODE_PRIVATE)
+    private var materialsFiltered = filesIDs.sorted().toMutableList()
     private var interstitialAd : InterstitialAd? = null
     private var refreshPosition : Int? = null
-    private var isListView = pref.getBoolean("is_materials_list_view", true)
+    private var isListView = viewTypePref.getBoolean("is_materials_list_view", true)
 
-    private fun pdfViewActivity(materialData : MaterialData) {
+    private fun pdfViewActivity(fileData : FileData) {
         try {
             val intent = Intent(activity, PdfViewActivity::class.java).apply {
                 putExtra(PdfViewActivity.MODULE_CODE, moduleCode)
-                putExtra(PdfViewActivity.MATERIAL_DATA, materialData)
+                putExtra(PdfViewActivity.FILE_DATA, fileData)
             }
             activity.startActivity(intent)
         } catch (e: Exception) {
@@ -60,15 +60,15 @@ class MaterialsAdapter(val activity: MainActivity, private val moduleCode : Stri
         val adRequest = AdRequest.Builder().build()
         InterstitialAd.load(activity,activity.getString(R.string.activity_materialsList_interstitialAdUnitId), adRequest, object : InterstitialAdLoadCallback() {
             override fun onAdFailedToLoad(adError: LoadAdError) {
-                this@MaterialsAdapter.interstitialAd = null
+                this@FilesAdapter.interstitialAd = null
             }
             override fun onAdLoaded(interstitialAd: InterstitialAd) {
-                this@MaterialsAdapter.interstitialAd = interstitialAd
+                this@FilesAdapter.interstitialAd = interstitialAd
             }
         })
     }
 
-    private fun showAd(materialData : MaterialData){
+    private fun showAd(materialData : FileData){
         interstitialAd!!.fullScreenContentCallback = object: FullScreenContentCallback() {
             override fun onAdClicked() {}
             override fun onAdDismissedFullScreenContent() {
@@ -126,13 +126,13 @@ class MaterialsAdapter(val activity: MainActivity, private val moduleCode : Stri
             document.get(Source.CACHE)
                 .addOnSuccessListener { cacheDoc ->
                     if (cacheDoc.exists()) {
-                        val materialData = cacheDoc.toObject(MaterialData::class.java)
+                        val materialData = cacheDoc.toObject(FileData::class.java)
                         menu.visibility = View.VISIBLE
                         materialData?.let { bind(it, position) }
                     } else {
                         document.get(Source.SERVER)
                             .addOnSuccessListener { serverDoc ->
-                                val materialData = serverDoc.toObject(MaterialData::class.java)
+                                val materialData = serverDoc.toObject(FileData::class.java)
                                 menu.visibility = View.VISIBLE
                                 materialData?.let { bind(it, position) }
                             }
@@ -149,13 +149,13 @@ class MaterialsAdapter(val activity: MainActivity, private val moduleCode : Stri
         }
 
         @SuppressLint("SetTextI18n")
-        private fun bind(materialData: MaterialData, position: Int){
+        private fun bind(materialData: FileData, position: Int){
             itemView.setOnClickListener {
                 it.tempDisable(2000)
                 activity.hideKeyboard(it)
 
-                if (activity.isOnline() || fileExists(moduleCode, materialData.id, 0)) {
-                    refreshPosition = if (fileExists(moduleCode, materialData.id,0)) null else position
+                if (activity.isOnline() || fileExists(moduleCode, materialData.name, 0)) {
+                    refreshPosition = if (fileExists(moduleCode, materialData.name,0)) null else position
 
                     if (interstitialAd != null) {
                         showAd(materialData)
@@ -174,13 +174,13 @@ class MaterialsAdapter(val activity: MainActivity, private val moduleCode : Stri
                 dialog.setContentView(R.layout.menu_layout_material)
 
                 dialog.findViewById<TextView>(R.id.module_code).text = moduleCode
-                dialog.findViewById<TextView>(R.id.material_title).text = materialData.id
-                dialog.findViewById<TextView>(R.id.material_size).text = "${materialData.size?.materialSize} MB".takeIf { it != "0.0 MB" }
-                dialog.findViewById<TextView>(R.id.material_uploader_name).text = materialData.uploader?.name ?: "Anonymous"
+                dialog.findViewById<TextView>(R.id.material_title).text = materialData.name
+                dialog.findViewById<TextView>(R.id.material_size).text = "${materialData.materialSize} MB".takeIf { it != "0.0 MB" }
+                dialog.findViewById<TextView>(R.id.material_uploader_name).text = materialData.uploaderName ?: "Anonymous"
                 dialog.findViewById<TextView>(R.id.material_downloads_number).text = materialData.downloads.toString()
-                if (materialData.withSolutions) {
+                if (materialData.solutionsUrl != null) {
                     dialog.findViewById<LinearLayout>(R.id.material_solutions).visibility = View.VISIBLE
-                    dialog.findViewById<TextView>(R.id.solutions_size).text = " | ${materialData.size?.solutionsSize} MB".takeIf { it != " | 0.0 MB" }
+                    dialog.findViewById<TextView>(R.id.solutions_size).text = " | ${materialData.solutionsSize} MB".takeIf { it != " | 0.0 MB" }
                 }
 
                 val dateInstance = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT)
@@ -221,9 +221,9 @@ class MaterialsAdapter(val activity: MainActivity, private val moduleCode : Stri
             return (100.0 * bytesTransferred / totalByteCount).toInt()
         }
 
-        private fun checkDownloads(materialData: MaterialData, download : Boolean) {
-            val materialRef = Firebase.storage.getReference("modules/$moduleCode/materials/${materialData.id}.pdf")
-            val solutionsRef = Firebase.storage.getReference("modules/$moduleCode/materials/${materialData.id} Solutions.pdf")
+        private fun checkDownloads(materialData: FileData, download : Boolean) {
+            val materialRef = Firebase.storage.getReference("modules/$moduleCode/materials/${materialData.name}.pdf")
+            val solutionsRef = Firebase.storage.getReference("modules/$moduleCode/materials/${materialData.name} Solutions.pdf")
 
             if (!activity.isOnline()) {
                 if (download)
@@ -248,7 +248,7 @@ class MaterialsAdapter(val activity: MainActivity, private val moduleCode : Stri
                                 materialTaskDone = true
                                 if (solutionsTaskDone){
                                     progressLayout.visibility = View.GONE
-                                    checkIfDownloaded(materialData.id)
+                                    checkIfDownloaded(materialData.name)
                                 }
                             }
                             .addOnFailureListener {
@@ -263,7 +263,7 @@ class MaterialsAdapter(val activity: MainActivity, private val moduleCode : Stri
                                 solutionsTaskDone = true
                                 if (materialTaskDone){
                                     progressLayout.visibility = View.GONE
-                                    checkIfDownloaded(materialData.id)
+                                    checkIfDownloaded(materialData.name)
                                 }
                             }
                             .addOnFailureListener {
@@ -280,7 +280,7 @@ class MaterialsAdapter(val activity: MainActivity, private val moduleCode : Stri
                         materialTasks[0]
                             .addOnSuccessListener {
                                 progressLayout.visibility = View.GONE
-                                checkIfDownloaded(materialData.id)
+                                checkIfDownloaded(materialData.name)
                             }
                             .addOnFailureListener {
                                 progressLayout.visibility = View.GONE
@@ -296,7 +296,7 @@ class MaterialsAdapter(val activity: MainActivity, private val moduleCode : Stri
                         solutionsTasks[0]
                             .addOnSuccessListener {
                                 progressLayout.visibility = View.GONE
-                                checkIfDownloaded(materialData.id)
+                                checkIfDownloaded(materialData.name)
                             }
                             .addOnFailureListener {
                                 progressLayout.visibility = View.GONE
@@ -307,8 +307,8 @@ class MaterialsAdapter(val activity: MainActivity, private val moduleCode : Stri
                             }
                     }
                     download -> {
-                        val materialFile = checkFile(materialData.id, false)
-                        val solutionsFile = if (materialData.withSolutions) checkFile(materialData.id, true) else null
+                        val materialFile = checkFile(materialData.name, false)
+                        val solutionsFile = if (materialData.solutionsUrl != null) checkFile(materialData.name, true) else null
                         when {
                             materialFile != null && solutionsFile != null -> {
                                 progressLayout.visibility = View.VISIBLE
@@ -326,10 +326,10 @@ class MaterialsAdapter(val activity: MainActivity, private val moduleCode : Stri
                                         materialTaskDone = true
                                         if (solutionsTaskDone){
                                             progressLayout.visibility = View.GONE
-                                            checkIfDownloaded(materialData.id)
+                                            checkIfDownloaded(materialData.name)
                                         }
                                         Firebase.firestore
-                                            .document("modules/$moduleCode/materials/${materialData.id}")
+                                            .document("modules/$moduleCode/materials/${materialData.name}")
                                             .update("downloads", FieldValue.increment(1))
                                     }
                                     .addOnFailureListener {
@@ -351,7 +351,7 @@ class MaterialsAdapter(val activity: MainActivity, private val moduleCode : Stri
                                         solutionsTaskDone = true
                                         if (materialTaskDone){
                                             progressLayout.visibility = View.GONE
-                                            checkIfDownloaded(materialData.id)
+                                            checkIfDownloaded(materialData.name)
                                         }
                                     }
                                     .addOnFailureListener {
@@ -374,9 +374,9 @@ class MaterialsAdapter(val activity: MainActivity, private val moduleCode : Stri
                                 materialTask
                                     .addOnSuccessListener {
                                         progressLayout.visibility = View.GONE
-                                        checkIfDownloaded(materialData.id)
+                                        checkIfDownloaded(materialData.name)
                                         Firebase.firestore
-                                            .document("modules/$moduleCode/materials/${materialData.id}")
+                                            .document("modules/$moduleCode/materials/${materialData.name}")
                                             .update("downloads", FieldValue.increment(1))
                                     }
                                     .addOnFailureListener {
@@ -399,7 +399,7 @@ class MaterialsAdapter(val activity: MainActivity, private val moduleCode : Stri
                                 solutionsTask
                                     .addOnSuccessListener {
                                         progressLayout.visibility = View.GONE
-                                        checkIfDownloaded(materialData.id)
+                                        checkIfDownloaded(materialData.name)
                                     }
                                     .addOnFailureListener {
                                         // Handle any errors
@@ -453,7 +453,7 @@ class MaterialsAdapter(val activity: MainActivity, private val moduleCode : Stri
 
     fun toggleItemViewType() : Boolean {
         isListView = !isListView
-        pref.edit().putBoolean("is_materials_list_view", isListView).apply()
+        viewTypePref.edit().putBoolean("is_materials_list_view", isListView).apply()
         return isListView
     }
 
@@ -481,10 +481,10 @@ class MaterialsAdapter(val activity: MainActivity, private val moduleCode : Stri
             override fun performFiltering(constraint: CharSequence?): FilterResults {
                 val pattern = constraint.toString().lowercase(Locale.getDefault())
                 materialsFiltered = if (pattern.isEmpty()){
-                    materialIDs.sorted().toMutableList()
+                    filesIDs.sorted().toMutableList()
                 } else {
                     val resultList = arrayListOf<String>()
-                    for(material in materialIDs){
+                    for(material in filesIDs){
                         if (material.lowercase().contains(pattern)){
                             resultList.add(material)
                         }

@@ -20,12 +20,12 @@ import androidx.core.widget.doOnTextChanged
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import com.avidco.studentintellect.databinding.FragmentMaterialUploadBinding
-import com.avidco.studentintellect.models.MaterialData
 import com.avidco.studentintellect.models.ModuleData
 import com.avidco.studentintellect.utils.Constants
 import com.avidco.studentintellect.utils.OpenDocumentContract
 import com.avidco.studentintellect.R
-import com.avidco.studentintellect.activities.ui.DataViewModel
+import com.avidco.studentintellect.activities.ui.ProfileViewModel
+import com.avidco.studentintellect.models.FileData
 import com.avidco.studentintellect.utils.Extensions.buildMaterialName
 import com.avidco.studentintellect.utils.Utils.hideKeyboard
 import com.avidco.studentintellect.utils.Utils.isOnline
@@ -511,15 +511,18 @@ class UploadFragment : Fragment() {
     private fun uploadMaterial(moduleCode : String) {
         val materialName = buildMaterialName(materialTitle, materialNumber, materialYear)
 
-        database.collection(getString(R.string.materials_path, moduleCode))
+
+        val modulePath = arguments?.getString("modulePath") ?: "Materials/$moduleCode"
+
+        database.collection(modulePath)
             .whereEqualTo("name", materialName)
             .limit(1)
             .get()
             .addOnSuccessListener {
                 val isEmpty = it.isEmpty
                 if (isEmpty) {
-                    val document = database.document(getString(R.string.materials_path, moduleCode)+"/$materialName")
-                    val storageRef = storage.getReference(getString(R.string.materials_path, moduleCode))
+                    val document = database.document(modulePath+"/$materialName")
+                    val storageRef = storage.getReference(modulePath)
                     try {
                         val materialRef = storageRef.child("${document.id}.pdf")
                         val metadata = storageMetadata {
@@ -534,7 +537,7 @@ class UploadFragment : Fragment() {
                             }
                             materialRef.downloadUrl
                         }
-                            .addOnSuccessListener {
+                            .addOnSuccessListener { materialUri ->
                                 if (solutionsUri != null){
                                     val solutionsRef = storageRef.child("${document.id} Solutions.pdf")
                                     val solutionsUploadTask = solutionsRef.putFile(solutionsUri!!, metadata)
@@ -546,8 +549,8 @@ class UploadFragment : Fragment() {
                                         }
                                         solutionsRef.downloadUrl
                                     }
-                                        .addOnSuccessListener {
-                                            document.set(MaterialData(document.id, document.id, true, MaterialSize(materialSize, solutionsSize)))
+                                        .addOnSuccessListener { uri ->
+                                            document.set(FileData(document.id, uri.toString()))
                                                 .addOnSuccessListener {
                                                     clear()
                                                    // binding.progressLayout.hideProgress()
@@ -561,7 +564,7 @@ class UploadFragment : Fragment() {
                                                             .update("balance", FieldValue.increment(amount.toDouble()))
 
                                                         val prefs = requireActivity().getSharedPreferences("pref", Context.MODE_PRIVATE)
-                                                        val dataViewModel = ViewModelProvider(requireActivity())[DataViewModel::class.java]
+                                                        val dataViewModel = ViewModelProvider(requireActivity())[ProfileViewModel::class.java]
                                                         dataViewModel.setBalance(prefs, amount)
                                                         binding.rewardBalance.text = getString(R.string.zero_rand)
                                                         rewardItem = null
@@ -588,7 +591,7 @@ class UploadFragment : Fragment() {
                                     }
                                 }
                                 else {
-                                    document.set(MaterialData(document.id, size = MaterialSize(materialSize, solutionsSize)))
+                                    document.set(FileData(document.id, materialUri.toString(), ))
                                         .addOnSuccessListener {
                                             clear()
                                            // binding.progressLayout.hideProgress()
@@ -603,7 +606,7 @@ class UploadFragment : Fragment() {
                                                 Toast.makeText(requireActivity(), "Uploaded successfully.\nYou earned R${amount.roundToRand()} reward.", Toast.LENGTH_SHORT).show()
 
                                                 val prefs = requireActivity().getSharedPreferences("pref", Context.MODE_PRIVATE)
-                                                val dataViewModel = ViewModelProvider(requireActivity())[DataViewModel::class.java]
+                                                val dataViewModel = ViewModelProvider(requireActivity())[ProfileViewModel::class.java]
                                                 dataViewModel.setBalance(prefs, amount)
                                                 binding.rewardBalance.text = getString(R.string.zero_rand)
                                                 rewardItem = null

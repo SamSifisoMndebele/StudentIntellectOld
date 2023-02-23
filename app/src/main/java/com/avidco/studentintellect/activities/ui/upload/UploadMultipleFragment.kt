@@ -23,13 +23,12 @@ import androidx.core.widget.doOnTextChanged
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import com.avidco.studentintellect.databinding.FragmentMaterialUploadBinding
-import com.avidco.studentintellect.models.MaterialData
 import com.avidco.studentintellect.models.ModuleData
 import com.avidco.studentintellect.utils.Constants
 import com.avidco.studentintellect.utils.OpenDocumentContract
 import com.avidco.studentintellect.R
-import com.avidco.studentintellect.activities.ui.DataViewModel
-import com.avidco.studentintellect.models.MaterialSize
+import com.avidco.studentintellect.activities.ui.ProfileViewModel
+import com.avidco.studentintellect.models.FileData
 import com.avidco.studentintellect.utils.Utils.hideKeyboard
 import com.avidco.studentintellect.utils.Utils.isOnline
 import com.avidco.studentintellect.utils.Utils.roundToRand
@@ -643,7 +642,7 @@ class UploadMultipleFragment : Fragment() {
                                         solutionsRef.downloadUrl
                                     }
                                         .addOnSuccessListener {
-                                            document.set(MaterialData(document.id,  document.id, true, MaterialSize(materialSize, solutionsSize)))
+                                            document.set(FileData(document.id,  document.id, ))
                                                 .addOnSuccessListener {
                                                     clear()
                                                    // binding.progressLayout.hideProgress()
@@ -657,7 +656,7 @@ class UploadMultipleFragment : Fragment() {
                                                             .update("balance", FieldValue.increment(amount.toDouble()))
 
                                                         val prefs = requireActivity().getSharedPreferences("pref", Context.MODE_PRIVATE)
-                                                        val dataViewModel = ViewModelProvider(requireActivity())[DataViewModel::class.java]
+                                                        val dataViewModel = ViewModelProvider(requireActivity())[ProfileViewModel::class.java]
                                                         dataViewModel.setBalance(prefs, amount)
                                                         binding.rewardBalance.text = getString(R.string.zero_rand)
                                                         rewardItem = null
@@ -684,7 +683,7 @@ class UploadMultipleFragment : Fragment() {
                                     }
                                 }
                                 else {
-                                    document.set(MaterialData(document.id, size = MaterialSize(materialSize, solutionsSize)))
+                                    document.set(FileData(document.id))
                                         .addOnSuccessListener {
                                             clear()
                                            // binding.progressLayout.hideProgress()
@@ -699,7 +698,7 @@ class UploadMultipleFragment : Fragment() {
                                                 Toast.makeText(requireActivity(), "Uploaded successfully.\nYou earned R${amount.roundToRand()} reward.", Toast.LENGTH_SHORT).show()
 
                                                 val prefs = requireActivity().getSharedPreferences("pref", Context.MODE_PRIVATE)
-                                                val dataViewModel = ViewModelProvider(requireActivity())[DataViewModel::class.java]
+                                                val dataViewModel = ViewModelProvider(requireActivity())[ProfileViewModel::class.java]
                                                 dataViewModel.setBalance(prefs, amount)
                                                 binding.rewardBalance.text = getString(R.string.zero_rand)
                                                 rewardItem = null

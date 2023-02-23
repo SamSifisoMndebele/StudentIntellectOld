@@ -1,14 +1,13 @@
 package com.avidco.studentintellect.activities.ui
 
 import android.content.SharedPreferences
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.LiveData
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
 
-class DataViewModel : ViewModel() {
-
+class ProfileViewModel : ViewModel() {
     private val _modulesList = MutableLiveData<MutableSet<String>?>()
     private val _photoUrl = MutableLiveData<String?>().apply {
         this.value = Firebase.auth.currentUser?.photoUrl.toString().ifEmpty { null }
@@ -19,9 +18,11 @@ class DataViewModel : ViewModel() {
     private val _balance = MutableLiveData<Float>()
 
     fun init(prefs: SharedPreferences){
-        _modulesList.value = prefs.getStringSet("user_modules", null)?.sorted()?.take(10)?.toMutableSet()
-        _balance.value = prefs.getFloat("user_balance", 0f)
+        _modulesList.value = prefs.getStringSet("my_modules", null)?.sorted()?.take(10)?.toMutableSet()
+        _balance.value = prefs.getFloat("my_balance", 0f)
     }
+
+
 
     fun setModules(prefs: SharedPreferences, modulesList : MutableSet<String>?){
         prefs.edit().putStringSet("user_modules", modulesList).apply()

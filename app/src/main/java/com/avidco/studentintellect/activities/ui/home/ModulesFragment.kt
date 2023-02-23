@@ -1,10 +1,8 @@
 package com.avidco.studentintellect.activities.ui.home
 
 import android.Manifest
-import android.app.Dialog
+import android.annotation.SuppressLint
 import android.content.*
-import android.graphics.Color
-import android.graphics.drawable.ColorDrawable
 import android.net.Uri
 import android.os.*
 import android.provider.Settings
@@ -12,6 +10,7 @@ import android.view.*
 import android.widget.*
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.view.menu.MenuBuilder
 import androidx.core.content.PermissionChecker
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
@@ -19,7 +18,11 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.avidco.studentintellect.activities.ui.MainActivity
 import com.avidco.studentintellect.R
 import com.avidco.studentintellect.databinding.FragmentModulesBinding
-import com.avidco.studentintellect.activities.ui.DataViewModel
+import com.avidco.studentintellect.activities.ui.ProfileViewModel
+import com.avidco.studentintellect.utils.Utils.appRatedCheck
+import com.avidco.studentintellect.utils.Utils.askPlayStoreRatings
+import com.avidco.studentintellect.utils.Utils.isGooglePlayServicesAvailable
+import com.avidco.studentintellect.utils.Utils.openPlayStore
 import com.avidco.studentintellect.utils.Utils.shareApp
 import com.avidco.studentintellect.utils.Utils.tempDisable
 import com.google.android.gms.ads.*
@@ -95,10 +98,9 @@ class ModulesFragment : Fragment() {
         if(!granted){
             askPermissionsAgain()
         } else {
-            adapter?.gotoMaterialsListActivity()
+            adapter?.gotoMaterialsFragment()
         }
     }
-
     private fun askPermissionsAgain() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             when {
@@ -189,20 +191,14 @@ class ModulesFragment : Fragment() {
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?): View {
         binding = FragmentModulesBinding.inflate(inflater, container, false)
-
+        @Suppress("DEPRECATION")
+        setHasOptionsMenu(true)
 
         observeViewData()
 
         MobileAds.initialize(requireContext()) {
             loadInterstitialAd()
         }
-
-        /*binding.menuButton.setOnClickListener {
-            it.tempDisable()
-            binding.addButton.tempDisable()
-
-            showMenuDialog()
-        }*/
 
         /*binding.addButton.setOnClickListener {
             it.tempDisable()
@@ -218,9 +214,9 @@ class ModulesFragment : Fragment() {
         return binding.root
     }
 
-    private lateinit var viewModel : DataViewModel
+    private lateinit var viewModel : ProfileViewModel
     private fun observeViewData() {
-        viewModel = ViewModelProvider(activity as MainActivity)[DataViewModel::class.java]
+        viewModel = ViewModelProvider(activity as MainActivity)[ProfileViewModel::class.java]
         viewModel.modulesList.observe(viewLifecycleOwner) { modulesList ->
             if (modulesList.isNullOrEmpty()) {
                 binding.welcomeLayout.visibility = View.VISIBLE
@@ -236,7 +232,7 @@ class ModulesFragment : Fragment() {
                     // Do offline things
                     binding.welcomeLayout.visibility = View.GONE
                     binding.moduleListLayout.visibility = View.VISIBLE
-                    val query : Query = database.collection("modules")
+                    val query : Query = database.collection("Modules")
                         .whereIn("code", modulesList.sorted().take(10).toMutableList())
 
                     adapter = ModulesAdapter(activity as MainActivity, query, requestMultiplePermissions, modulesList.toMutableList())
@@ -251,30 +247,46 @@ class ModulesFragment : Fragment() {
         }
     }
 
-    private fun showMenuDialog() {
-        val dialog = Dialog(requireContext())
-        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
-        dialog.setContentView(R.layout.menu_layout_bottomsheet)
-        val feedback = dialog.findViewById<LinearLayout>(R.id.feedback)
-        val shareApp = dialog.findViewById<LinearLayout>(R.id.share_app)
-        /*feedback.setOnClickListener {
-            it.tempDisable()
-            dialog.dismiss()
-            val sheet = FeedbackBottomSheetDialog()
-            sheet.show(childFragmentManager, "FeedbackBottomSheetDialog")
-        }*/
-        shareApp.setOnClickListener {
-            it.tempDisable()
-            dialog.dismiss()
-            activity?.shareApp()
+    @Deprecated("Deprecated in Java")
+    @Suppress("DEPRECATION")
+    @SuppressLint("RestrictedApi")
+    override fun onCreateOptionsMenu(menu: Menu, menuInflater: MenuInflater) {
+        super.onCreateOptionsMenu(menu, menuInflater)
+
+        menuInflater.inflate(R.menu.main_menu, menu)
+        if (menu is MenuBuilder) menu.setOptionalIconsVisible(true)
+        if (!requireActivity().isGooglePlayServicesAvailable()) {
+            menu.findItem(R.id.item_rate).isVisible = false
         }
-        dialog.show()
-        dialog.window!!.setLayout(
-            ViewGroup.LayoutParams.MATCH_PARENT,
-            ViewGroup.LayoutParams.WRAP_CONTENT
-        )
-        dialog.window!!.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
-        dialog.window!!.attributes.windowAnimations = R.style.DialogAnimation
-        dialog.window!!.setGravity(Gravity.BOTTOM)
+
+
+    }
+
+    @Deprecated("Deprecated in Java")
+    @Suppress("DEPRECATION")
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        when(item.itemId){
+            R.id.item_modules -> {
+                if (interstitialAd == null) {
+                    (requireActivity() as MainActivity).navController.navigate(R.id.addModulesFragment)
+                } else {
+                    interstitialAd!!.show(requireActivity())
+                }
+            }
+            R.id.item_share -> {
+                requireActivity().shareApp()
+            }
+            R.id.item_rate -> {
+                requireActivity().appRatedCheck({
+                    requireActivity().openPlayStore()
+                },{
+                    requireActivity().askPlayStoreRatings()
+                })
+            }
+            R.id.item_feedback -> {
+                (activity as MainActivity).showFeedbackDialog()
+            }
+        }
+        return super.onOptionsItemSelected(item)
     }
 }

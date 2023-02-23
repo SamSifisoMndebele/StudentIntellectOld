@@ -7,7 +7,6 @@ import android.net.Uri
 import android.os.Bundle
 import android.view.*
 import android.widget.Toast
-import androidx.core.widget.doOnTextChanged
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import com.avidco.studentintellect.BuildConfig
@@ -15,10 +14,9 @@ import com.avidco.studentintellect.R
 import com.avidco.studentintellect.activities.auth.AuthActivity
 import com.avidco.studentintellect.databinding.FragmentProfileBinding
 import com.avidco.studentintellect.databinding.SheetAboutAppBinding
-import com.avidco.studentintellect.activities.ui.DataViewModel
+import com.avidco.studentintellect.activities.ui.ProfileViewModel
 import com.avidco.studentintellect.models.UserType
 import com.avidco.studentintellect.activities.ui.MainActivity
-import com.avidco.studentintellect.activities.ui.home.ModulesFragment
 import com.avidco.studentintellect.utils.LoadingDialog
 import com.avidco.studentintellect.utils.OpenPicturesContract
 import com.avidco.studentintellect.utils.Utils.hideKeyboard
@@ -120,7 +118,7 @@ class ProfileFragment : Fragment() {
                         currentUser?.updateProfile(userProfileChangeRequest {
                             photoUri = imageUrl })
                             ?.addOnSuccessListener {
-                                val dataViewModel = ViewModelProvider(requireActivity())[DataViewModel::class.java]
+                                val dataViewModel = ViewModelProvider(requireActivity())[ProfileViewModel::class.java]
                                 dataViewModel.setPhotoUrl(imageUrl.toString())
                                 loadingDialog.isDone {  }
                             }
@@ -137,7 +135,7 @@ class ProfileFragment : Fragment() {
                 currentUser?.updateProfile(userProfileChangeRequest {
                     photoUri = null })
                     ?.addOnSuccessListener {
-                        val dataViewModel = ViewModelProvider(requireActivity())[DataViewModel::class.java]
+                        val dataViewModel = ViewModelProvider(requireActivity())[ProfileViewModel::class.java]
                         dataViewModel.setPhotoUrl(null)
                     }
                     ?.addOnFailureListener {
@@ -162,7 +160,7 @@ class ProfileFragment : Fragment() {
             if (task.isSuccessful) {
                 Toast.makeText(context, "Saved", Toast.LENGTH_SHORT).show()
                 context?.hideKeyboard(binding.root)
-                val dataViewModel = ViewModelProvider(requireActivity())[DataViewModel::class.java]
+                val dataViewModel = ViewModelProvider(requireActivity())[ProfileViewModel::class.java]
                 dataViewModel.setDisplayName(userName.trim())
             } else {
                 //binding.progressBar.visibility = View.GONE
@@ -192,7 +190,7 @@ class ProfileFragment : Fragment() {
 
         binding.userEmail.text = auth.currentUser?.email
 
-        val dataViewModel = ViewModelProvider(activity as MainActivity)[DataViewModel::class.java]
+        val dataViewModel = ViewModelProvider(activity as MainActivity)[ProfileViewModel::class.java]
         dataViewModel.modulesList.observe(viewLifecycleOwner) { list ->
             val modules = StringBuilder()
             var b = false
@@ -294,8 +292,7 @@ class ProfileFragment : Fragment() {
 
         binding.feedback.setOnClickListener {
             it.tempDisable()
-            val sheet = FeedbackBottomSheetDialog()
-            sheet.show(childFragmentManager, "FeedbackBottomSheetDialog")
+            (activity as MainActivity).showFeedbackDialog()
         }
 
         binding.appInfo.setOnClickListener {

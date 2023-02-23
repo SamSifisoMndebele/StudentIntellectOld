@@ -1,6 +1,5 @@
 package com.avidco.studentintellect.activities.ui.materials
 
-import android.content.Context
 import android.content.Context.MODE_PRIVATE
 import android.content.Intent
 import android.os.*
@@ -14,7 +13,8 @@ import com.avidco.studentintellect.R
 import com.avidco.studentintellect.activities.auth.AuthActivity
 import com.avidco.studentintellect.activities.ui.MainActivity
 import com.avidco.studentintellect.databinding.FragmentMaterialsBinding
-import com.avidco.studentintellect.models.MaterialData
+import com.avidco.studentintellect.models.FileData
+import com.avidco.studentintellect.models.FolderData
 import com.google.firebase.Timestamp
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.firestore.ktx.firestore
@@ -24,7 +24,8 @@ import com.google.firebase.ktx.Firebase
 class MaterialsFragment : Fragment() {
 
     private lateinit var binding: FragmentMaterialsBinding
-    private var adapter : MaterialsAdapter? = null
+    private var foldersAdapter : FoldersAdapter? = null
+    private var filesAdapter : FilesAdapter? = null
     private var isListView = false
 
     override fun onCreateView(
@@ -46,65 +47,206 @@ class MaterialsFragment : Fragment() {
             return
         }
 
-        isListView = requireActivity().getSharedPreferences("view_type", Context.MODE_PRIVATE).getBoolean("is_materials_list_view", true)
+        isListView = requireActivity().getSharedPreferences("view_type", MODE_PRIVATE)
+            .getBoolean("is_materials_list_view", true)
 
         val moduleCode = arguments?.getString(MODULE_CODE)!!
         (requireActivity() as MainActivity).supportActionBar?.title = moduleCode
 
         val prefs = requireActivity().getSharedPreferences("pref", MODE_PRIVATE)
-        val materialsSet = prefs.getStringSet("${moduleCode}_materials_set", null)
+        val foldersIDs = prefs.getStringSet("${moduleCode}_foldersIDs", null)
+        val filesIDs = prefs.getStringSet("${moduleCode}_filesIDs", null)
         val currentTime = Timestamp.now()
 
-        if (!materialsSet.isNullOrEmpty()) {
-            val lastReadTime = Timestamp(prefs.getLong("materials_last_read_time", 0),0)
-            Firebase.firestore
-                .collection("modules/$moduleCode/materials")
-                .whereGreaterThanOrEqualTo("dateAdded", lastReadTime)
-                .get()
-                .addOnSuccessListener {
-                    val materials = mutableSetOf<String>()
-                    materials.addAll(materialsSet)
-                    it.documents.forEach { snapshot ->
-                        val data = snapshot.toObject(MaterialData::class.java)!!
-                        materials.add(data.id)
-                    }
-                    prefs.edit().putStringSet("${moduleCode}_materials_set", materials).apply()
-                    prefs.edit().putLong("materials_last_read_time",currentTime.seconds).apply()
+        val modulePath = arguments?.getString("modulePath") ?: "Materials/$moduleCode"
 
-                    adapter = MaterialsAdapter(requireActivity() as MainActivity, moduleCode, materials.toMutableList())
-                    itemViewType(isListView, null, binding.materialList)
-                    binding.materialList.setHasFixedSize(true)
-                    binding.materialList.adapter = adapter
-                    adapter!!.loadAd()
-                    // binding.progressBar.visibility = View.GONE
-                }
-        } else {
-            Firebase.firestore
-                .collection("modules/$moduleCode/materials")
-                .get()
-                .addOnSuccessListener {
-                    val materials = mutableSetOf<String>()
-                    it.documents.forEach { snapshot ->
-                        val data = snapshot.toObject(MaterialData::class.java)!!
-                        materials.add(data.id)
-                    }
-                    prefs.edit().putStringSet("${moduleCode}_materials_set", materials).apply()
-                    prefs.edit().putLong("materials_last_read_time",currentTime.seconds).apply()
+        when {
+            !foldersIDs.isNullOrEmpty() && !filesIDs.isNullOrEmpty() -> {
+                val foldersIDsLastReadTime = Timestamp(prefs.getLong("foldersIDs_last_read_time", 0),0)
+                Firebase.firestore
+                    .collection("$modulePath/Folders")
+                    .whereGreaterThanOrEqualTo("dateAdded", foldersIDsLastReadTime)
+                    .get()
+                    .addOnSuccessListener {
+                        val foldersIDsSet = mutableSetOf<String>()
+                        foldersIDsSet.addAll(foldersIDs)
+                        it.documents.forEach { snapshot ->
+                            val data = snapshot.toObject(FolderData::class.java)!!
+                            foldersIDsSet.add(data.name)
+                        }
+                        prefs.edit().putStringSet("${moduleCode}_foldersIDs", foldersIDsSet)
+                            .putLong("foldersIDs_last_read_time",currentTime.seconds).apply()
 
-                    adapter = MaterialsAdapter(requireActivity() as MainActivity, moduleCode, materials.toMutableList())
-                    itemViewType(isListView, null, binding.materialList)
-                    binding.materialList.setHasFixedSize(true)
-                    binding.materialList.adapter = adapter
-                    adapter!!.loadAd()
-                    // binding.progressBar.visibility = View.GONE
-                }
+                        foldersAdapter = FoldersAdapter(requireActivity() as MainActivity, moduleCode,
+                            "$modulePath/Folders", foldersIDsSet.toMutableList())
+                        itemViewType(isListView, null, binding.foldersList)
+                        binding.foldersList.setHasFixedSize(true)
+                        binding.foldersList.adapter = foldersAdapter
+                        foldersAdapter!!.loadAd()
+                        // binding.progressBar.visibility = View.GONE
+                    }
+                val filesIDsLastReadTime = Timestamp(prefs.getLong("filesIDs_last_read_time", 0),0)
+                Firebase.firestore
+                    .collection("$modulePath/Files")
+                    .whereGreaterThanOrEqualTo("dateAdded", filesIDsLastReadTime)
+                    .get()
+                    .addOnSuccessListener {
+                        val filesIDsSet = mutableSetOf<String>()
+                        filesIDsSet.addAll(filesIDs)
+                        it.documents.forEach { snapshot ->
+                            val data = snapshot.toObject(FileData::class.java)!!
+                            filesIDsSet.add(data.name)
+                        }
+                        prefs.edit().putStringSet("${moduleCode}_filesIDs", filesIDsSet)
+                            .putLong("filesIDs_last_read_time",currentTime.seconds).apply()
+
+                        filesAdapter = FilesAdapter(requireActivity() as MainActivity, moduleCode, filesIDsSet.toMutableList())
+                        itemViewType(isListView, null, binding.filesList)
+                        binding.filesList.setHasFixedSize(true)
+                        binding.filesList.adapter = filesAdapter
+                        filesAdapter!!.loadAd()
+                        // binding.progressBar.visibility = View.GONE
+                    }
+            }
+            !foldersIDs.isNullOrEmpty() -> {
+                val foldersIDsLastReadTime = Timestamp(prefs.getLong("foldersIDs_last_read_time", 0),0)
+                Firebase.firestore
+                    .collection("$modulePath/Folders" )
+                    .whereGreaterThanOrEqualTo("dateAdded", foldersIDsLastReadTime)
+                    .get()
+                    .addOnSuccessListener {
+                        val foldersIDsSet = mutableSetOf<String>()
+                        foldersIDsSet.addAll(foldersIDs)
+                        it.documents.forEach { snapshot ->
+                            val data = snapshot.toObject(FolderData::class.java)!!
+                            foldersIDsSet.add(data.name)
+                        }
+                        prefs.edit().putStringSet("${moduleCode}_foldersIDs", foldersIDsSet)
+                            .putLong("foldersIDs_last_read_time",currentTime.seconds).apply()
+
+                        foldersAdapter = FoldersAdapter(requireActivity() as MainActivity, moduleCode,
+                            "$modulePath/Folders", foldersIDsSet.toMutableList())
+                        itemViewType(isListView, null, binding.foldersList)
+                        binding.foldersList.setHasFixedSize(true)
+                        binding.foldersList.adapter = foldersAdapter
+                        foldersAdapter!!.loadAd()
+                        // binding.progressBar.visibility = View.GONE
+                    }
+                Firebase.firestore
+                    .collection("$modulePath/Files")
+                    .get()
+                    .addOnSuccessListener {
+                        val filesIDsSet = mutableSetOf<String>()
+                        it.documents.forEach { snapshot ->
+                            val data = snapshot.toObject(FileData::class.java)!!
+                            filesIDsSet.add(data.name)
+                        }
+                        prefs.edit().putStringSet("${moduleCode}_filesIDs", filesIDsSet)
+                            .putLong("filesIDs_last_read_time",currentTime.seconds).apply()
+
+                        filesAdapter = FilesAdapter(requireActivity() as MainActivity, moduleCode, filesIDsSet.toMutableList())
+                        itemViewType(isListView, null, binding.filesList)
+                        binding.filesList.setHasFixedSize(true)
+                        binding.filesList.adapter = filesAdapter
+                        filesAdapter!!.loadAd()
+                        // binding.progressBar.visibility = View.GONE
+                    }
+            }
+            !filesIDs.isNullOrEmpty() -> {
+                Firebase.firestore
+                    .collection("$modulePath/Folders")
+                    .get()
+                    .addOnSuccessListener {
+                        val foldersIDsSet = mutableSetOf<String>()
+                        it.documents.forEach { snapshot ->
+                            val data = snapshot.toObject(FolderData::class.java)!!
+                            foldersIDsSet.add(data.name)
+                        }
+                        prefs.edit().putStringSet("${moduleCode}_foldersIDs", foldersIDsSet)
+                            .putLong("foldersIDs_last_read_time",currentTime.seconds).apply()
+
+                        foldersAdapter = FoldersAdapter(requireActivity() as MainActivity, moduleCode,
+                            "$modulePath/Folders", foldersIDsSet.toMutableList())
+                        itemViewType(isListView, null, binding.foldersList)
+                        binding.foldersList.setHasFixedSize(true)
+                        binding.foldersList.adapter = foldersAdapter
+                        foldersAdapter!!.loadAd()
+
+                        // binding.progressBar.visibility = View.GONE
+                    }
+                val filesIDsLastReadTime = Timestamp(prefs.getLong("filesIDs_last_read_time", 0),0)
+                Firebase.firestore
+                    .collection("$modulePath/Files")
+                    .whereGreaterThanOrEqualTo("dateAdded", filesIDsLastReadTime)
+                    .get()
+                    .addOnSuccessListener {
+                        val filesIDsSet = mutableSetOf<String>()
+                        filesIDsSet.addAll(filesIDs)
+                        it.documents.forEach { snapshot ->
+                            val data = snapshot.toObject(FileData::class.java)!!
+                            filesIDsSet.add(data.name)
+                        }
+                        prefs.edit().putStringSet("${moduleCode}_filesIDs", filesIDsSet)
+                            .putLong("filesIDs_last_read_time",currentTime.seconds).apply()
+
+                        filesAdapter = FilesAdapter(requireActivity() as MainActivity, moduleCode, filesIDsSet.toMutableList())
+                        itemViewType(isListView, null, binding.filesList)
+                        binding.filesList.setHasFixedSize(true)
+                        binding.filesList.adapter = filesAdapter
+                        filesAdapter!!.loadAd()
+                        // binding.progressBar.visibility = View.GONE
+                    }
+            }
+            else -> {
+                Firebase.firestore
+                    .collection("$modulePath/Folders")
+                    .get()
+                    .addOnSuccessListener {
+                        val foldersIDsSet = mutableSetOf<String>()
+                        it.documents.forEach { snapshot ->
+                            val data = snapshot.toObject(FolderData::class.java)!!
+                            foldersIDsSet.add(data.name)
+                        }
+                        prefs.edit().putStringSet("${moduleCode}_foldersIDs", foldersIDsSet)
+                            .putLong("foldersIDs_last_read_time",currentTime.seconds).apply()
+
+                        foldersAdapter = FoldersAdapter(requireActivity() as MainActivity, moduleCode,
+                            "$modulePath/Folders", foldersIDsSet.toMutableList())
+                        itemViewType(isListView, null, binding.foldersList)
+                        binding.foldersList.setHasFixedSize(true)
+                        binding.foldersList.adapter = foldersAdapter
+                        foldersAdapter!!.loadAd()
+
+                        // binding.progressBar.visibility = View.GONE
+                    }
+                Firebase.firestore
+                    .collection("$modulePath/Files")
+                    .get()
+                    .addOnSuccessListener {
+                        val filesIDsSet = mutableSetOf<String>()
+                        it.documents.forEach { snapshot ->
+                            val data = snapshot.toObject(FileData::class.java)!!
+                            filesIDsSet.add(data.name)
+                        }
+                        prefs.edit().putStringSet("${moduleCode}_filesIDs", filesIDsSet)
+                            .putLong("filesIDs_last_read_time",currentTime.seconds).apply()
+
+                        filesAdapter = FilesAdapter(requireActivity() as MainActivity, moduleCode, filesIDsSet.toMutableList())
+                        itemViewType(isListView, null, binding.filesList)
+                        binding.filesList.setHasFixedSize(true)
+                        binding.filesList.adapter = filesAdapter
+                        filesAdapter!!.loadAd()
+                        // binding.progressBar.visibility = View.GONE
+                    }
+            }
         }
     }
 
     override fun onResume() {
         super.onResume()
         Handler(Looper.getMainLooper()).postDelayed({
-            adapter?.checkItemChanged()
+            foldersAdapter?.checkItemChanged()
+            filesAdapter?.checkItemChanged()
         },300)
     }
 
@@ -112,7 +254,7 @@ class MaterialsFragment : Fragment() {
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
         super.onCreateOptionsMenu(menu, inflater)
         inflater.inflate(R.menu.material_menu, menu)
-        val searchView = menu.findItem(R.id.search_bar)?.actionView as SearchView
+        val searchView = menu?.findItem(R.id.search_bar)?.actionView as SearchView
         searchView.animate()
         searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener{
             override fun onQueryTextSubmit(p0: String?): Boolean {
@@ -120,7 +262,8 @@ class MaterialsFragment : Fragment() {
                 return false
             }
             override fun onQueryTextChange(string: String?): Boolean {
-                adapter?.filter?.filter(string)
+                foldersAdapter?.filter?.filter(string)
+                filesAdapter?.filter?.filter(string)
                 return false
             }
         })

@@ -21,7 +21,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.avidco.studentintellect.activities.ui.MainActivity
 import com.avidco.studentintellect.R
-import com.avidco.studentintellect.activities.ui.DataViewModel
+import com.avidco.studentintellect.activities.ui.ProfileViewModel
 import com.avidco.studentintellect.databinding.FragmentAddModulesBinding
 import com.avidco.studentintellect.models.ModuleData
 import com.avidco.studentintellect.utils.Utils.hideKeyboard
@@ -65,7 +65,7 @@ class AddModulesFragment : Fragment() {
         if (allModulesSet.isNullOrEmpty()) {
             FirebaseFirestore
                 .getInstance()
-                .collection("modules")
+                .collection("Modules")
                 .get()
                 .addOnSuccessListener {
                     val modules = mutableSetOf<String>()
@@ -77,9 +77,9 @@ class AddModulesFragment : Fragment() {
                     prefs.edit().putLong("last_read_all_modules_time",currentTime.seconds).apply()
 
                     addAdapter = AddModulesAdapter(modules.toMutableList(), userModulesSet?.toMutableList())
-                    binding!!.addModuleList.layoutManager = LinearLayoutManager(context)
-                    binding!!.addModuleList.setHasFixedSize(true)
-                    binding!!.addModuleList.adapter = addAdapter
+                    binding.addModuleList.layoutManager = LinearLayoutManager(context)
+                    binding.addModuleList.setHasFixedSize(true)
+                    binding.addModuleList.adapter = addAdapter
                     //binding!!.progressBar.hideProgressDialog(binding!!.avi)
                 }
                 .addOnFailureListener {
@@ -91,7 +91,7 @@ class AddModulesFragment : Fragment() {
             val lastReadTime = Timestamp(prefs.getLong("last_read_all_modules_time", 0),0)
             FirebaseFirestore
                 .getInstance()
-                .collection("modules")
+                .collection("Modules")
                 .whereGreaterThanOrEqualTo("dateAdded", lastReadTime)
                 .get()
                 .addOnSuccessListener {
@@ -122,12 +122,12 @@ class AddModulesFragment : Fragment() {
                     val modulesList = addAdapter!!.list()
                     Firebase.firestore.collection("users")
                         .document(Firebase.auth.currentUser!!.uid)
-                        .update("modules", modulesList)
+                        .update("Modules", modulesList)
                         .addOnCompleteListener { task ->
                             if (task.exception != null) {
                                 Toast.makeText(context, task.exception?.message, Toast.LENGTH_LONG).show()
                             }
-                            ViewModelProvider(this)[DataViewModel::class.java]
+                            ViewModelProvider(this)[ProfileViewModel::class.java]
                                 .setModules(prefs, modulesList.toMutableSet())
                             activity?.hideKeyboard(binding.root)
                             (requireActivity() as MainActivity).navController.navigateUp()

@@ -13,7 +13,6 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.view.menu.MenuBuilder
 import androidx.core.content.PermissionChecker
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.avidco.studentintellect.activities.ui.MainActivity
 import com.avidco.studentintellect.R
@@ -187,37 +186,21 @@ class ModulesFragment : Fragment() {
             }
         }
     }
+
+
+    private lateinit var profileViewModel: ProfileViewModel
     
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?): View {
         binding = FragmentModulesBinding.inflate(inflater, container, false)
         @Suppress("DEPRECATION")
         setHasOptionsMenu(true)
+        MobileAds.initialize(requireContext()) {}
+        loadInterstitialAd()
 
-        observeViewData()
-
-        MobileAds.initialize(requireContext()) {
-            loadInterstitialAd()
-        }
-
-        /*binding.addButton.setOnClickListener {
-            it.tempDisable()
-            binding.menuButton.tempDisable()
-
-            if (interstitialAd == null){
-                addModulesView()
-            } else {
-                interstitialAd?.show(requireActivity())
-            }
-        }*/
-
-        return binding.root
-    }
-
-    private lateinit var viewModel : ProfileViewModel
-    private fun observeViewData() {
-        viewModel = ViewModelProvider(activity as MainActivity)[ProfileViewModel::class.java]
-        viewModel.modulesList.observe(viewLifecycleOwner) { modulesList ->
+        binding.loadingAnim.visibility = View.VISIBLE
+        profileViewModel = (activity as MainActivity).profileViewModel
+        profileViewModel.modulesList.observe(viewLifecycleOwner) { modulesList ->
             if (modulesList.isNullOrEmpty()) {
                 binding.welcomeLayout.visibility = View.VISIBLE
                 binding.moduleListLayout.visibility = View.GONE
@@ -225,7 +208,7 @@ class ModulesFragment : Fragment() {
                     it.tempDisable()
                     (requireActivity() as MainActivity).navController.navigate(R.id.addModulesFragment)
                 }
-                //binding.progressBar.visibility = View.GONE
+                binding.loadingAnim.visibility = View.GONE
             }
             else {
                 database.disableNetwork().addOnCompleteListener {
@@ -233,18 +216,20 @@ class ModulesFragment : Fragment() {
                     binding.welcomeLayout.visibility = View.GONE
                     binding.moduleListLayout.visibility = View.VISIBLE
                     val query : Query = database.collection("Modules")
-                        .whereIn("code", modulesList.sorted().take(10).toMutableList())
+                        .whereIn("code", modulesList.sortedBy { it.name }.take(10).toMutableList())
 
                     adapter = ModulesAdapter(activity as MainActivity, query, requestMultiplePermissions, modulesList.toMutableList())
                     binding.moduleList.layoutManager = LinearLayoutManager(context)
                     binding.moduleList.setHasFixedSize(true)
                     binding.moduleList.adapter = adapter
                     adapter!!.startListening()
-                   // binding.progressBar.visibility = View.GONE
+                    binding.loadingAnim.visibility = View.GONE
                     database.enableNetwork()
                 }
             }
         }
+
+        return binding.root
     }
 
     @Deprecated("Deprecated in Java")
@@ -253,13 +238,11 @@ class ModulesFragment : Fragment() {
     override fun onCreateOptionsMenu(menu: Menu, menuInflater: MenuInflater) {
         super.onCreateOptionsMenu(menu, menuInflater)
 
-        menuInflater.inflate(R.menu.main_menu, menu)
+        menuInflater.inflate(R.menu.menu_main, menu)
         if (menu is MenuBuilder) menu.setOptionalIconsVisible(true)
         if (!requireActivity().isGooglePlayServicesAvailable()) {
             menu.findItem(R.id.item_rate).isVisible = false
         }
-
-
     }
 
     @Deprecated("Deprecated in Java")

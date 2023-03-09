@@ -1,0 +1,20 @@
+<PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <PreferenceCategory
+        app:title="Side Navigation Preferences">
+
+        <SwitchPreferenceCompat
+            app:key="open_blackboard_app"
+            app:summaryOff="The Blackboard website will be opened."
+            app:summaryOn="Blackboard Learn application will be opened."
+            app:title="Blackboard Learn" />
+
+        <SwitchPreferenceCompat
+            app:key="under_construction_features"
+            app:title="Under Construction Features"
+            app:summaryOff="Under construction features are hidden."
+            app:summaryOn="All features are shown, under construction features will not work."/>
+
+    </PreferenceCategory>
+
+</PreferenceScreen>

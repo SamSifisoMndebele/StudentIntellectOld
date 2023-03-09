@@ -29,7 +29,9 @@ import com.google.android.gms.ads.AdView
 import com.google.android.gms.ads.MobileAds
 import com.avidco.studentintellect.BuildConfig
 import com.avidco.studentintellect.activities.auth.AuthActivity
+import com.avidco.studentintellect.activities.ui.materials.MaterialsFragment
 import com.avidco.studentintellect.models.FileData
+import com.avidco.studentintellect.models.ModuleData
 import com.avidco.studentintellect.utils.Utils.imagesDir
 import com.google.android.material.elevation.SurfaceColors
 import com.google.android.material.tabs.TabLayoutMediator
@@ -70,12 +72,20 @@ class PdfViewActivity : AppCompatActivity() {
         fileData = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             intent.extras?.getParcelable(FILE_DATA, FileData::class.java)!!
         } else {
+            @Suppress("DEPRECATION")
             intent.extras?.getParcelable(FILE_DATA)!!
         }
-        moduleCode = intent.extras?.getString(MODULE_CODE)!!
+        val moduleData = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            intent.extras?.getParcelable(MaterialsFragment.MODULE_DATA, ModuleData::class.java)!!
+        } else {
+            @Suppress("DEPRECATION")
+            intent.extras?.getParcelable(MaterialsFragment.MODULE_DATA)!!
+        }
+        moduleCode = moduleData.code
+
         supportActionBar?.title = fileData.name + " | " + moduleCode
 
-        binding.viewPager.adapter = SectionsPagerAdapter( fileData , moduleCode,this)
+        binding.viewPager.adapter = SectionsPagerAdapter( fileData , moduleData,this)
         binding.viewPager.offscreenPageLimit = 2
 
         if (fileData.solutionsUrl != null){
@@ -216,7 +226,6 @@ class PdfViewActivity : AppCompatActivity() {
             ViewGroup.LayoutParams.WRAP_CONTENT
         )
         dialog.window!!.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
-        dialog.window!!.attributes.windowAnimations = R.style.DialogAnimation
         dialog.window!!.setGravity(Gravity.BOTTOM)
     }
 
@@ -297,6 +306,6 @@ class PdfViewActivity : AppCompatActivity() {
 
     companion object {
         const val FILE_DATA = "arg_file_data"
-        const val MODULE_CODE = "arg_module_code"
+        const val MODULE_DATA = "arg_module_data"
     }
 }

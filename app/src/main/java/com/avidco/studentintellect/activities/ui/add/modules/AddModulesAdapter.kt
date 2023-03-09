@@ -7,23 +7,32 @@ import android.view.ViewGroup
 import android.widget.*
 import androidx.recyclerview.widget.RecyclerView
 import com.avidco.studentintellect.R
+import com.avidco.studentintellect.activities.ui.materials.database.FoldersDatabaseHelper
+import com.avidco.studentintellect.activities.ui.materials.database.ModulesDatabaseHelper
+import com.avidco.studentintellect.models.ModuleData
 import com.avidco.studentintellect.utils.Utils.tempDisable
 import java.util.*
 import kotlin.collections.ArrayList
 
-class AddModulesAdapter(val allModules: MutableList<String>, userModules: MutableList<String>?) :
+class AddModulesAdapter(private val databaseHelper: ModulesDatabaseHelper, userModules: MutableList<ModuleData>?) :
     RecyclerView.Adapter<AddModulesAdapter.ViewHolder>(), Filterable {
 
-    private var snapshotsFiltered = allModules.sorted().toMutableList()
+    private var snapshotsFiltered = databaseHelper.moduleDataList.sortedBy { it.code }.toMutableList()
     private var selectedList = userModules?:mutableListOf()
+
+    @SuppressLint("NotifyDataSetChanged")
+    fun setModulesList(moreModules: MutableList<ModuleData>){
+        snapshotsFiltered = moreModules
+        notifyDataSetChanged()
+    }
 
     inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
 
         private val code: TextView = itemView.findViewById(R.id.module_code)
         private val checkBox: CheckBox = itemView.findViewById(R.id.select_check_box)
 
-        fun bind(module: String) {
-            code.text = module
+        fun bind(module: ModuleData) {
+            code.text = module.code
             checkBox.isChecked = selectedList.contains(module)
 
             checkBox.isClickable = false
@@ -61,31 +70,31 @@ class AddModulesAdapter(val allModules: MutableList<String>, userModules: Mutabl
             override fun performFiltering(constraint: CharSequence): FilterResults {
                 val pattern = constraint.toString().lowercase(Locale.getDefault())
                 snapshotsFiltered = if (pattern.isEmpty()) {
-                    allModules.sorted().toMutableList()
+                    databaseHelper.moduleDataList.sortedBy { it.code }.toMutableList()
                 } else {
-                    val filteredList = arrayListOf<String>()
-                    for (data in allModules) {
-                        if (data.lowercase().contains(pattern) || data.lowercase().contains(pattern)
+                    val filteredList = arrayListOf<ModuleData>()
+                    for (data in databaseHelper.moduleDataList) {
+                        if (data.name.lowercase().contains(pattern) || data.code.lowercase().contains(pattern)
                         ) {
                             filteredList.add(data)
                         }
                     }
-                    filteredList.sorted().toMutableList()
+                    filteredList.sortedBy { it.code }.toMutableList()
                 }
 
-                return FilterResults().apply { values = snapshotsFiltered.sorted().toMutableList() }
+                return FilterResults().apply { values = snapshotsFiltered }
             }
 
             @SuppressLint("NotifyDataSetChanged")
             @Suppress("UNCHECKED_CAST")
             override fun publishResults(constraint: CharSequence?, results: FilterResults) {
-                snapshotsFiltered = (results.values as ArrayList<String>).sorted().toMutableList()
+                snapshotsFiltered = (results.values as ArrayList<ModuleData>).sortedBy { it.code }.toMutableList()
                 notifyDataSetChanged()
             }
         }
     }
 
-    fun list(): List<String> {
+    fun list(): List<ModuleData> {
         return selectedList.toList()
     }
 }

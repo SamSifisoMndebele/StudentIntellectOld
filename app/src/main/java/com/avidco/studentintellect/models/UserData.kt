@@ -11,10 +11,10 @@ data class UserData(
     val email: String = Firebase.auth.currentUser?.email!!,
     val phone: String? = Firebase.auth.currentUser?.phoneNumber,
     val userType : Int = UserType.STUDENT,
-    val balance : Float = 0f,
-    val myModules : String? = "",
-    val termsAccepted : Boolean = false,
-    val imageUrl: String? = null
+    val balance : Double = 0.0,
+    @JvmField val isTermsAccepted : Boolean = false,
+    val imageUrl: String? = null,
+    @JvmField val isOnline : Boolean = false
 ) : Parcelable {
     constructor(parcel: Parcel) : this(
         parcel.readString()!!,
@@ -22,10 +22,10 @@ data class UserData(
         parcel.readString()!!,
         parcel.readString(),
         parcel.readInt(),
-        parcel.readFloat(),
-        parcel.readString()!!,
+        parcel.readDouble(),
         parcel.readByte() != 0.toByte(),
-        parcel.readString()
+        parcel.readString(),
+        parcel.readByte() != 0.toByte()
     )
 
     override fun writeToParcel(parcel: Parcel, flags: Int) {
@@ -34,10 +34,10 @@ data class UserData(
         parcel.writeString(email)
         parcel.writeString(phone)
         parcel.writeInt(userType)
-        parcel.writeFloat(balance)
-        parcel.writeString(myModules)
-        parcel.writeByte(if (termsAccepted) 1 else 0)
+        parcel.writeDouble(balance)
+        parcel.writeByte(if (isTermsAccepted) 1 else 0)
         parcel.writeString(imageUrl)
+        parcel.writeByte(if (isOnline) 1 else 0)
     }
 
     override fun describeContents(): Int {

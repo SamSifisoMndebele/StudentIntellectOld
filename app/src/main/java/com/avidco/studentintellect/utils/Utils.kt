@@ -71,7 +71,7 @@ object Utils {
         }
     }
 
-    fun Float.roundToRand(): String {
+    fun Double.roundToRand(): String {
         val number : Int = (this * 100f).roundToInt()
         if (number == 0){ return "0.00" }
         val wholeNum = number/100
@@ -120,15 +120,14 @@ object Utils {
     }
 
     ///Directories
-    fun documentsDir(moduleCode : String) : File {
+    fun documentsDir(folderPath : String) : File {
         val directory = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R)
-            File(
-                Environment.getExternalStoragePublicDirectory(
+            File(Environment.getExternalStoragePublicDirectory(
                     Environment.DIRECTORY_DOCUMENTS),"Student Intellect")
         else
             File(Environment.getExternalStorageDirectory(), "Student Intellect/Documents")
 
-        return File(directory, moduleCode).apply {
+        return File(directory.path+"/"+folderPath).apply {
             if (!exists()) mkdirs()
         }
     }
@@ -138,15 +137,20 @@ object Utils {
             Environment.DIRECTORY_DCIM),"Student Intellect").apply { if (!exists()) mkdirs() }
     }
 
-    fun fileExists(moduleCode : String, fileName: String, i : Int = 0): Boolean {
-        val file = if (i == 0) File(documentsDir(moduleCode), "$fileName.pdf")
-        else File(documentsDir(moduleCode), "$fileName($i).pdf")
+    fun makeFolderIfNotExists(folderPath : String, folderName: String) {
+        File(documentsDir(folderPath), folderName).apply {
+            if (!exists()) mkdirs()
+        }
+    }
+    fun fileExists(folderPath : String, fileName: String, i : Int = 0): Boolean {
+        val file = if (i == 0) File(documentsDir(folderPath), "$fileName.pdf")
+        else File(documentsDir(folderPath), "$fileName($i).pdf")
 
         return if (file.exists() && file.length() != 0L) {
             if (file.canRead()){
                 true
             } else {
-                fileExists(moduleCode, fileName, i+1)
+                fileExists(folderPath, fileName, i+1)
             }
         } else {
             false
@@ -158,21 +162,28 @@ object Utils {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             val capabilities = connectivityManager.getNetworkCapabilities(connectivityManager.activeNetwork)
             if (capabilities != null) {
-                if (capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)) {
+
+                return capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)
+                        || capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)
+                        || capabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET)
+
+                /*if (capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)) {
                     println("Internet, NetworkCapabilities.TRANSPORT_CELLULAR")
                     return true
-                } else if (capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)) {
+                }
+                else if (capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)) {
                     println("Internet, NetworkCapabilities.TRANSPORT_WIFI")
                     return true
-                } else if (capabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET)) {
+                }
+                else if (capabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET)) {
                     println("Internet, NetworkCapabilities.TRANSPORT_ETHERNET")
                     return true
-                }
+                }*/
             }
         } else
         @Suppress("DEPRECATION")
         {
-            println("Internet, connectivityManager.activeNetworkInfo")
+            //println("Internet, connectivityManager.activeNetworkInfo")
             val netInfo = connectivityManager.activeNetworkInfo
             return netInfo != null && netInfo.isConnectedOrConnecting
         }

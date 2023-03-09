@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu
+    xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/item_creator"
+        android:title="@null"
+        android:enabled="false" />
+    <item
+        android:id="@+id/item_files_count"
+        android:title="@null"
+        android:enabled="false" />
+    <item
+        android:id="@+id/item_updated_date"
+        android:title="@null"
+        android:enabled="false"/>
+
+
+    <item
+        android:id="@+id/item_edit"
+        android:title="@string/edit"
+        android:icon="@drawable/ic_edit" />
+    <item
+        android:id="@+id/item_delete"
+        android:title="@string/delete"
+        android:icon="@drawable/ic_delete" />
+</menu>

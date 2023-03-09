@@ -37,7 +37,6 @@ import com.google.android.gms.ads.rewarded.RewardItem
 import com.google.android.gms.ads.rewarded.RewardedAd
 import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback
 import com.google.android.material.textfield.TextInputLayout
-import com.google.firebase.Timestamp
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.firestore.*
 import com.google.firebase.firestore.ktx.firestore
@@ -47,7 +46,7 @@ import com.google.firebase.storage.ktx.storageMetadata
 import java.io.IOException
 
 
-class UploadFragment : Fragment() {
+class UploadFragment222 : Fragment() {
 
     companion object {
         private const val SELECT_TITLE = "Select Title"
@@ -67,8 +66,8 @@ class UploadFragment : Fragment() {
     private var materialNumber : String? = SELECT_NUMBER
     private var materialYear : String? = SELECT_YEAR
 
-    private var solutionsSize = 0f
-    private var materialSize = 0f
+    private var solutionsSize = 0.0
+    private var materialSize = 0.0
 
     @SuppressLint("SetTextI18n")
     private val selectSolutionsResult = registerForActivityResult(OpenDocumentContract()) { uri: Uri? ->
@@ -83,7 +82,7 @@ class UploadFragment : Fragment() {
                     val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
                     val sizeIndex = cursor.getColumnIndex(OpenableColumns.SIZE)
                     cursor.moveToFirst()
-                    solutionsSize = (cursor.getFloat(sizeIndex)/1000000).roundToRand().toFloat()
+                    solutionsSize = (cursor.getDouble(sizeIndex)/1000000).roundToRand().toDouble()
                     binding.selectSolutionsText.text = "$solutionsSize MB | "+cursor.getString(nameIndex)
                 }
             } finally {
@@ -104,7 +103,7 @@ class UploadFragment : Fragment() {
                     val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
                     val sizeIndex = cursor.getColumnIndex(OpenableColumns.SIZE)
                     cursor.moveToFirst()
-                    materialSize = (cursor.getFloat(sizeIndex)/1000000).roundToRand().toFloat()
+                    materialSize = (cursor.getDouble(sizeIndex)/1000000).roundToRand().toDouble()
                     binding.selectMaterialText.text = "$materialSize MB | "+cursor.getString(nameIndex)
                 }
             } finally {
@@ -141,11 +140,11 @@ class UploadFragment : Fragment() {
 
                 if (showAd && validateAllFields()) {
                     rewardedAd?.show(requireActivity()) { rewardItem->
-                        this@UploadFragment.rewardItem = rewardItem
+                        this@UploadFragment222.rewardItem = rewardItem
                         val amount = if (solutionsUri != null) {
-                            (rewardItem.amount.toFloat()/100f).roundToRand()
+                            (rewardItem.amount.toDouble()/100f).roundToRand()
                         } else {
-                            (rewardItem.amount.toFloat()/200f).roundToRand()
+                            (rewardItem.amount.toDouble()/200f).roundToRand()
                         }
                         binding.rewardBalance.text = amount
                         Toast.makeText(context, "You earned the R$amount reward.", Toast.LENGTH_SHORT).show()
@@ -234,7 +233,7 @@ class UploadFragment : Fragment() {
             android.R.layout.simple_spinner_dropdown_item, materials)
         binding.moduleCodeAutoComplete.setAdapter(moduleCodeAdapter)
 
-        val titleAdapter = ArrayAdapter.createFromResource(requireContext(),R.array.materials_title,
+        val titleAdapter = ArrayAdapter.createFromResource(requireContext(),R.array.materials_array,
             android.R.layout.simple_spinner_dropdown_item)
         binding.materialTitleSpinner.adapter = titleAdapter
         var prevPos = -1
@@ -284,7 +283,7 @@ class UploadFragment : Fragment() {
                     binding.materialNumberSpinner.isEnabled = false
                 }
             }
-        val numberAdapter = ArrayAdapter.createFromResource(requireContext(),R.array.materials_number,
+        val numberAdapter = ArrayAdapter.createFromResource(requireContext(),R.array.materials_array,
             android.R.layout.simple_spinner_dropdown_item)
         binding.materialNumberSpinner.adapter = numberAdapter
         binding.materialNumberSpinner.onItemSelectedListener =
@@ -556,7 +555,7 @@ class UploadFragment : Fragment() {
                                                    // binding.progressLayout.hideProgress()
 
                                                     if (rewardItem != null) {
-                                                        val amount = rewardItem!!.amount.toFloat()/100f
+                                                        val amount = rewardItem!!.amount.toDouble()/100.0
                                                         Toast.makeText(requireActivity(), "Uploaded successfully.\nYou earned R${amount.roundToRand()} reward.", Toast.LENGTH_SHORT).show()
 
                                                         database.collection("users")
@@ -565,7 +564,7 @@ class UploadFragment : Fragment() {
 
                                                         val prefs = requireActivity().getSharedPreferences("pref", Context.MODE_PRIVATE)
                                                         val dataViewModel = ViewModelProvider(requireActivity())[ProfileViewModel::class.java]
-                                                        dataViewModel.setBalance(prefs, amount)
+                                                        dataViewModel.setBalance(amount)
                                                         binding.rewardBalance.text = getString(R.string.zero_rand)
                                                         rewardItem = null
                                                     } else {
@@ -597,7 +596,7 @@ class UploadFragment : Fragment() {
                                            // binding.progressLayout.hideProgress()
 
                                             if (rewardItem != null){
-                                                val amount = rewardItem!!.amount.toFloat()/200f
+                                                val amount = rewardItem!!.amount.toDouble()/200
 
                                                 database.collection("users")
                                                     .document(auth.currentUser!!.uid)
@@ -607,7 +606,7 @@ class UploadFragment : Fragment() {
 
                                                 val prefs = requireActivity().getSharedPreferences("pref", Context.MODE_PRIVATE)
                                                 val dataViewModel = ViewModelProvider(requireActivity())[ProfileViewModel::class.java]
-                                                dataViewModel.setBalance(prefs, amount)
+                                                dataViewModel.setBalance(amount)
                                                 binding.rewardBalance.text = getString(R.string.zero_rand)
                                                 rewardItem = null
                                             } else {

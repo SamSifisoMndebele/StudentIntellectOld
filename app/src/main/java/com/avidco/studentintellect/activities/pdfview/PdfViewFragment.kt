@@ -8,6 +8,7 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 import com.avidco.studentintellect.databinding.FragmentPdfBinding
 import com.avidco.studentintellect.models.FileData
+import com.avidco.studentintellect.models.ModuleData
 import com.avidco.studentintellect.utils.Utils.documentsDir
 import com.avidco.studentintellect.utils.Utils.isOnline
 import com.avidco.studentintellect.utils.Utils.loadPdf
@@ -23,11 +24,11 @@ import java.io.File
 class PdfViewFragment : Fragment() {
 
     companion object {
-        fun newInstance(fileData: FileData, moduleCode : String, isSolutions : Boolean = false): PdfViewFragment {
+        fun newInstance(fileData: FileData, moduleData : ModuleData, isSolutions : Boolean = false): PdfViewFragment {
             val fragment = PdfViewFragment().apply {
                 val bundle = Bundle().apply {
                     putParcelable(PdfViewActivity.FILE_DATA, fileData)
-                    putString(PdfViewActivity.MODULE_CODE, moduleCode)
+                    putParcelable(PdfViewActivity.MODULE_DATA, moduleData)
                     putBoolean("isSolutions",isSolutions) }
                 arguments = bundle
             }
@@ -63,9 +64,16 @@ class PdfViewFragment : Fragment() {
         fileData = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             requireArguments().getParcelable(PdfViewActivity.FILE_DATA, FileData::class.java)!!
         } else {
+            @Suppress("DEPRECATION")
             requireArguments().getParcelable(PdfViewActivity.FILE_DATA)!!
         }
-        moduleCode = requireArguments().getString(PdfViewActivity.MODULE_CODE)!!
+        val moduleData = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            requireArguments().getParcelable(PdfViewActivity.MODULE_DATA, ModuleData::class.java)!!
+        } else {
+            @Suppress("DEPRECATION")
+            requireArguments().getParcelable(PdfViewActivity.MODULE_DATA)!!
+        }
+        moduleCode = moduleData.code
         isSolutions = requireArguments().getBoolean("isSolutions")
         storageRef = Firebase.storage.getReference(if (isSolutions) {
             "modules/$moduleCode/materials/${fileData.name} Solutions.pdf"

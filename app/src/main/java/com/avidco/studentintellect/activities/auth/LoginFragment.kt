@@ -144,8 +144,7 @@ class LoginFragment : Fragment() {
                             Handler(Looper.getMainLooper()).postDelayed({
                                 val prefs = requireActivity().getSharedPreferences("pref", Context.MODE_PRIVATE)
                                 prefs.edit().putInt("user_type", userData.userType)?.apply()
-                                prefs.edit().putStringSet("my_modules", userData.myModules?.split(';')?.toSet()).apply()
-                                prefs.edit().putFloat("my_balance", userData.balance).apply()
+
                                 startActivity(Intent(requireActivity(), MainActivity::class.java))
                                 requireActivity().finishAffinity()
                             }, 1000)
@@ -170,17 +169,10 @@ class LoginFragment : Fragment() {
             .addOnSuccessListener {
                 val userData = it.toObject<UserData>()
                 if (userData != null){
-                    if (userData.termsAccepted) {
+                    if (userData.isTermsAccepted) {
                         val prefs = requireActivity().getSharedPreferences("pref", Context.MODE_PRIVATE)
                         prefs.edit().putInt("user_type", userData.userType).apply()
-                        prefs.edit().putStringSet("my_modules", userData.myModules?.split(';')?.toSet()).apply()
-                        prefs.edit().putFloat("my_balance", userData.balance).apply()
                         val checkMark = BitmapFactory.decodeResource(context?.resources, R.drawable.ic_checked)
-                        if (withGoogle){
-                           // binding.loginWithGoogle.doneLoadingAnimation(Color.parseColor("#3BB54A"), checkMark)
-                        } else {
-                            //binding.loginButton.doneLoadingAnimation(Color.parseColor("#3BB54A"), checkMark)
-                        }
                         Handler(Looper.getMainLooper()).postDelayed({
                             startActivity(Intent(requireActivity(), MainActivity::class.java))
                             requireActivity().finishAffinity()

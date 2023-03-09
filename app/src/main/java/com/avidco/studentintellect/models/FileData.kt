@@ -5,34 +5,34 @@ import android.os.Parcel
 import android.os.Parcelable
 import com.google.firebase.Timestamp
 import com.google.firebase.auth.ktx.auth
-import com.google.firebase.firestore.CollectionReference
-import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.ktx.Firebase
 
 data class FileData(
+    val id: String = "",
     val name: String = "", //ID
     val materialUrl: String = "",
-    val materialSize: Float = 0.0f,
+    val materialSize: Double = 0.0,
     val solutionsUrl: String? = null,
-    val solutionsSize: Float? = null,
+    val solutionsSize: Double? = null,
     val downloads: Int = 0,
     val uploaderUID: String = Firebase.auth.currentUser?.uid!!,
-    val uploaderName: String? = Firebase.auth.currentUser?.displayName,
+    val uploaderName: String = Firebase.auth.currentUser?.displayName?:"",
     val uploadedTime: Timestamp = Timestamp.now(),
     @JvmField val isVerified: Boolean = false,
-    val verifiedByUID: String? = null,
+    val verifiedByUID: String = "",
     @JvmField val isExportable: Boolean = false,
-    val ref : DocumentReference? = null
+    var updatedTime: Timestamp = Timestamp.now()
 ) : Parcelable {
     constructor(parcel: Parcel) : this(
         parcel.readString()!!,
         parcel.readString()!!,
-        parcel.readFloat(),
+        parcel.readString()!!,
+        parcel.readDouble(),
         parcel.readString(),
-        parcel.readValue(Float::class.java.classLoader) as? Float,
+        parcel.readValue(Double::class.java.classLoader) as? Double,
         parcel.readInt(),
         parcel.readString()!!,
-        parcel.readString(),
+        parcel.readString()!!,
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU){
             parcel.readParcelable(Timestamp::class.java.classLoader, Timestamp::class.java)!!
         } else {
@@ -40,20 +40,21 @@ data class FileData(
             parcel.readParcelable(Timestamp::class.java.classLoader)!!
         },
         parcel.readByte() != 0.toByte(),
-        parcel.readString(),
+        parcel.readString()!!,
         parcel.readByte() != 0.toByte(),
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU){
-            parcel.readParcelable(DocumentReference::class.java.classLoader, DocumentReference::class.java)
+            parcel.readParcelable(Timestamp::class.java.classLoader, Timestamp::class.java)!!
         } else {
             @Suppress("DEPRECATION")
-            parcel.readParcelable(DocumentReference::class.java.classLoader)
+            parcel.readParcelable(Timestamp::class.java.classLoader)!!
         }
     )
 
     override fun writeToParcel(parcel: Parcel, flags: Int) {
+        parcel.writeString(id)
         parcel.writeString(name)
         parcel.writeString(materialUrl)
-        parcel.writeFloat(materialSize)
+        parcel.writeDouble(materialSize)
         parcel.writeString(solutionsUrl)
         parcel.writeValue(solutionsSize)
         parcel.writeInt(downloads)
@@ -63,6 +64,7 @@ data class FileData(
         parcel.writeByte(if (isVerified) 1 else 0)
         parcel.writeString(verifiedByUID)
         parcel.writeByte(if (isExportable) 1 else 0)
+        parcel.writeParcelable(updatedTime, flags)
     }
 
     override fun describeContents(): Int {

@@ -11,10 +11,18 @@
     <com.google.android.material.appbar.MaterialToolbar
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
-        app:titleCentered="true"
         app:titleTextAppearance="@style/TextAppearance.App.Title"
         android:layout_height="?attr/actionBarSize"
         android:background="@null" />
+
+    <TextView
+        android:id="@+id/no_internet"
+        android:visibility="gone"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textAlignment="center"
+        android:background="@color/red_transparent"
+        android:text="No network connection."/>
 
     <fragment
         android:id="@+id/nav_host_fragment_content_main"

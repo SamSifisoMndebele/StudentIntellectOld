@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.google.android.material.card.MaterialCardView
+<androidx.cardview.widget.CardView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
@@ -12,69 +12,54 @@
     app:cardBackgroundColor="@color/grey_transparent">
 
     <LinearLayout
-        android:id="@+id/item_view"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:minHeight="50dp"
-        android:orientation="vertical">
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:minHeight="44dp">
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:layout_gravity="center"
+        android:minHeight="56dp">
 
-            <ImageView
-                android:id="@+id/folder_image"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:adjustViewBounds="true"
-                android:layout_weight="3"
-                android:layout_margin="10dp"
-                android:contentDescription="@string/select_pdf_file"
-                android:src="@drawable/ic_folder"/>
+        <ImageView
+            android:id="@+id/folder_image"
+            android:layout_width="wrap_content"
+            android:layout_height="40dp"
+            android:adjustViewBounds="true"
+            android:layout_margin="8dp"
+            android:contentDescription="@string/select_pdf_file"
+            android:src="@drawable/ic_folder"/>
 
-
-            <View
-                android:layout_width="0dp"
-                android:layout_height="0dp"
-                android:layout_margin="8dp"
-                android:layout_weight="2"/>
-
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:layout_marginTop="4dp"
-                android:paddingBottom="8dp"
-                android:layout_gravity="end|top">
-                <ImageView
-                    android:id="@+id/menu_button"
-                    android:visibility="invisible"
-                    android:layout_width="36dp"
-                    android:layout_height="36dp"
-                    android:layout_marginTop="8dp"
-                    android:layout_marginHorizontal="8dp"
-                    android:paddingVertical="4dp"
-                    android:paddingHorizontal="8dp"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:contentDescription="@string/menu"
-                    android:src="@drawable/ic_dots" />
-
-            </LinearLayout>
-
-        </LinearLayout>
         <TextView
             android:id="@+id/folder_title"
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:textStyle="bold"
-            android:layout_marginBottom="8dp"
-            android:layout_marginHorizontal="8dp"
-            android:fontFamily="@font/jura_medium"
-            android:textSize="18sp"/>
+            android:layout_weight="10"
+            android:maxLines="3"
+            android:ellipsize="end"
+            android:layout_marginEnd="8dp"
+            android:paddingVertical="8dp"
+            android:fontFamily="@font/jura_medium"/>
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_gravity="end|top">
+            <ImageView
+                android:id="@+id/menu_button"
+                android:visibility="visible"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:paddingVertical="4dp"
+                android:paddingHorizontal="6dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:focusable="true"
+                android:contentDescription="@string/menu"
+                android:src="@drawable/ic_dots" />
+
+        </LinearLayout>
+
     </LinearLayout>
 
-</com.google.android.material.card.MaterialCardView>
+</androidx.cardview.widget.CardView>

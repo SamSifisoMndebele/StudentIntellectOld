@@ -100,8 +100,9 @@ class ProfileFragment : Fragment() {
         loadingDialog.show("Saving Picture...")
         try {
             if (imageUri != null) {
-                val userRef =  Firebase.storage.getReference("users").child("${currentUser?.uid}.pdf")
-                val uploadTask = userRef.putFile(imageUri)
+                val userImagesRef =  Firebase.storage.getReference("Users")
+                    .child("Images/${currentUser?.uid}.png")
+                val uploadTask = userImagesRef.putFile(imageUri)
                 loadingDialog.onCancel {
                     uploadTask.cancel()
                 }
@@ -112,19 +113,11 @@ class ProfileFragment : Fragment() {
                             throw it
                         }
                     }
-                    userRef.downloadUrl
+                    userImagesRef.downloadUrl
                 }
                     .addOnSuccessListener { imageUrl ->
-                        currentUser?.updateProfile(userProfileChangeRequest {
-                            photoUri = imageUrl })
-                            ?.addOnSuccessListener {
-                                val dataViewModel = ViewModelProvider(requireActivity())[ProfileViewModel::class.java]
-                                dataViewModel.setPhotoUrl(imageUrl.toString())
-                                loadingDialog.isDone {  }
-                            }
-                            ?.addOnFailureListener {
-                                loadingDialog.isError(it.message) {  }
-                            }
+                        profileViewModel.setPhotoUrl(imageUrl)
+                        loadingDialog.isDone {  }
                     }
                     .addOnFailureListener {
                         loadingDialog.isError(it.message) {  }
@@ -132,16 +125,7 @@ class ProfileFragment : Fragment() {
 
             } else {
                 binding.userImage.setImageResource(R.drawable.ic_user)
-                currentUser?.updateProfile(userProfileChangeRequest {
-                    photoUri = null })
-                    ?.addOnSuccessListener {
-                        val dataViewModel = ViewModelProvider(requireActivity())[ProfileViewModel::class.java]
-                        dataViewModel.setPhotoUrl(null)
-                    }
-                    ?.addOnFailureListener {
-                        loadingDialog.isError(it.message) {  }
-                    }
-
+                profileViewModel.setPhotoUrl(null)
             }
 
 
@@ -151,22 +135,7 @@ class ProfileFragment : Fragment() {
         }
     }
 
-    private fun setName(userName : String){
-        //binding.progressBar.visibility = View.VISIBLE
-
-        currentUser?.updateProfile(userProfileChangeRequest {
-            displayName = userName.trim()
-        })?.addOnCompleteListener { task ->
-            if (task.isSuccessful) {
-                Toast.makeText(context, "Saved", Toast.LENGTH_SHORT).show()
-                context?.hideKeyboard(binding.root)
-                val dataViewModel = ViewModelProvider(requireActivity())[ProfileViewModel::class.java]
-                dataViewModel.setDisplayName(userName.trim())
-            } else {
-                //binding.progressBar.visibility = View.GONE
-            }
-        }
-    }
+    private lateinit var profileViewModel: ProfileViewModel
 
     override fun onCreateView (
         inflater: LayoutInflater,
@@ -174,45 +143,32 @@ class ProfileFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View {
         binding = FragmentProfileBinding.inflate(inflater, container, false)
-
-
-        /*val profileViewModel = ViewModelProvider(this)[ProfileViewModel::class.java]
-        profileViewModel.text.observe(viewLifecycleOwner,
-            Observer { text: String? -> binding.userName.text = text }
-        )*/
-
-        return binding.root
-    }
-
-    @SuppressLint("SetTextI18n")
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-
         binding.userEmail.text = auth.currentUser?.email
 
-        val dataViewModel = ViewModelProvider(activity as MainActivity)[ProfileViewModel::class.java]
-        dataViewModel.modulesList.observe(viewLifecycleOwner) { list ->
+        profileViewModel = ViewModelProvider(activity as MainActivity)[ProfileViewModel::class.java]
+        profileViewModel.modulesList.observe(viewLifecycleOwner) { list ->
             val modules = StringBuilder()
             var b = false
-            list?.sorted()?.forEach {
+            list?.forEach {
                 if (b) modules.append(", ")
-                modules.append(it)
+                modules.append(it.code +" - "+it.name)
                 b = true
             }
             binding.modulesPreview.setText(modules.toString().trim().ifEmpty { "Select your modules" })
         }
-        dataViewModel.photoUrl.observe(viewLifecycleOwner) {
+        profileViewModel.photoUrl.observe(viewLifecycleOwner) {
             Glide.with(this)
                 .load(it)
                 .placeholder(R.drawable.ic_user)
                 .into(binding.userImage)
         }
 
-        dataViewModel.displayName.observe(viewLifecycleOwner) {
+        profileViewModel.displayName.observe(viewLifecycleOwner) {
             binding.username.setText(it?:getString(R.string.display_picture_and_name))
         }
 
-        dataViewModel.balance.observe(viewLifecycleOwner) {
+        profileViewModel.balance.observe(viewLifecycleOwner) {
+            @SuppressLint("SetTextI18n")
             binding.userBalance.text = "R ${it.roundToRand()}"
         }
 
@@ -226,7 +182,8 @@ class ProfileFragment : Fragment() {
 
         binding.saveButton.setOnClickListener {
             it.tempDisable()
-            setName(binding.username.text?.trim().toString())
+            context?.hideKeyboard(binding.root)
+            profileViewModel.setDisplayName(binding.username.text?.trim().toString())
         }
 
 
@@ -302,13 +259,11 @@ class ProfileFragment : Fragment() {
         }
 
         MobileAds.initialize(requireContext()) { loadAd() }
+        return binding.root
     }
 
     class AppInfoSheetDialog : BottomSheetDialogFragment() {
         private lateinit var binding: SheetAboutAppBinding
-        override fun getTheme(): Int {
-            return R.style.CustomBottomSheetDialog
-        }
         override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
             super.onCreateView(inflater, container, savedInstanceState)
             binding = SheetAboutAppBinding.inflate(inflater,container,false)

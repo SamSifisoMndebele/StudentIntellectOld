@@ -14,39 +14,6 @@
         <item>2014</item>
         <item>2013</item>
     </string-array>
-    <string-array name="materials_title">
-        <item>Select Title</item>
-        <item>Main Exam</item>
-        <item>Supp Exam</item>
-        <item>Special Exam</item>
-        <item>Test</item>
-        <item>Optional Test</item>
-        <item>Special Test</item>
-        <item>Tutorial</item>
-    </string-array>
-    <string-array name="materials_number">
-        <item>Select Number</item>
-        <item>NA</item>
-        <item>1</item>
-        <item>2</item>
-        <item>3</item>
-        <item>4</item>
-        <item>5</item>
-        <item>6</item>
-        <item>7</item>
-        <item>8</item>
-        <item>9</item>
-        <item>10</item>
-        <item>11</item>
-        <item>12</item>
-        <item>13</item>
-        <item>14</item>
-        <item>15</item>
-        <item>16</item>
-        <item>17</item>
-        <item>18</item>
-        <item>19</item>
-    </string-array>
 
 
     <string-array name="materials_array">
@@ -57,13 +24,21 @@
         <item>Test 1</item>
         <item>Test 2</item>
         <item>Test 3</item>
+        <item>Test 4</item>
         <item>Optional Test</item>
+        <item>Optional Test 1</item>
+        <item>Optional Test 2</item>
         <item>Special Test</item>
+        <item>Special Test 1</item>
+        <item>Special Test 2</item>
         <item>Tutorial 1</item>
         <item>Tutorial 2</item>
         <item>Tutorial 3</item>
         <item>Tutorial 4</item>
         <item>Tutorial 5</item>
         <item>Tutorial 6</item>
+        <item>Tutorial 7</item>
+        <item>Tutorial 8</item>
+        <item>Tutorial 9</item>
     </string-array>
 </resources>

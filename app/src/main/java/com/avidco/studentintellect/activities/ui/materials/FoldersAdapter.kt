@@ -3,9 +3,9 @@ package com.avidco.studentintellect.activities.ui.materials
 import android.annotation.SuppressLint
 import android.app.Dialog
 import android.content.Context
-import android.content.Intent
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
+import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -13,75 +13,49 @@ import android.view.*
 import android.widget.*
 import androidx.recyclerview.widget.RecyclerView
 import com.avidco.studentintellect.R
-import com.avidco.studentintellect.activities.pdfview.PdfViewActivity
 import com.avidco.studentintellect.activities.ui.MainActivity
+import com.avidco.studentintellect.activities.ui.materials.database.FilesDatabaseHelper
+import com.avidco.studentintellect.activities.ui.materials.database.FoldersDatabaseHelper
+import com.avidco.studentintellect.models.FileData
 import com.avidco.studentintellect.models.FolderData
+import com.avidco.studentintellect.models.ModuleData
+import com.avidco.studentintellect.models.UserType
 import com.avidco.studentintellect.utils.Utils
-import com.avidco.studentintellect.utils.Utils.fileExists
 import com.avidco.studentintellect.utils.Utils.hideKeyboard
 import com.avidco.studentintellect.utils.Utils.isOnline
+import com.avidco.studentintellect.utils.Utils.makeFolderIfNotExists
 import com.avidco.studentintellect.utils.Utils.tempDisable
-import com.daimajia.numberprogressbar.NumberProgressBar
-import com.google.android.gms.ads.AdError
-import com.google.android.gms.ads.AdRequest
-import com.google.android.gms.ads.FullScreenContentCallback
-import com.google.android.gms.ads.LoadAdError
-import com.google.android.gms.ads.interstitial.InterstitialAd
-import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
+import com.google.firebase.auth.ktx.auth
 import com.google.firebase.firestore.FieldValue
-import com.google.firebase.firestore.Source
+import com.google.firebase.firestore.SetOptions
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
-import com.google.firebase.storage.ktx.storage
 import java.io.File
 import java.text.DateFormat
 import java.util.*
 
-class FoldersAdapter(val activity: MainActivity, private val moduleCode : String,
-                     private val path: String, private val foldersIDs : MutableList<String>) :
+class FoldersAdapter(val activity: MainActivity, private val parentFolderData : FolderData?, private val moduleData : ModuleData,
+                     private val databaseHelper: FoldersDatabaseHelper, private val fragment: MaterialsFragment) :
     RecyclerView.Adapter<FoldersAdapter.MaterialViewHolder>(), Filterable {
     private val pref = activity.getSharedPreferences("view_type", Context.MODE_PRIVATE)
-    private var materialsFiltered = foldersIDs.sorted().toMutableList()
-    private var interstitialAd : InterstitialAd? = null
-    private var refreshPosition : Int? = null
     private var isListView = pref.getBoolean("is_materials_list_view", true)
+    private var foldersFiltered : MutableList<FolderData> = databaseHelper.folderDataList
+    private var refreshPosition : Int? = null
+    private val folderPath = parentFolderData?.path ?: ""
 
-    private fun gotoMaterialsFragment(folderData : FolderData) {
+    @SuppressLint("NotifyDataSetChanged")
+    fun setFoldersList(folders : MutableList<FolderData>){
+        foldersFiltered = folders
+        notifyDataSetChanged()
+    }
+
+    private fun gotoFolderMaterialsFragment(folderData : FolderData) {
         val bundle = Bundle().apply {
-            putString(MaterialsFragment.MODULE_CODE, moduleCode)
-            putString("modulePath", "$path/${folderData.name}")
-            putParcelable("folderData", folderData)
+            putParcelable(MaterialsFragment.MODULE_DATA, moduleData)
+            putParcelable(MaterialsFragment.FOLDER_DATA, folderData)
+            putBoolean("editMode", fragment.editMode)
         }
         activity.navController.navigate(R.id.materialsFragment, bundle)
-    }
-
-    fun loadAd() {
-        val adRequest = AdRequest.Builder().build()
-        InterstitialAd.load(activity,activity.getString(R.string.activity_materialsList_interstitialAdUnitId), adRequest, object : InterstitialAdLoadCallback() {
-            override fun onAdFailedToLoad(adError: LoadAdError) {
-                this@FoldersAdapter.interstitialAd = null
-            }
-            override fun onAdLoaded(interstitialAd: InterstitialAd) {
-                this@FoldersAdapter.interstitialAd = interstitialAd
-            }
-        })
-    }
-
-    private fun showAd(folderData : FolderData){
-        interstitialAd!!.fullScreenContentCallback = object: FullScreenContentCallback() {
-            override fun onAdClicked() {}
-            override fun onAdDismissedFullScreenContent() {
-                gotoMaterialsFragment(folderData)
-                loadAd()
-            }
-            override fun onAdFailedToShowFullScreenContent(adError: AdError) {
-                gotoMaterialsFragment(folderData)
-                loadAd()
-            }
-            override fun onAdImpression() {}
-            override fun onAdShowedFullScreenContent() {}
-        }
-        interstitialAd!!.show(activity)
     }
 
     fun checkItemChanged() {
@@ -94,102 +68,123 @@ class FoldersAdapter(val activity: MainActivity, private val moduleCode : String
         private val menu: ImageView = itemView.findViewById(R.id.menu_button)
         private val folderImage: ImageView = itemView.findViewById(R.id.folder_image)
 
-        private fun showError(errorMessage: String) {
-            val errorLayout: LinearLayout = itemView.findViewById(R.id.error_layout)
-            itemView.findViewById<TextView>(R.id.error_text).text = errorMessage
-            errorLayout.visibility = View.VISIBLE
-            Handler(Looper.getMainLooper()).postDelayed({
-                errorLayout.visibility = View.GONE
-            }, 3000)
-        }
-        fun bind(materialName: String, position: Int) {
-            folderTitle.text = materialName
-
-            val document = Firebase.firestore.document("modules/$moduleCode/materials/$materialName")
-            document.get(Source.CACHE)
-                .addOnSuccessListener { cacheDoc ->
-                    if (cacheDoc.exists()) {
-                        val folderData = cacheDoc.toObject(FolderData::class.java)
-                        menu.visibility = View.VISIBLE
-                        folderData?.let { bind(it, position) }
-                    } else {
-                        document.get(Source.SERVER)
-                            .addOnSuccessListener { serverDoc ->
-                                val folderData = serverDoc.toObject(FolderData::class.java)
-                                menu.visibility = View.VISIBLE
-                                folderData?.let { bind(it, position) }
-                            }
-                            .addOnFailureListener { e ->
-                                Toast.makeText(activity, e.message, Toast.LENGTH_LONG).show()
-                                activity.navController.navigateUp()
-                            }
-                    }
-                }
-                .addOnFailureListener { e ->
-                    Toast.makeText(activity, e.message, Toast.LENGTH_LONG).show()
-                    activity.navController.navigateUp()
-                }
-        }
-
         @SuppressLint("SetTextI18n")
-        private fun bind(folderData: FolderData, position: Int){
+        fun bind(folderData: FolderData, position: Int) {
+            folderTitle.text = folderData.name
+
             itemView.setOnClickListener {
                 it.tempDisable(2000)
                 activity.hideKeyboard(it)
 
-                if (activity.isOnline() || fileExists(moduleCode, folderData.name, 0)) {
-                    refreshPosition = if (fileExists(moduleCode, folderData.name,0)) null else position
+                val path = "$folderPath/Folders/${folderData.id}"
+                makeFolderIfNotExists(moduleData.code+path, folderData.id)
 
-                    if (interstitialAd != null) {
-                        showAd(folderData)
-                    } else {
-                        gotoMaterialsFragment(folderData)
+                gotoFolderMaterialsFragment(folderData.apply {
+                    this.path = path
+                })
+            }
+
+            val popupMenu = setUpMenu(folderData)
+            menu.visibility = View.VISIBLE
+            menu.setOnClickListener { menu ->
+                menu.tempDisable()
+                popupMenu.show()
+            }
+
+        }
+
+
+        @SuppressLint("NotifyDataSetChanged")
+        private fun setUpMenu(folderData: FolderData) : PopupMenu {
+            val popupMenu = PopupMenu(activity, menu)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+                popupMenu.gravity = Gravity.END
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
+                popupMenu.setForceShowIcon(true)
+            popupMenu.menuInflater.inflate(R.menu.popup_menu_folder, popupMenu.menu)
+
+            activity.profileViewModel.userType.observe(activity) {
+                when(it){
+                    UserType.ADMIN -> {
+                        popupMenu.menu.findItem(R.id.item_delete).isVisible = true
+                        popupMenu.menu.findItem(R.id.item_edit).isVisible = true
+                        popupMenu.setOnMenuItemClickListener { item ->
+                            when(item.itemId) {
+                                R.id.item_delete -> {
+                                    Firebase.firestore.document("$folderPath/Deleted/Folders")
+                                        .set(mapOf("ids" to FieldValue.arrayUnion(folderData.id)), SetOptions.merge())
+                                        .addOnSuccessListener {
+                                            Firebase.firestore.collection("$folderPath/Folders")
+                                                .document(folderData.id)
+                                                .delete()
+                                                .addOnSuccessListener {
+                                                    databaseHelper.deleteFolderData(folderData.id)
+                                                    foldersFiltered = databaseHelper.folderDataList
+                                                    notifyDataSetChanged()
+                                                }
+                                        }
+                                }
+                                R.id.item_edit -> {
+
+                                }
+                            }
+                            true
+                        }
                     }
-                } else {
-                    showError(activity.getString(R.string.no_internet_connection))
+                    UserType.STUDENT, UserType.TUTOR -> {
+                        if (folderData.creatorUID == Firebase.auth.currentUser?.uid){
+                            popupMenu.menu.findItem(R.id.item_delete).isVisible = true
+                            popupMenu.menu.findItem(R.id.item_edit).isVisible = true
+                            popupMenu.setOnMenuItemClickListener { item ->
+                                when(item.itemId) {
+                                    R.id.item_delete -> {
+                                        Firebase.firestore.document("$folderPath/Deleted/Folders")
+                                            .set(mapOf("ids" to FieldValue.arrayUnion(folderData.id)), SetOptions.merge())
+                                            .addOnSuccessListener {
+                                                Firebase.firestore.collection("$folderPath/Folders")
+                                                    .document(folderData.id)
+                                                    .delete()
+                                                    .addOnSuccessListener {
+                                                        databaseHelper.deleteFolderData(folderData.id)
+                                                        foldersFiltered = databaseHelper.folderDataList
+                                                        notifyDataSetChanged()
+                                                    }
+                                            }
+                                    }
+                                    R.id.item_edit -> {
+
+                                    }
+                                }
+                                true
+                            }
+                        } else {
+                            popupMenu.menu.findItem(R.id.item_delete).isVisible = false
+                            popupMenu.menu.findItem(R.id.item_edit).isVisible = false
+                        }
+                    }
                 }
             }
 
-            menu.setOnClickListener { menu ->
-                menu.tempDisable()
-                val dialog = Dialog(itemView.context)
-                dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
-                dialog.setContentView(R.layout.menu_layout_material)
+            popupMenu.menu.findItem(R.id.item_creator).title = "Created by ${folderData.creatorName}"
+            popupMenu.menu.findItem(R.id.item_files_count).title = "${folderData.filesCount} files"
+            val dateInstance = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT)
+            popupMenu.menu.findItem(R.id.item_updated_date).title = "Updated at " +
+                    folderData.updatedTime.toDate().let { dateInstance.format(it) }
 
-                dialog.findViewById<TextView>(R.id.module_code).text = moduleCode
-                dialog.findViewById<TextView>(R.id.material_title).text = folderData.name
-
-                val dateInstance = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT)
-                dialog.findViewById<TextView>(R.id.material_upload_date).text =
-                    folderData.createdTime?.toDate()?.let { dateInstance.format(it) } ?: "Not available"
-
-                /*val delete = dialog.findViewById<LinearLayout>(R.id.delete)
-                delete.setOnClickListener {
-                    it.tempDisable()
-                    dialog.dismiss()
-                }*/
-
-                dialog.window!!.setLayout(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.WRAP_CONTENT
-                )
-                dialog.window!!.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
-                dialog.window!!.setGravity(Gravity.CENTER)
-                dialog.show()
-            }
+            return popupMenu
         }
 
         private fun checkFile(materialName: String, isSolutions : Boolean, i : Int = 0) : File? {
             val file = if (isSolutions) {
                 if (i == 0)
-                    File(Utils.documentsDir(moduleCode), "$materialName Solutions.pdf")
+                    File(Utils.documentsDir(folderPath), "$materialName Solutions.pdf")
                 else
-                    File(Utils.documentsDir(moduleCode), "$materialName Solutions($i).pdf")
+                    File(Utils.documentsDir(folderPath), "$materialName Solutions($i).pdf")
             } else {
                 if (i == 0)
-                    File(Utils.documentsDir(moduleCode), "$materialName.pdf")
+                    File(Utils.documentsDir(folderPath), "$materialName.pdf")
                 else
-                    File(Utils.documentsDir(moduleCode), "$materialName($i).pdf")
+                    File(Utils.documentsDir(folderPath), "$materialName($i).pdf")
             }
 
             return if (file.exists() && file.length() != 0L) {
@@ -225,38 +220,38 @@ class FoldersAdapter(val activity: MainActivity, private val moduleCode : String
     }
 
     override fun onBindViewHolder(holder: MaterialViewHolder, position: Int) {
-        if (position < materialsFiltered.size){
-            holder.bind(materialsFiltered[position], position)
+        if (position < foldersFiltered.size){
+            holder.bind(foldersFiltered[position], position)
         }
     }
 
     override fun getItemCount(): Int {
-        return materialsFiltered.size
+        return foldersFiltered.size
     }
 
     override fun getFilter(): Filter {
         return object : Filter(){
             override fun performFiltering(constraint: CharSequence?): FilterResults {
                 val pattern = constraint.toString().lowercase(Locale.getDefault())
-                materialsFiltered = if (pattern.isEmpty()){
-                    foldersIDs.sorted().toMutableList()
+                foldersFiltered = if (pattern.isEmpty()){
+                    databaseHelper.folderDataList.toMutableList()
                 } else {
-                    val resultList = arrayListOf<String>()
-                    for(material in foldersIDs){
-                        if (material.lowercase().contains(pattern)){
-                            resultList.add(material)
+                    val resultList = arrayListOf<FolderData>()
+                    for(folder in databaseHelper.folderDataList){
+                        if (folder.name.lowercase().contains(pattern)){
+                            resultList.add(folder)
                         }
                     }
-                    resultList.sorted().toMutableList()
+                    resultList.toMutableList()
                 }
 
-                return FilterResults().apply { values = materialsFiltered.sorted().toMutableList() }
+                return FilterResults().apply { values = foldersFiltered.toMutableList() }
             }
 
             @SuppressLint("NotifyDataSetChanged")
             @Suppress("UNCHECKED_CAST")
             override fun publishResults(constraint: CharSequence?, results: FilterResults?) {
-                materialsFiltered = (results?.values as ArrayList<String>).sorted().toMutableList()
+                foldersFiltered = (results?.values as ArrayList<FolderData>).toMutableList()
                 notifyDataSetChanged()
             }
         }

@@ -19,8 +19,21 @@
         android:theme="@style/Theme.StudentIntellect"
         android:windowSoftInputMode="stateHidden|adjustPan"
         tools:targetApi="33">
-
-        <!--<activity android:name="com.google.androidbrowserhelper.trusted.LauncherActivity"
+        <activity
+            android:name=".activities.settings.SettingsActivity"
+            android:exported="false"
+            android:label="Settings"
+            android:hardwareAccelerated="true"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.StudentIntellect.Splash"
+            android:windowSoftInputMode="stateHidden|adjustPan"
+            tools:ignore="LockedOrientationActivity">
+            <meta-data
+                android:name="android.app.lib_name"
+                android:value="" />
+        </activity>
+        <!--
+        <activity android:name="com.google.androidbrowserhelper.trusted.LauncherActivity"
             android:exported="true">
             <meta-data
                 android:name="android.support.customtabs.trusted.DEFAULT_URL"
@@ -35,10 +48,8 @@
                     android:scheme="https"
                     android:host="tmlearn.ul.ac.za"/>
             </intent-filter>
-        </activity>-->
-
-
-
+        </activity>
+        -->
         <activity
             android:name=".activities.auth.AuthActivity"
             android:exported="true"
@@ -49,6 +60,7 @@
             tools:ignore="LockedOrientationActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 

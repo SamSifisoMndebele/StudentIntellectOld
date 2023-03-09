@@ -1,15 +1,10 @@
 package com.avidco.studentintellect.activities.ui.home
 
 import android.Manifest
-import android.annotation.SuppressLint
-import android.app.Dialog
 import android.content.Context
 import android.content.pm.PackageManager
-import android.graphics.Color
-import android.graphics.drawable.ColorDrawable
+import android.os.Build
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
 import android.view.*
 import android.widget.*
 import androidx.activity.result.ActivityResultLauncher
@@ -20,31 +15,30 @@ import com.avidco.studentintellect.R
 import com.avidco.studentintellect.activities.ui.ProfileViewModel
 import com.avidco.studentintellect.activities.ui.FirestoreAdapter
 import com.avidco.studentintellect.activities.ui.MainActivity
-import com.avidco.studentintellect.activities.ui.upload.UploadFragment
 import com.avidco.studentintellect.models.ModuleData
 import com.avidco.studentintellect.activities.ui.materials.MaterialsFragment
 import com.avidco.studentintellect.utils.Utils.hideKeyboard
 import com.avidco.studentintellect.utils.Utils.tempDisable
+import com.bumptech.glide.Glide
 import com.google.firebase.auth.ktx.auth
-import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import java.util.*
-import kotlin.collections.ArrayList
 
 class ModulesAdapter(
     private val activity: MainActivity,
     query: Query,
     private val requestMultiplePermissions: ActivityResultLauncher<Array<String>>,
-    var userModules: MutableList<String>?
-) : FirestoreAdapter<ModulesAdapter.ViewHolder>(query), Filterable {
+    var userModules: MutableList<ModuleData>?
+) : FirestoreAdapter<ModulesAdapter.ViewHolder>(query) {
 
-    private var snapshotsFiltered: MutableList<DocumentSnapshot>
+    private var modulesSnapshots = getSnapshots()
     private var clickedModule: ModuleData? = null
 
     inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
 
+        private val image: ImageView = itemView.findViewById(R.id.material_image)
         private val code: TextView = itemView.findViewById(R.id.module_code)
         private val name: TextView = itemView.findViewById(R.id.module_name)
         private val menu: ImageView = itemView.findViewById(R.id.menu_button)
@@ -52,6 +46,11 @@ class ModulesAdapter(
         fun bind(module: ModuleData) {
             code.text = module.code
             name.text = module.name
+            if (module.imageUrl != null) {
+                Glide.with(activity)
+                    .load(module.imageUrl)
+                    .into(image)
+            }
 
             itemView.setOnClickListener {
                 it.tempDisable(2000)
@@ -60,12 +59,7 @@ class ModulesAdapter(
                 checkPermissionsAndOpenMaterialsList()
             }
 
-            itemView.setOnLongClickListener {
-                true
-            }
-
-            menu.setOnClickListener { menu->
-                menu.tempDisable()
+            /*itemView.setOnLongClickListener {
                 val dialog = Dialog(itemView.context)
                 dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
                 dialog.setContentView(R.layout.menu_layout_modules)
@@ -110,6 +104,29 @@ class ModulesAdapter(
                 //dialog.window!!.attributes.windowAnimations = R.style.DialogAnimation
                 dialog.window!!.setGravity(Gravity.CENTER)
                 dialog.show()
+                true
+            }*/
+
+            menu.setOnClickListener { menu->
+                menu.tempDisable()
+
+                val popupMenu = PopupMenu(activity, menu)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+                    popupMenu.gravity = Gravity.END
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
+                    popupMenu.setForceShowIcon(true)
+                popupMenu.menuInflater.inflate(R.menu.popup_menu_module, popupMenu.menu)
+
+                popupMenu.setOnMenuItemClickListener {
+                    when(it.itemId) {
+                        R.id.item_delete -> {
+                            val dataViewModel = ViewModelProvider(activity)[ProfileViewModel::class.java]
+                            dataViewModel.deleteModule(module)
+                        }
+                    }
+                    true
+                }
+                popupMenu.show()
             }
         }
     }
@@ -131,7 +148,8 @@ class ModulesAdapter(
     }
     fun gotoMaterialsFragment() {
         val bundle = Bundle().apply {
-            putString(MaterialsFragment.MODULE_CODE, clickedModule!!.code.trim())
+            putParcelable(MaterialsFragment.MODULE_DATA, clickedModule!!)
+            putParcelable(MaterialsFragment.FOLDER_DATA, null)
         }
         activity.navController.navigate(R.id.materialsFragment, bundle)
     }
@@ -143,45 +161,12 @@ class ModulesAdapter(
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        if (position < snapshotsFiltered.size){
-            snapshotsFiltered[position].toObject(ModuleData::class.java)?.let { holder.bind(it) }
+        if (position < modulesSnapshots.size){
+            modulesSnapshots[position].toObject(ModuleData::class.java)?.let { holder.bind(it) }
         }
     }
 
     override fun getItemCount(): Int {
-        return snapshotsFiltered.size
-    }
-
-    override fun getFilter(): Filter {
-        return object : Filter() {
-            override fun performFiltering(constraint: CharSequence): FilterResults {
-                val pattern = constraint.toString().lowercase(Locale.getDefault())
-                snapshotsFiltered = if (pattern.isEmpty()) {
-                    getSnapshots()
-                } else {
-                    val filteredList = arrayListOf<DocumentSnapshot>()
-                    for (snapshot in getSnapshots()) {
-                        val data = snapshot.toObject(ModuleData::class.java)!!
-                        if (data.code.lowercase().contains(pattern) || data.name.lowercase().contains(pattern)) {
-                            filteredList.add(snapshot)
-                        }
-                    }
-                    filteredList
-                }
-
-                return FilterResults().apply { values = snapshotsFiltered }
-            }
-
-            @SuppressLint("NotifyDataSetChanged")
-            @Suppress("UNCHECKED_CAST")
-            override fun publishResults(constraint: CharSequence?, results: FilterResults) {
-                snapshotsFiltered = results.values as ArrayList<DocumentSnapshot>
-                notifyDataSetChanged()
-            }
-        }
-    }
-
-    init {
-        this.snapshotsFiltered = getSnapshots()
+        return modulesSnapshots.size
     }
 }

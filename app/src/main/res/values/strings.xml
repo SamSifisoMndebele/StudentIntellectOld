@@ -724,4 +724,11 @@
     <string name="tutorial_videos">Tutorial Videos</string>
     <string name="intellect_calculator">Intellect Calculator</string>
     <string name="study_materials">Study Materials</string>
+    <string name="edit_on">Edit On</string>
+    <string name="edit_off">Edit Off</string>
+    <string name="list_view">List View</string>
+    <string name="grid_view">Grid View</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+
 </resources>

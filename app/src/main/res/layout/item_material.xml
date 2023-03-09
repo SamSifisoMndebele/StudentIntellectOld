@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.google.android.material.card.MaterialCardView
+<androidx.cardview.widget.CardView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
@@ -14,7 +14,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center_vertical"
-        android:minHeight="50dp">
+        android:layout_gravity="center"
+        android:minHeight="56dp">
         <LinearLayout
             android:id="@+id/item_view"
             android:layout_width="match_parent"
@@ -25,7 +26,7 @@
             <ImageView
                 android:id="@+id/material_image"
                 android:layout_width="wrap_content"
-                android:layout_height="56dp"
+                android:layout_height="40dp"
                 android:adjustViewBounds="true"
                 android:layout_margin="8dp"
                 android:contentDescription="@string/select_pdf_file"
@@ -38,14 +39,15 @@
                 android:layout_weight="1"
                 android:layout_gravity="center"
                 android:textStyle="bold"
-                android:paddingVertical="4dp"
-                android:fontFamily="@font/jura_medium"
-                android:textSize="18sp"/>
+                android:maxLines="2"
+                android:ellipsize="end"
+                android:paddingVertical="8dp"
+                android:fontFamily="@font/jura_medium"/>
 
             <ImageView
                 android:id="@+id/material_download"
-                android:layout_width="36dp"
-                android:layout_height="36dp"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
                 android:focusable="true"
                 android:clickable="true"
                 android:background="?attr/selectableItemBackgroundBorderless"
@@ -59,9 +61,11 @@
                 app:tint="@color/primaryColor" />
             <ImageView
                 android:id="@+id/material_downloaded"
-                android:layout_width="36dp"
-                android:layout_height="36dp"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
                 android:visibility="gone"
+                android:clickable="false"
+                android:focusable="false"
                 android:layout_marginHorizontal="8dp"
                 android:paddingVertical="4dp"
                 android:paddingHorizontal="4dp"
@@ -73,24 +77,24 @@
             <ImageView
                 android:id="@+id/menu_button"
                 android:visibility="invisible"
-                android:layout_width="36dp"
-                android:layout_height="56dp"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
                 android:layout_marginEnd="4dp"
                 android:paddingVertical="4dp"
-                android:paddingHorizontal="8dp"
+                android:paddingHorizontal="6dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:clickable="true"
                 android:contentDescription="@string/menu"
                 android:focusable="true"
-                android:src="@drawable/ic_dots"
-                 />
+                android:src="@drawable/ic_dots" />
         </LinearLayout>
 
         <LinearLayout
             android:id="@+id/progress_layout"
-            android:orientation="horizontal"
             android:layout_width="match_parent"
-            android:layout_height="56dp"
+            android:layout_height="wrap_content"
+            android:paddingHorizontal="8dp"
+            android:orientation="vertical"
             android:clickable="false"
             android:focusable="false"
             android:visibility="gone"
@@ -99,42 +103,37 @@
             style="@style/Theme.StudentIntellect.LoadingBackground"
             android:layout_alignTop="@id/item_view">
 
-            <LinearLayout
+            <TextView
+                android:id="@+id/progress_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:layout_marginBottom="4dp"
+                android:text="@string/loading"
+                android:maxLines="1"
+                android:textColor="@color/primaryColor"
+                android:textStyle="bold"/>
+
+            <com.daimajia.numberprogressbar.NumberProgressBar
+                android:id="@+id/progress_bar"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginHorizontal="8dp"
-                android:orientation="vertical">
-                <TextView
-                    android:id="@+id/progress_text"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:gravity="center"
-                    android:layout_marginBottom="4dp"
-                    android:text="@string/loading"
-                    android:textColor="@color/primaryColor"
-                    android:textStyle="bold"/>
-
-                <com.daimajia.numberprogressbar.NumberProgressBar
-                    android:id="@+id/progress_bar"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:progressBackgroundTint="@color/transparent"
-                    app:progress_max="100"
-                    app:progress_reached_bar_height="4dp"
-                    app:progress_reached_color="@color/primaryColor"
-                    app:progress_text_color="@color/primaryColor"
-                    app:progress_text_offset="0.5dp"
-                    app:progress_text_size="12sp"
-                    app:progress_unreached_bar_height="3dp"
-                    app:progress_unreached_color="#C2C2C2" />
-            </LinearLayout>
+                android:progressBackgroundTint="@color/transparent"
+                app:progress_max="100"
+                app:progress_reached_bar_height="4dp"
+                app:progress_reached_color="@color/primaryColor"
+                app:progress_text_color="@color/primaryColor"
+                app:progress_text_offset="0.5dp"
+                app:progress_text_size="12sp"
+                app:progress_unreached_bar_height="3dp"
+                app:progress_unreached_color="#C2C2C2" />
         </LinearLayout>
 
         <LinearLayout
             android:id="@+id/error_layout"
             android:orientation="horizontal"
             android:layout_width="match_parent"
-            android:layout_height="56dp"
+            android:layout_height="wrap_content"
             android:clickable="true"
             android:focusable="true"
             android:visibility="gone"
@@ -144,8 +143,8 @@
             android:layout_alignTop="@id/item_view">
 
             <ImageView
-                android:layout_width="48dp"
-                android:layout_height="48dp"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
                 android:layout_margin="8dp"
                 android:layout_gravity="center"
                 android:src="@drawable/ic_warning"
@@ -154,11 +153,12 @@
                 android:id="@+id/error_text"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginHorizontal="8dp"
+                android:layout_marginEnd="8dp"
+                android:maxLines="2"
                 android:textColor="@color/primaryColor"
                 android:textStyle="bold"/>
         </LinearLayout>
     </RelativeLayout>
 
 
-</com.google.android.material.card.MaterialCardView>
+</androidx.cardview.widget.CardView>

@@ -1,12 +1,11 @@
 package com.avidco.studentintellect.activities.ui
 
 import android.app.Dialog
-import android.app.PendingIntent
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
-import android.graphics.Bitmap
+import android.content.SharedPreferences.OnSharedPreferenceChangeListener
 import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
@@ -20,16 +19,15 @@ import android.view.ViewGroup
 import android.view.Window
 import android.view.WindowManager
 import android.widget.ImageView
-import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import android.window.OnBackInvokedDispatcher
 import androidx.activity.OnBackPressedCallback
+import androidx.appcompat.app.ActionBar
 import androidx.appcompat.app.AppCompatActivity
 import androidx.browser.customtabs.CustomTabColorSchemeParams
 import androidx.browser.customtabs.CustomTabsIntent
 import androidx.cardview.widget.CardView
-import androidx.core.graphics.BitmapCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.lifecycle.ViewModelProvider
@@ -39,6 +37,7 @@ import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.navigateUp
 import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.navigation.ui.setupWithNavController
+import androidx.preference.PreferenceManager
 import com.avidco.studentintellect.R
 import com.avidco.studentintellect.activities.auth.AuthActivity
 import com.avidco.studentintellect.databinding.ActivityMainBinding
@@ -48,6 +47,7 @@ import com.avidco.studentintellect.utils.Utils.askPlayStoreRatings
 import com.avidco.studentintellect.utils.Utils.dpToPx
 import com.avidco.studentintellect.utils.Utils.hideKeyboard
 import com.avidco.studentintellect.utils.Utils.isGooglePlayServicesAvailable
+import com.avidco.studentintellect.utils.Utils.isOnline
 import com.avidco.studentintellect.utils.Utils.openPlayStore
 import com.avidco.studentintellect.utils.Utils.tempDisable
 import com.bumptech.glide.Glide
@@ -67,10 +67,12 @@ import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
 
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity() , OnSharedPreferenceChangeListener {
 
     private lateinit var appBarConfiguration: AppBarConfiguration
     lateinit var navController : NavController
+    lateinit var profileViewModel: ProfileViewModel
+    private lateinit var navView: NavigationView
     private lateinit var binding: ActivityMainBinding
     companion object{
         private const val UPDATE_REQUEST_CODE = 12
@@ -78,7 +80,6 @@ class MainActivity : AppCompatActivity() {
     private var appUpdateManager : AppUpdateManager? = null
     private var exit = false
     private lateinit var currentUser : FirebaseUser
-
 
     private lateinit var adRequest : AdRequest
     private var interstitialAd : InterstitialAd? = null
@@ -139,13 +140,22 @@ class MainActivity : AppCompatActivity() {
             return
         }
         currentUser = Firebase.auth.currentUser!!
-        val prefs = getSharedPreferences("pref", Context.MODE_PRIVATE)
-        val modulesViewModel = ViewModelProvider(this)[ProfileViewModel::class.java]
-        modulesViewModel.init(prefs)
+
+        profileViewModel = ViewModelProvider(this)[ProfileViewModel::class.java]
+        profileViewModel.init(this)
+
+        profileViewModel.isOnline.observe(this){
+            if (it) {
+                binding.contentMain.noInternet.visibility = View.GONE
+            } else {
+                binding.contentMain.noInternet.visibility = View.VISIBLE
+            }
+        }
 
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
         setSupportActionBar(binding.contentMain.toolbar)
+
         //Theme
         val color = SurfaceColors.SURFACE_1.getColor(this)
         window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS)
@@ -172,14 +182,14 @@ class MainActivity : AppCompatActivity() {
 
 
         val drawerLayout: DrawerLayout = binding.drawerLayout
-        val navView: NavigationView = binding.navView
+        navView = binding.navView
         navView.itemIconTintList = null
         navController = findNavController(R.id.nav_host_fragment_content_main)
         // Passing each menu ID as a set of Ids because each
         // menu should be considered as top level destinations.
         appBarConfiguration = AppBarConfiguration(
             setOf(
-                R.id.nav_materials, R.id.nav_materials_upload
+                R.id.nav_materials
             ), drawerLayout
         )
         setupActionBarWithNavController(navController, appBarConfiguration)
@@ -202,7 +212,7 @@ class MainActivity : AppCompatActivity() {
             drawerLayout.close()
         }
 
-        navViewMenuItemClickListeners(navView, drawerLayout)
+        navViewMenuItemClickListeners( drawerLayout)
 
         /**Init ads*/
         adsInit()
@@ -229,10 +239,9 @@ class MainActivity : AppCompatActivity() {
         map.adjustViewBounds = true
         map.maxHeight = 28.dpToPx().toInt()
         map.setImageResource(R.drawable.ic_coming_soon)
-
     }
 
-    private fun navViewMenuItemClickListeners(navView: NavigationView, drawerLayout: DrawerLayout) {
+    private fun navViewMenuItemClickListeners(drawerLayout: DrawerLayout) {
         navView.menu.findItem(R.id.action_logout).setOnMenuItemClickListener {
             MaterialAlertDialogBuilder(this)
                 .setTitle(getString(R.string.logout_question))
@@ -267,14 +276,49 @@ class MainActivity : AppCompatActivity() {
         //Blackboard
         navView.menu.findItem(R.id.action_blackboard).setOnMenuItemClickListener {
             drawerLayout.close()
-            try {
-                val blackboardIntent = Intent().apply {
-                    setClassName("com.blackboard.android.bbstudent", "com.blackboard.android.bbstudent.splash.SplashActivity")
-                    addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK)
-                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
+            val openBlackboardApp = sharedPreferences.getBoolean("open_blackboard_app", false)
+            if (openBlackboardApp){
+                try {
+                    val blackboardIntent = Intent().apply {
+                        setClassName("com.blackboard.android.bbstudent2", "com.blackboard.android.bbstudent2.splash.SplashActivity")
+                        addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK)
+                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    }
+                    startActivity(blackboardIntent)
                 }
-                startActivity(blackboardIntent)
-            } catch (e: ActivityNotFoundException) {
+                catch (e: ActivityNotFoundException) {
+                    MaterialAlertDialogBuilder(this)
+                        .setTitle("Download Blackboard Learn?")
+                        .setNeutralButton("Cancel"){d,_->
+                            d.dismiss()
+                        }
+                        .setNegativeButton("Open the website"){d,_->
+                            d.dismiss()
+                            sharedPreferences.edit().putBoolean("open_blackboard_app", false).apply()
+
+                            val url = "https://tmlearn.ul.ac.za/"
+                            val builder = CustomTabsIntent.Builder()
+                            builder.setDefaultColorSchemeParams(CustomTabColorSchemeParams.Builder()
+                                .setToolbarColor(SurfaceColors.SURFACE_1.getColor(this))
+                                .build())
+                            builder.setCloseButtonIcon(BitmapFactory.decodeResource(resources, R.drawable.ic_back_arrow))
+                            builder.setToolbarCornerRadiusDp(15)
+                            builder.setUrlBarHidingEnabled(true)
+                            val customTabsIntent = builder.build()
+
+                            customTabsIntent.launchUrl(this, Uri.parse(url))
+                        }
+                        .setPositiveButton("Download"){d,_->
+                            d.dismiss()
+                            startActivity(Intent(Intent.ACTION_VIEW).apply {
+                                data = Uri.parse("market://details?id=com.blackboard.android.bbstudent")
+                            })
+                        }
+                        .show()
+                }
+            }
+            else {
                 val url = "https://tmlearn.ul.ac.za/"
                 val builder = CustomTabsIntent.Builder()
                 builder.setDefaultColorSchemeParams(CustomTabColorSchemeParams.Builder()
@@ -285,32 +329,8 @@ class MainActivity : AppCompatActivity() {
                 builder.setUrlBarHidingEnabled(true)
                 val customTabsIntent = builder.build()
 
-                val showPref = getSharedPreferences("download_apps", Context.MODE_PRIVATE)
-                if (isGooglePlayServicesAvailable() && showPref.getBoolean("download_blackboard", true)) {
-                    MaterialAlertDialogBuilder(this)
-                        .setTitle("Download Blackboard Learn?")
-                        .setNeutralButton("Remind me later"){d,_->
-                            d.dismiss()
-                            customTabsIntent.launchUrl(this, Uri.parse(url))
-                        }
-                        .setNegativeButton(getString(R.string.no)){d,_->
-                            d.dismiss()
-                            customTabsIntent.launchUrl(this, Uri.parse(url))
-                            showPref.edit().putBoolean("download_blackboard", false).apply()
-                        }
-                        .setPositiveButton(getString(R.string.yes)){d,_->
-                            d.dismiss()
-                            startActivity(Intent(Intent.ACTION_VIEW).apply {
-                                data = Uri.parse("market://details?id=com.blackboard.android.bbstudent")
-                            })
-                        }
-                        .show()
-                } else {
-                    customTabsIntent.launchUrl(this, Uri.parse(url))
-                }
+                customTabsIntent.launchUrl(this, Uri.parse(url))
             }
-
-
 
             false
         }
@@ -331,6 +351,7 @@ class MainActivity : AppCompatActivity() {
             }
             false
         }
+
     }
 
     private fun adsInit(){
@@ -368,17 +389,13 @@ class MainActivity : AppCompatActivity() {
         }
 
 
-        val bannerView = AdView(this)
-
+        /*val bannerView = AdView(this)
         //val adSize = AdSize(300, 50)
         val adSize = AdSize.getCurrentOrientationInlineAdaptiveBannerAdSize(this, 320)
-
         bannerView.adUnitId = getString(R.string.activity_main_bannerAdUnitId)
         bannerView.setAdSize(adSize)
-
         bannerView.loadAd(adRequest)
-
-        binding.contentMain.root.addView(bannerView)
+        binding.contentMain.root.addView(bannerView)*/
     }
 
     override fun onSupportNavigateUp(): Boolean {
@@ -455,8 +472,6 @@ class MainActivity : AppCompatActivity() {
             }
     }
 
-
-
     fun showFeedbackDialog() {
         val dialog = Dialog(this)
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
@@ -503,6 +518,33 @@ class MainActivity : AppCompatActivity() {
             ViewGroup.LayoutParams.WRAP_CONTENT
         )
         dialog.window!!.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
-        dialog.window!!.attributes.windowAnimations = R.style.DialogAnimation
+    }
+
+    override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences, key: String) {
+        when(key){
+            "under_construction_features" -> {
+                val construction = sharedPreferences.getBoolean(key, false)
+                navView.menu.findItem(R.id.action_timetable).isVisible = construction
+                navView.menu.findItem(R.id.nav_youtube).isVisible = construction
+                navView.menu.findItem(R.id.action_map).isVisible = construction
+            }
+        }
+    }
+
+    override fun onStart() {
+        super.onStart()
+        val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
+        sharedPreferences.registerOnSharedPreferenceChangeListener(this)
+
+        val construction = sharedPreferences.getBoolean("under_construction_features", false)
+        navView.menu.findItem(R.id.action_timetable).isVisible = construction
+        navView.menu.findItem(R.id.nav_youtube).isVisible = construction
+        navView.menu.findItem(R.id.action_map).isVisible = construction
+    }
+
+    override fun onStop() {
+        super.onStop()
+        PreferenceManager.getDefaultSharedPreferences(this)
+            .unregisterOnSharedPreferenceChangeListener(this)
     }
 }

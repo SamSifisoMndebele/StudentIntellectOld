@@ -11,11 +11,6 @@
         android:label="@string/my_modules_title"
         tools:layout="@layout/fragment_modules"/>
     <fragment
-        android:id="@+id/nav_materials_upload"
-        android:name="com.avidco.studentintellect.activities.ui.upload.UploadFragment"
-        android:label="@string/upload_materials_title"
-        tools:layout="@layout/fragment_material_upload"/>
-    <fragment
         android:id="@+id/profileFragment"
         android:name="com.avidco.studentintellect.activities.ui.profile.ProfileFragment"
         android:label="Profile"
@@ -28,6 +23,36 @@
     <fragment
         android:id="@+id/materialsFragment"
         android:name="com.avidco.studentintellect.activities.ui.materials.MaterialsFragment"
-        android:label="Materials"
-        tools:layout="@layout/fragment_materials"/>
+        android:label=" "
+        tools:layout="@layout/fragment_materials">
+        <action
+            android:id="@+id/action_materialsFragment_to_editFileFragment"
+            app:destination="@id/editFileFragment" />
+        <action
+            android:id="@+id/action_materialsFragment_to_editFolderFragment"
+            app:destination="@id/editFolderFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/action_settings"
+        android:name="com.avidco.studentintellect.activities.ui.settings.SettingsFragment"
+        android:label="Settings" />
+    <fragment
+        android:id="@+id/editFileFragment"
+        android:name="com.avidco.studentintellect.activities.ui.materials.edit.EditFileFragment"
+        android:label="Add a pdf file"
+        tools:layout="@layout/fragment_edit_file" >
+        <action
+            android:id="@+id/action_editFileFragment_to_materialsFragment"
+            app:destination="@id/materialsFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/editFolderFragment"
+        android:name="com.avidco.studentintellect.activities.ui.materials.edit.EditFolderFragment"
+        android:label="Add a folder"
+        tools:layout="@layout/fragment_edit_folder" >
+        <action
+            android:id="@+id/action_editFolderFragment_to_materialsFragment"
+            app:destination="@id/materialsFragment" />
+    </fragment>
+
 </navigation>

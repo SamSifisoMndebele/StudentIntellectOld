@@ -22,6 +22,10 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.avidco.studentintellect.activities.ui.MainActivity
 import com.avidco.studentintellect.R
 import com.avidco.studentintellect.activities.ui.ProfileViewModel
+import com.avidco.studentintellect.activities.ui.materials.FoldersAdapter
+import com.avidco.studentintellect.activities.ui.materials.database.DatabasesConnect
+import com.avidco.studentintellect.activities.ui.materials.database.FoldersDatabaseHelper
+import com.avidco.studentintellect.activities.ui.materials.database.ModulesDatabaseHelper
 import com.avidco.studentintellect.databinding.FragmentAddModulesBinding
 import com.avidco.studentintellect.models.ModuleData
 import com.avidco.studentintellect.utils.Utils.hideKeyboard
@@ -37,6 +41,10 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.async
+import kotlinx.coroutines.launch
 
 class AddModulesFragment : Fragment() {
 
@@ -45,84 +53,40 @@ class AddModulesFragment : Fragment() {
 
     private val database = Firebase.firestore
     
+    @OptIn(DelicateCoroutinesApi::class)
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
-        savedInstanceState: Bundle?): View {
+                              savedInstanceState: Bundle?): View {
         binding = FragmentAddModulesBinding.inflate(inflater, container, false)
-        val prefs = requireActivity().getSharedPreferences("pref", Context.MODE_PRIVATE)
-        //binding!!.progressBar.showProgressDialog(binding!!.avi)
 
-        val userModulesSet = prefs?.getStringSet("user_modules", null)
-        val allModulesSet = prefs.getStringSet("all_modules_set", null)
-        addAdapter = AddModulesAdapter(allModulesSet?.toMutableList()?:mutableListOf(), userModulesSet?.toMutableList())
+        val databaseHelperModules = ModulesDatabaseHelper(activity)
+
+        addAdapter = AddModulesAdapter(databaseHelperModules, (activity as MainActivity?)?.profileViewModel?.modulesList?.value)
+        binding.addModuleList.layoutManager = LinearLayoutManager(context)
+        binding.addModuleList.setHasFixedSize(true)
         binding.addModuleList.adapter = addAdapter
-        /*val homeViewModel = ViewModelProvider(this)[HomeViewModel::class.java]
-        homeViewModel.text.observe(viewLifecycleOwner) {
 
-        }*/
-
-
-        val currentTime = Timestamp.now()
-        if (allModulesSet.isNullOrEmpty()) {
-            FirebaseFirestore
-                .getInstance()
-                .collection("Modules")
-                .get()
-                .addOnSuccessListener {
-                    val modules = mutableSetOf<String>()
-                    it.documents.forEach { snapshot ->
-                        val data = snapshot.toObject(ModuleData::class.java)!!
-                        modules.add(data.code)
-                    }
-                    prefs.edit().putStringSet("all_modules_set", modules).apply()
-                    prefs.edit().putLong("last_read_all_modules_time",currentTime.seconds).apply()
-
-                    addAdapter = AddModulesAdapter(modules.toMutableList(), userModulesSet?.toMutableList())
-                    binding.addModuleList.layoutManager = LinearLayoutManager(context)
-                    binding.addModuleList.setHasFixedSize(true)
-                    binding.addModuleList.adapter = addAdapter
-                    //binding!!.progressBar.hideProgressDialog(binding!!.avi)
-                }
-                .addOnFailureListener {
-                    //binding!!.progressBar.hideProgressDialog(binding!!.avi)
-                    Toast.makeText(context, it.message, Toast.LENGTH_LONG).show()
-                }
-        }
-        else {
-            val lastReadTime = Timestamp(prefs.getLong("last_read_all_modules_time", 0),0)
-            FirebaseFirestore
-                .getInstance()
-                .collection("Modules")
-                .whereGreaterThanOrEqualTo("dateAdded", lastReadTime)
-                .get()
-                .addOnSuccessListener {
-                    val modules = mutableSetOf<String>()
-                    modules.addAll(allModulesSet)
-                    it.documents.forEach { snapshot ->
-                        val data = snapshot.toObject(ModuleData::class.java)!!
-                        modules.add(data.code)
-                    }
-                    prefs.edit().putStringSet("all_modules_set", modules).apply()
-                    prefs.edit().putLong("last_read_all_modules_time",currentTime.seconds).apply()
-                    addAdapter = AddModulesAdapter(modules.toMutableList(), userModulesSet?.toMutableList())
-                    binding!!.addModuleList.layoutManager = LinearLayoutManager(context)
-                    binding!!.addModuleList.setHasFixedSize(true)
-                    binding!!.addModuleList.adapter = addAdapter
-                    // binding!!.progressBar.hideProgressDialog(binding!!.avi)
-                }
-                .addOnFailureListener { e ->
-                    // binding!!.progressBar.hideProgressDialog(binding!!.avi)
-                    context?.let { Toast.makeText(it, e.message, Toast.LENGTH_LONG).show() }
-                }
+        GlobalScope.launch {
+            val modulesDataListDeferred = async { (activity as MainActivity?)?.let {
+                DatabasesConnect.getModulesDataList(it, it.isOnline())
+            } }
+            val modulesDataList = modulesDataListDeferred.await()
+            (activity as MainActivity?)?.runOnUiThread {
+                modulesDataList?.let { addAdapter?.setModulesList(it) }
+            }
         }
 
-        binding!!.saveButton.setOnClickListener {
+        binding.saveButton.setOnClickListener {
             if (requireActivity().isOnline()){
                 if (addAdapter != null) {
                     // (it as CircularProgressButton).startAnimation()
                     val modulesList = addAdapter!!.list()
-                    Firebase.firestore.collection("users")
+                    val profileViewModel = ViewModelProvider(this)[ProfileViewModel::class.java]
+                    profileViewModel.modulesList
+                    /*Firebase.firestore.collection("Users")
                         .document(Firebase.auth.currentUser!!.uid)
-                        .update("Modules", modulesList)
+                        .collection("MyModules")
+                        .document()
+                        .set()
                         .addOnCompleteListener { task ->
                             if (task.exception != null) {
                                 Toast.makeText(context, task.exception?.message, Toast.LENGTH_LONG).show()
@@ -131,7 +95,7 @@ class AddModulesFragment : Fragment() {
                                 .setModules(prefs, modulesList.toMutableSet())
                             activity?.hideKeyboard(binding.root)
                             (requireActivity() as MainActivity).navController.navigateUp()
-                        }
+                        }*/
                 } else {
                     it.tempDisable()
                     Toast.makeText(activity, "Please try again.", Toast.LENGTH_SHORT).show()

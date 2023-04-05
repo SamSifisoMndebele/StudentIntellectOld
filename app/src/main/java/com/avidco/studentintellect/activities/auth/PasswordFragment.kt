@@ -13,6 +13,7 @@ import android.widget.Toast
 import androidx.core.widget.doOnTextChanged
 import com.avidco.studentintellect.R
 import com.avidco.studentintellect.databinding.FragmentPasswordBinding
+import com.avidco.studentintellect.utils.LoadingDialog
 import com.avidco.studentintellect.utils.Utils.tempDisable
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
@@ -20,13 +21,14 @@ import com.google.firebase.ktx.Firebase
 class PasswordFragment : Fragment() {
 
     private lateinit var binding: FragmentPasswordBinding
+    private lateinit var loadingDialog: LoadingDialog
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-
         binding = FragmentPasswordBinding.inflate(inflater, container, false)
+        loadingDialog = LoadingDialog(activity)
         return binding.root
     }
 

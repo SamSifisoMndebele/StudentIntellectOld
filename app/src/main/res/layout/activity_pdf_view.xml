@@ -67,7 +67,8 @@
             android:layout_width="54dp"
             android:layout_height="54dp"
             android:src="@drawable/ic_cancel"
-            android:padding="8dp"/>
+            android:padding="8dp"
+            android:contentDescription="@null" />
     </FrameLayout>
 
     <androidx.viewpager2.widget.ViewPager2

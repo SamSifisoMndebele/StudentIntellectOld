@@ -2,27 +2,35 @@
 <menu
     xmlns:android="http://schemas.android.com/apk/res/android">
     <item
-        android:id="@+id/item_size"
-        android:title="@null"
-        android:enabled="false" />
-    <item
-        android:id="@+id/item_solutions"
-        android:title="@null"
-        android:enabled="false" />
-    <item
-        android:id="@+id/item_uploader"
-        android:title="@null"
-        android:enabled="false" />
-    <item
-        android:id="@+id/item_downloads"
-        android:title="@null"
-        android:enabled="false" />
-    <item
-        android:id="@+id/item_updated_date"
-        android:title="@null"
-        android:enabled="false"/>
-
-
+        android:id="@+id/submenu"
+        android:title="@string/file_info">
+        <menu>
+            <item
+                android:id="@+id/item_size"
+                android:title="@null"
+                android:enabled="false" />
+            <item
+                android:id="@+id/item_solutions"
+                android:title="@null"
+                android:enabled="false" />
+            <item
+                android:id="@+id/item_uploader"
+                android:title="@null"
+                android:enabled="false" />
+            <item
+                android:id="@+id/item_downloads"
+                android:title="@null"
+                android:enabled="false" />
+            <item
+                android:id="@+id/item_updated_date"
+                android:title="@null"
+                android:enabled="false"/>
+            <item
+                android:id="@+id/item_verified"
+                android:title="@null"
+                android:enabled="false" />
+        </menu>
+    </item>
 
     <item
         android:id="@+id/item_edit"

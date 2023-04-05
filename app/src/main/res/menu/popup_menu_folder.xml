@@ -2,22 +2,31 @@
 <menu
     xmlns:android="http://schemas.android.com/apk/res/android">
     <item
-        android:id="@+id/item_creator"
-        android:title="@null"
-        android:enabled="false" />
-    <item
-        android:id="@+id/item_files_count"
-        android:title="@null"
-        android:enabled="false" />
-    <item
-        android:id="@+id/item_updated_date"
-        android:title="@null"
-        android:enabled="false"/>
-
+        android:id="@+id/submenu"
+        android:title="@string/folder_info">
+        <menu>
+            <item
+                android:id="@+id/item_creator"
+                android:title="@null"
+                android:enabled="false" />
+            <item
+                android:id="@+id/item_files_count"
+                android:title="@null"
+                android:enabled="false" />
+            <item
+                android:id="@+id/item_updated_date"
+                android:title="@null"
+                android:enabled="false"/>
+            <item
+                android:id="@+id/item_verified"
+                android:title="@null"
+                android:enabled="false" />
+        </menu>
+    </item>
 
     <item
         android:id="@+id/item_edit"
-        android:title="@string/edit"
+        android:title="@string/rename"
         android:icon="@drawable/ic_edit" />
     <item
         android:id="@+id/item_delete"

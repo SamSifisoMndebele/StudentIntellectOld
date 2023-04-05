@@ -6,23 +6,22 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.view.*
-import android.widget.Toast
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.ViewModelProvider
 import com.avidco.studentintellect.BuildConfig
 import com.avidco.studentintellect.R
 import com.avidco.studentintellect.activities.auth.AuthActivity
 import com.avidco.studentintellect.databinding.FragmentProfileBinding
 import com.avidco.studentintellect.databinding.SheetAboutAppBinding
-import com.avidco.studentintellect.activities.ui.ProfileViewModel
 import com.avidco.studentintellect.models.UserType
 import com.avidco.studentintellect.activities.ui.MainActivity
+import com.avidco.studentintellect.activities.ui.database.UserDB
+import com.avidco.studentintellect.activities.ui.modules.MyModulesDatabaseHelper
 import com.avidco.studentintellect.utils.LoadingDialog
 import com.avidco.studentintellect.utils.OpenPicturesContract
 import com.avidco.studentintellect.utils.Utils.hideKeyboard
 import com.avidco.studentintellect.utils.Utils.isGooglePlayServicesAvailable
 import com.avidco.studentintellect.utils.Utils.openPlayStore
-import com.avidco.studentintellect.utils.Utils.roundToRand
+import com.avidco.studentintellect.utils.Utils.toRand
 import com.avidco.studentintellect.utils.Utils.shareApp
 import com.avidco.studentintellect.utils.Utils.tempDisable
 import com.bumptech.glide.Glide
@@ -32,7 +31,6 @@ import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.firebase.auth.ktx.auth
-import com.google.firebase.auth.ktx.userProfileChangeRequest
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.ktx.storage
 import java.io.IOException
@@ -63,7 +61,7 @@ class ProfileFragment : Fragment() {
                                 // Called when ad is dismissed.
                                 // Set the ad reference to null so you don't show the ad a second time.
                                 println("Ad dismissed fullscreen content.")
-                                (requireActivity() as MainActivity).navController.navigate(R.id.addModulesFragment)
+                                (requireActivity() as MainActivity).navController.navigate(R.id.action_modules_fragment)
                                 loadAd()
                             }
 
@@ -116,7 +114,7 @@ class ProfileFragment : Fragment() {
                     userImagesRef.downloadUrl
                 }
                     .addOnSuccessListener { imageUrl ->
-                        profileViewModel.setPhotoUrl(imageUrl)
+                        userDB.setImageUrl(imageUrl.toString())
                         loadingDialog.isDone {  }
                     }
                     .addOnFailureListener {
@@ -125,7 +123,7 @@ class ProfileFragment : Fragment() {
 
             } else {
                 binding.userImage.setImageResource(R.drawable.ic_user)
-                profileViewModel.setPhotoUrl(null)
+                userDB.setImageUrl(null)
             }
 
 
@@ -135,7 +133,7 @@ class ProfileFragment : Fragment() {
         }
     }
 
-    private lateinit var profileViewModel: ProfileViewModel
+    private lateinit var userDB : UserDB
 
     override fun onCreateView (
         inflater: LayoutInflater,
@@ -143,10 +141,10 @@ class ProfileFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View {
         binding = FragmentProfileBinding.inflate(inflater, container, false)
-        binding.userEmail.text = auth.currentUser?.email
+        userDB = UserDB(context, null)
+        binding.userEmail.text = userDB.email.value
 
-        profileViewModel = ViewModelProvider(activity as MainActivity)[ProfileViewModel::class.java]
-        profileViewModel.modulesList.observe(viewLifecycleOwner) { list ->
+        /*profileViewModel.modulesList.observe(viewLifecycleOwner) { list ->
             val modules = StringBuilder()
             var b = false
             list?.forEach {
@@ -155,21 +153,21 @@ class ProfileFragment : Fragment() {
                 b = true
             }
             binding.modulesPreview.setText(modules.toString().trim().ifEmpty { "Select your modules" })
-        }
-        profileViewModel.photoUrl.observe(viewLifecycleOwner) {
+        }*/
+        userDB.imageUrl.observe(viewLifecycleOwner) {
             Glide.with(this)
                 .load(it)
                 .placeholder(R.drawable.ic_user)
                 .into(binding.userImage)
         }
 
-        profileViewModel.displayName.observe(viewLifecycleOwner) {
+        userDB.name.observe(viewLifecycleOwner) {
             binding.username.setText(it?:getString(R.string.display_picture_and_name))
         }
 
-        profileViewModel.balance.observe(viewLifecycleOwner) {
+        userDB.balance.observe(viewLifecycleOwner) {
             @SuppressLint("SetTextI18n")
-            binding.userBalance.text = "R ${it.roundToRand()}"
+            binding.userBalance.text = it.toRand()
         }
 
         /*binding.username.editText?.doOnTextChanged { text, _, _, _ ->
@@ -183,7 +181,7 @@ class ProfileFragment : Fragment() {
         binding.saveButton.setOnClickListener {
             it.tempDisable()
             context?.hideKeyboard(binding.root)
-            profileViewModel.setDisplayName(binding.username.text?.trim().toString())
+            userDB.setName(binding.username.text?.trim().toString())
         }
 
 
@@ -216,7 +214,7 @@ class ProfileFragment : Fragment() {
         binding.modules.setOnClickListener {
             it.tempDisable()
             if (interstitialAd == null) {
-                (requireActivity() as MainActivity).navController.navigate(R.id.addModulesFragment)
+                (requireActivity() as MainActivity).navController.navigate(R.id.action_modules_fragment)
             } else {
                 interstitialAd!!.show(requireActivity())
             }
@@ -224,7 +222,7 @@ class ProfileFragment : Fragment() {
         binding.modulesPreview.setOnClickListener {
             it.tempDisable()
             if (interstitialAd == null) {
-                (requireActivity() as MainActivity).navController.navigate(R.id.addModulesFragment)
+                (requireActivity() as MainActivity).navController.navigate(R.id.action_modules_fragment)
             } else {
                 interstitialAd!!.show(requireActivity())
             }
@@ -240,9 +238,10 @@ class ProfileFragment : Fragment() {
                 }
                 .setPositiveButton(getString(R.string.logout)){d,_->
                     d.dismiss()
-                    Firebase.auth.signOut()
-                    startActivity(Intent(requireActivity(), AuthActivity::class.java))
-                    requireActivity().finishAffinity()
+                    MyModulesDatabaseHelper(requireContext()).doOnSignOut {
+                        startActivity(Intent(requireActivity(), AuthActivity::class.java))
+                        requireActivity().finishAffinity()
+                    }
                 }
                 .show()
         }

@@ -15,7 +15,7 @@
         android:layout_height="wrap_content"
         android:gravity="center_vertical"
         android:layout_gravity="center"
-        android:minHeight="56dp">
+        android:minHeight="64dp">
 
         <LinearLayout
             android:id="@+id/item_view"

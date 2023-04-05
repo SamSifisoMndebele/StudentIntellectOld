@@ -7,5 +7,6 @@ data class Address(
     val complexOrBuilding: String? = null,
     val suburb: String = "",
     val cityOrTown: String = "",
-    val postalCode: String = ""
+    val postalCode: String = "",
+    val myModulesIDs: MutableList<String>? = null
 )

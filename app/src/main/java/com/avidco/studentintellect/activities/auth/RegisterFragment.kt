@@ -29,6 +29,7 @@ import com.avidco.studentintellect.utils.Constants
 import com.avidco.studentintellect.utils.OpenPicturesContract
 import com.avidco.studentintellect.models.UserType
 import com.avidco.studentintellect.activities.ui.MainActivity
+import com.avidco.studentintellect.utils.LoadingDialog
 import com.avidco.studentintellect.utils.Utils.tempDisable
 import com.avidco.studentintellect.utils.pdfviewer.util.FitPolicy
 import com.google.firebase.auth.UserProfileChangeRequest
@@ -44,6 +45,7 @@ import java.lang.Exception
 class RegisterFragment : Fragment() {
 
     private lateinit var binding: FragmentRegisterBinding
+    private lateinit var loadingDialog: LoadingDialog
     private lateinit var terms: PopupTermsBinding
     private lateinit var popupWindow : PopupWindow
     private var imageUri : Uri? = null
@@ -55,10 +57,9 @@ class RegisterFragment : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-
         binding = FragmentRegisterBinding.inflate(inflater, container, false)
+        loadingDialog = LoadingDialog(activity)
         return binding.root
-
     }
 
     private fun loadPdf() {

@@ -3,7 +3,7 @@
     xmlns:android="http://schemas.android.com/apk/res/android" >
     <item
         android:id="@+id/item_modules"
-        android:title="@string/add_modules"
+        android:title="@string/modules"
         android:showAsAction="ifRoom|withText"
         android:icon="@drawable/ic_plus"
         tools:ignore="AppCompatResource" />

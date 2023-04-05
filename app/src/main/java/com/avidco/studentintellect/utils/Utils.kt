@@ -4,8 +4,6 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.content.res.Resources
-import android.net.ConnectivityManager
-import android.net.NetworkCapabilities
 import android.net.Uri
 import android.os.Build
 import android.os.Environment
@@ -20,14 +18,15 @@ import com.avidco.studentintellect.R
 import com.avidco.studentintellect.databinding.FragmentPdfBinding
 import com.avidco.studentintellect.utils.pdfviewer.scroll.MyScrollHandle
 import com.avidco.studentintellect.utils.pdfviewer.util.FitPolicy
-import com.avidco.studentintellect.activities.ui.MainActivity
 import com.google.android.gms.ads.AdSize
 import com.google.android.gms.common.ConnectionResult
 import com.google.android.gms.common.GoogleApiAvailability
 import com.google.android.gms.tasks.Task
 import com.google.android.play.core.review.ReviewInfo
 import com.google.android.play.core.review.ReviewManagerFactory
+import org.checkerframework.checker.index.qual.Positive
 import java.io.File
+import java.text.NumberFormat
 import java.util.concurrent.TimeUnit
 import kotlin.math.roundToInt
 
@@ -71,13 +70,19 @@ object Utils {
         }
     }
 
-    fun Double.roundToRand(): String {
-        val number : Int = (this * 100f).roundToInt()
-        if (number == 0){ return "0.00" }
-        val wholeNum = number/100
-        val decNum = number.toString().padStart(2,'0').takeLast(2)
 
-        return "$wholeNum.$decNum"
+    private val numberFormat = NumberFormat.getInstance()
+    fun Double.roundDecimalsTo(decimal: @Positive Int): String {
+        numberFormat.maximumFractionDigits = decimal
+        return numberFormat.format(this).replace(',','.')
+    }
+    fun Double.fixDecimalsTo(decimal: @Positive Int): String {
+        numberFormat.maximumFractionDigits = decimal
+        numberFormat.minimumFractionDigits = decimal
+        return numberFormat.format(this).replace(',','.')
+    }
+    fun Double.toRand(): String {
+        return "R"+fixDecimalsTo(2)
     }
 
     fun Int.pxToDp() : Float = (this / Resources.getSystem().displayMetrics.density)
@@ -155,39 +160,6 @@ object Utils {
         } else {
             false
         }
-    }
-
-    fun Context.isOnline() : Boolean {
-        val connectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            val capabilities = connectivityManager.getNetworkCapabilities(connectivityManager.activeNetwork)
-            if (capabilities != null) {
-
-                return capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)
-                        || capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)
-                        || capabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET)
-
-                /*if (capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)) {
-                    println("Internet, NetworkCapabilities.TRANSPORT_CELLULAR")
-                    return true
-                }
-                else if (capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)) {
-                    println("Internet, NetworkCapabilities.TRANSPORT_WIFI")
-                    return true
-                }
-                else if (capabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET)) {
-                    println("Internet, NetworkCapabilities.TRANSPORT_ETHERNET")
-                    return true
-                }*/
-            }
-        } else
-        @Suppress("DEPRECATION")
-        {
-            //println("Internet, connectivityManager.activeNetworkInfo")
-            val netInfo = connectivityManager.activeNetworkInfo
-            return netInfo != null && netInfo.isConnectedOrConnecting
-        }
-        return false
     }
 
     fun Context.hideKeyboard(view: View) {

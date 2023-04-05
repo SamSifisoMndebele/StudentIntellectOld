@@ -7,10 +7,9 @@ import android.view.*
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import com.avidco.studentintellect.databinding.FragmentPdfBinding
-import com.avidco.studentintellect.models.FileData
+import com.avidco.studentintellect.models.PdfFile
 import com.avidco.studentintellect.models.ModuleData
 import com.avidco.studentintellect.utils.Utils.documentsDir
-import com.avidco.studentintellect.utils.Utils.isOnline
 import com.avidco.studentintellect.utils.Utils.loadPdf
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.ktx.firestore
@@ -24,10 +23,10 @@ import java.io.File
 class PdfViewFragment : Fragment() {
 
     companion object {
-        fun newInstance(fileData: FileData, moduleData : ModuleData, isSolutions : Boolean = false): PdfViewFragment {
+        fun newInstance(pdfFile: PdfFile, moduleData : ModuleData, isSolutions : Boolean = false): PdfViewFragment {
             val fragment = PdfViewFragment().apply {
                 val bundle = Bundle().apply {
-                    putParcelable(PdfViewActivity.FILE_DATA, fileData)
+                    putParcelable(PdfViewActivity.FILE_DATA, pdfFile)
                     putParcelable(PdfViewActivity.MODULE_DATA, moduleData)
                     putBoolean("isSolutions",isSolutions) }
                 arguments = bundle
@@ -37,7 +36,7 @@ class PdfViewFragment : Fragment() {
     }
 
     private lateinit var binding: FragmentPdfBinding
-    private lateinit var fileData: FileData
+    private lateinit var pdfFile: PdfFile
     private lateinit var moduleCode : String
     private lateinit var storageRef : StorageReference
     private var isSolutions : Boolean = false
@@ -61,8 +60,8 @@ class PdfViewFragment : Fragment() {
         //binding.progressLayout.visibility = View.VISIBLE
         prefs = context?.getSharedPreferences("page_numbers", Context.MODE_PRIVATE)
 
-        fileData = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            requireArguments().getParcelable(PdfViewActivity.FILE_DATA, FileData::class.java)!!
+        pdfFile = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            requireArguments().getParcelable(PdfViewActivity.FILE_DATA, PdfFile::class.java)!!
         } else {
             @Suppress("DEPRECATION")
             requireArguments().getParcelable(PdfViewActivity.FILE_DATA)!!
@@ -76,16 +75,16 @@ class PdfViewFragment : Fragment() {
         moduleCode = moduleData.code
         isSolutions = requireArguments().getBoolean("isSolutions")
         storageRef = Firebase.storage.getReference(if (isSolutions) {
-            "modules/$moduleCode/materials/${fileData.name} Solutions.pdf"
+            "modules/$moduleCode/materials/${pdfFile.name} Solutions.pdf"
         } else {
-            "modules/$moduleCode/materials/${fileData.name}.pdf"
+            "modules/$moduleCode/materials/${pdfFile.name}.pdf"
         })
         isOpen = true
 
         pageKey = if (isSolutions) {
-            "${moduleCode}_${fileData.name}_Solutions"
+            "${moduleCode}_${pdfFile.name}_Solutions"
         } else {
-            "${moduleCode}_${fileData.name}"
+            "${moduleCode}_${pdfFile.name}"
         }
         val page = prefs?.getInt(pageKey, 0)?:0
         checkIfFileExists(page = page)
@@ -97,15 +96,15 @@ class PdfViewFragment : Fragment() {
     private fun checkIfFileExists(i : Int = 0, page: Int = 0) {
         file = if (i == 0) {
             if (isSolutions) {
-                File(documentsDir(moduleCode), "${fileData.name} Solutions.pdf")
+                File(documentsDir(moduleCode), "${pdfFile.name} Solutions.pdf")
             } else {
-                File(documentsDir(moduleCode), "${fileData.name}.pdf")
+                File(documentsDir(moduleCode), "${pdfFile.name}.pdf")
             }
         } else {
             if (isSolutions) {
-                File(documentsDir(moduleCode), "${fileData.name} Solutions(${i}).pdf")
+                File(documentsDir(moduleCode), "${pdfFile.name} Solutions(${i}).pdf")
             } else {
-                File(documentsDir(moduleCode), "${fileData.name}(${i}).pdf")
+                File(documentsDir(moduleCode), "${pdfFile.name}(${i}).pdf")
             }
         }
 
@@ -140,7 +139,7 @@ class PdfViewFragment : Fragment() {
 
     private fun downloadPdf( task : FileDownloadTask? = null) {
        // binding.progressLayout.visibility = View.VISIBLE
-        if (!binding.pdfView.context.isOnline()) {
+        if (!true) {
             binding.progressBar.visibility = View.GONE
            // binding.progressText.text = getString(R.string.no_internet_connection)
             /*binding.refreshBtn.visibility = View.VISIBLE
@@ -187,7 +186,7 @@ class PdfViewFragment : Fragment() {
                 }
                 if (!isSolutions) {
                     Firebase.firestore
-                        .document("modules/$moduleCode/materials/${fileData.name}")
+                        .document("modules/$moduleCode/materials/${pdfFile.name}")
                         .update("downloads", FieldValue.increment(1))
                 }
             }

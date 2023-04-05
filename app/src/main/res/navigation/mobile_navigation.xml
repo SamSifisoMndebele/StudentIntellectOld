@@ -3,56 +3,44 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/mobile_navigation"
-    app:startDestination="@+id/nav_materials">
+    app:startDestination="@+id/nav_my_materials">
 
     <fragment
-        android:id="@+id/nav_materials"
-        android:name="com.avidco.studentintellect.activities.ui.home.ModulesFragment"
+        android:id="@+id/nav_my_materials"
+        android:name="com.avidco.studentintellect.activities.ui.modules.MyModulesFragment"
         android:label="@string/my_modules_title"
-        tools:layout="@layout/fragment_modules"/>
+        tools:layout="@layout/fragment_my_modules"/>
+
+
     <fragment
-        android:id="@+id/profileFragment"
+        android:id="@+id/action_modules_fragment"
+        android:name="com.avidco.studentintellect.activities.ui.modules.add.ModulesFragment"
+        android:label="Modules"
+        tools:layout="@layout/fragment_add_modules"/>
+    <fragment
+        android:id="@+id/action_profile_fragment"
         android:name="com.avidco.studentintellect.activities.ui.profile.ProfileFragment"
         android:label="Profile"
         tools:layout="@layout/fragment_profile"/>
     <fragment
-        android:id="@+id/addModulesFragment"
-        android:name="com.avidco.studentintellect.activities.ui.add.modules.AddModulesFragment"
-        android:label="Add Modules"
-        tools:layout="@layout/fragment_add_modules"/>
-    <fragment
-        android:id="@+id/materialsFragment"
-        android:name="com.avidco.studentintellect.activities.ui.materials.MaterialsFragment"
-        android:label=" "
-        tools:layout="@layout/fragment_materials">
-        <action
-            android:id="@+id/action_materialsFragment_to_editFileFragment"
-            app:destination="@id/editFileFragment" />
-        <action
-            android:id="@+id/action_materialsFragment_to_editFolderFragment"
-            app:destination="@id/editFolderFragment" />
-    </fragment>
-    <fragment
-        android:id="@+id/action_settings"
+        android:id="@+id/action_settings_fragment"
         android:name="com.avidco.studentintellect.activities.ui.settings.SettingsFragment"
         android:label="Settings" />
+
     <fragment
-        android:id="@+id/editFileFragment"
-        android:name="com.avidco.studentintellect.activities.ui.materials.edit.EditFileFragment"
+        android:id="@+id/action_materials_fragment"
+        android:name="com.avidco.studentintellect.activities.ui.materials.MaterialsFragment"
+        android:label=" "
+        tools:layout="@layout/fragment_materials"/>
+    <fragment
+        android:id="@+id/action_edit_file_fragment"
+        android:name="com.avidco.studentintellect.activities.ui.materials.files.EditFileFragment"
         android:label="Add a pdf file"
-        tools:layout="@layout/fragment_edit_file" >
-        <action
-            android:id="@+id/action_editFileFragment_to_materialsFragment"
-            app:destination="@id/materialsFragment" />
-    </fragment>
+        tools:layout="@layout/fragment_edit_file"/>
     <fragment
-        android:id="@+id/editFolderFragment"
-        android:name="com.avidco.studentintellect.activities.ui.materials.edit.EditFolderFragment"
+        android:id="@+id/action_edit_folder_fragment"
+        android:name="com.avidco.studentintellect.activities.ui.materials.folders.EditFolderFragment"
         android:label="Add a folder"
-        tools:layout="@layout/fragment_edit_folder" >
-        <action
-            android:id="@+id/action_editFolderFragment_to_materialsFragment"
-            app:destination="@id/materialsFragment" />
-    </fragment>
+        tools:layout="@layout/fragment_edit_folder"/>
 
 </navigation>

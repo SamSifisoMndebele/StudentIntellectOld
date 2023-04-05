@@ -5,39 +5,35 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".auth.AuthActivity">
-    <ImageView
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:contentDescription="@null"
-        android:scaleType="centerCrop"/>
+    tools:context=".activities.auth.AuthActivity"
+    android:orientation="vertical">
 
     <androidx.appcompat.widget.Toolbar
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
-        android:layout_alignParentTop="true"
-        android:layout_alignParentEnd="true"
-        android:layout_alignParentStart="true"
-        android:background="@null"/>
+        android:background="@null"
+        app:titleTextAppearance="@style/TextAppearance.App.Title"/>
 
     <fragment
         android:id="@+id/nav_host_fragment_content_auth"
         android:name="androidx.navigation.fragment.NavHostFragment"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_marginBottom="90dp"
         app:defaultNavHost="true"
         app:navGraph="@navigation/auth_navigation"
-        tools:ignore="FragmentTagUsage" />
+        tools:ignore="FragmentTagUsage"
+        android:layout_above="@id/adView"/>
 
-    <FrameLayout
-        android:id="@+id/adViewContainer"
+    <com.google.android.gms.ads.AdView
+        xmlns:ads="http://schemas.android.com/apk/res-auto"
+        android:id="@+id/adView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_centerHorizontal="true"
         android:layout_alignParentBottom="true"
+        android:layout_gravity="bottom|center_horizontal"
         android:background="@color/transparent"
         android:backgroundTint="@color/transparent"
-        android:layout_gravity="center_horizontal|bottom"/>
+        ads:adSize="SMART_BANNER"
+        ads:adUnitId="@string/activity_auth_bannerAdUnitId"/>
 </RelativeLayout>

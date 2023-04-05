@@ -30,7 +30,7 @@ import com.google.android.gms.ads.MobileAds
 import com.avidco.studentintellect.BuildConfig
 import com.avidco.studentintellect.activities.auth.AuthActivity
 import com.avidco.studentintellect.activities.ui.materials.MaterialsFragment
-import com.avidco.studentintellect.models.FileData
+import com.avidco.studentintellect.models.PdfFile
 import com.avidco.studentintellect.models.ModuleData
 import com.avidco.studentintellect.utils.Utils.imagesDir
 import com.google.android.material.elevation.SurfaceColors
@@ -44,14 +44,13 @@ import java.io.*
 class PdfViewActivity : AppCompatActivity() {
 
     lateinit var binding: ActivityPdfViewBinding
-    private lateinit var fileData: FileData
+    private lateinit var pdfFile: PdfFile
     private lateinit var moduleCode: String
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         installSplashScreen()
         if (Firebase.auth.currentUser == null) {
-            Firebase.auth.signOut()
             startActivity(Intent(this, AuthActivity::class.java))
             finishAffinity()
             return
@@ -69,26 +68,26 @@ class PdfViewActivity : AppCompatActivity() {
         supportActionBar?.setBackgroundDrawable(ColorDrawable(color))
 
 
-        fileData = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            intent.extras?.getParcelable(FILE_DATA, FileData::class.java)!!
+        pdfFile = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            intent.extras?.getParcelable(FILE_DATA, PdfFile::class.java)!!
         } else {
             @Suppress("DEPRECATION")
             intent.extras?.getParcelable(FILE_DATA)!!
         }
         val moduleData = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            intent.extras?.getParcelable(MaterialsFragment.MODULE_DATA, ModuleData::class.java)!!
+            intent.extras?.getParcelable(MODULE_DATA, ModuleData::class.java)!!
         } else {
             @Suppress("DEPRECATION")
-            intent.extras?.getParcelable(MaterialsFragment.MODULE_DATA)!!
+            intent.extras?.getParcelable(MODULE_DATA)!!
         }
         moduleCode = moduleData.code
 
-        supportActionBar?.title = fileData.name + " | " + moduleCode
+        supportActionBar?.title = pdfFile.name + " | " + moduleCode
 
-        binding.viewPager.adapter = SectionsPagerAdapter( fileData , moduleData,this)
+        binding.viewPager.adapter = SectionsPagerAdapter( pdfFile , moduleData,this)
         binding.viewPager.offscreenPageLimit = 2
 
-        if (fileData.solutionsUrl != null){
+        if (pdfFile.solutionsUrl != null){
             TabLayoutMediator(binding.tabLayout, binding.viewPager) { tab, position ->
                 tab.text = if (position == 0) "Questions" else "Solutions"
             }.attach()
@@ -122,7 +121,7 @@ class PdfViewActivity : AppCompatActivity() {
 
     var menuItem : MenuItem? = null
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
-        menuInflater.inflate(R.menu.pdf_menu, menu)
+        menuInflater.inflate(R.menu.menu_pdf, menu)
         this.menuItem = menu.findItem(R.id.item_menu)
         return true
     }
@@ -136,8 +135,8 @@ class PdfViewActivity : AppCompatActivity() {
                 function()
             } else {
                 i++
-                this.file = if (binding.viewPager.currentItem == 0) File(directory, "${fileData.name}($i).pdf")
-                else File(directory, "${fileData.name} Solutions($i).pdf")
+                this.file = if (binding.viewPager.currentItem == 0) File(directory, "${pdfFile.name}($i).pdf")
+                else File(directory, "${pdfFile.name} Solutions($i).pdf")
                 searchFile(this.file, directory) { function() }
             }
         }
@@ -179,10 +178,10 @@ class PdfViewActivity : AppCompatActivity() {
             it.tempDisable()
             dialog.dismiss()
             try {
-                val path = "modules/$moduleCode/materials/${fileData.name}"
+                val path = "modules/$moduleCode/materials/${pdfFile.name}"
                 
-                file = if (binding.viewPager.currentItem == 0) File(documentsDir(moduleCode), "${fileData.name}.pdf")
-                else File(documentsDir(moduleCode), "${fileData.name} Solutions.pdf")
+                file = if (binding.viewPager.currentItem == 0) File(documentsDir(moduleCode), "${pdfFile.name}.pdf")
+                else File(documentsDir(moduleCode), "${pdfFile.name} Solutions.pdf")
                 searchFile(file, documentsDir(moduleCode)) {
                     val uri = FileProvider.getUriForFile(this, BuildConfig.APPLICATION_ID + ".provider", file)
                     val pdfOpenIntent = Intent(Intent.ACTION_VIEW)
@@ -201,9 +200,9 @@ class PdfViewActivity : AppCompatActivity() {
             it.tempDisable()
             dialog.dismiss()
             try {
-                val path = "modules/$moduleCode/materials/${fileData.name}"
-                file = if (binding.viewPager.currentItem == 0) File(documentsDir(moduleCode), "${fileData.name}.pdf")
-                else File(documentsDir(path), "${fileData.name} Solutions.pdf")
+                val path = "modules/$moduleCode/materials/${pdfFile.name}"
+                file = if (binding.viewPager.currentItem == 0) File(documentsDir(moduleCode), "${pdfFile.name}.pdf")
+                else File(documentsDir(path), "${pdfFile.name} Solutions.pdf")
                 searchFile(file, documentsDir(moduleCode)) {
                     val uri = FileProvider.getUriForFile(this, BuildConfig.APPLICATION_ID + ".provider", file)
                     val intent = Intent(Intent.ACTION_SEND)
@@ -256,7 +255,7 @@ class PdfViewActivity : AppCompatActivity() {
 
         var share = false
         binding.cropImageView.setOnCropImageCompleteListener { _, result ->
-            val filename = File(imagesDir(), "/${fileData.name}_${System.currentTimeMillis()}.png")
+            val filename = File(imagesDir(), "/${pdfFile.name}_${System.currentTimeMillis()}.png")
             try {
                 val fos = FileOutputStream(filename)
                 result.bitmap.compress(CompressFormat.PNG, 100, fos)

@@ -9,7 +9,7 @@ import android.content.SharedPreferences.OnSharedPreferenceChangeListener
 import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
-import android.net.Uri
+import android.net.*
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
@@ -23,7 +23,6 @@ import android.widget.TextView
 import android.widget.Toast
 import android.window.OnBackInvokedDispatcher
 import androidx.activity.OnBackPressedCallback
-import androidx.appcompat.app.ActionBar
 import androidx.appcompat.app.AppCompatActivity
 import androidx.browser.customtabs.CustomTabColorSchemeParams
 import androidx.browser.customtabs.CustomTabsIntent
@@ -40,14 +39,16 @@ import androidx.navigation.ui.setupWithNavController
 import androidx.preference.PreferenceManager
 import com.avidco.studentintellect.R
 import com.avidco.studentintellect.activities.auth.AuthActivity
+import com.avidco.studentintellect.activities.ui.database.UserDB
+import com.avidco.studentintellect.activities.ui.modules.MyModulesDatabaseHelper
 import com.avidco.studentintellect.databinding.ActivityMainBinding
+import com.avidco.studentintellect.models.User
 import com.avidco.studentintellect.utils.Utils.appRateCheck
 import com.avidco.studentintellect.utils.Utils.appRatedCheck
 import com.avidco.studentintellect.utils.Utils.askPlayStoreRatings
 import com.avidco.studentintellect.utils.Utils.dpToPx
 import com.avidco.studentintellect.utils.Utils.hideKeyboard
 import com.avidco.studentintellect.utils.Utils.isGooglePlayServicesAvailable
-import com.avidco.studentintellect.utils.Utils.isOnline
 import com.avidco.studentintellect.utils.Utils.openPlayStore
 import com.avidco.studentintellect.utils.Utils.tempDisable
 import com.bumptech.glide.Glide
@@ -71,11 +72,12 @@ class MainActivity : AppCompatActivity() , OnSharedPreferenceChangeListener {
 
     private lateinit var appBarConfiguration: AppBarConfiguration
     lateinit var navController : NavController
-    lateinit var profileViewModel: ProfileViewModel
     private lateinit var navView: NavigationView
     private lateinit var binding: ActivityMainBinding
+    lateinit var userDB: UserDB
     companion object{
         private const val UPDATE_REQUEST_CODE = 12
+        const val USER_ARG = "user_arg"
     }
     private var appUpdateManager : AppUpdateManager? = null
     private var exit = false
@@ -97,14 +99,14 @@ class MainActivity : AppCompatActivity() , OnSharedPreferenceChangeListener {
                             // Called when fullscreen content is dismissed.
                             interstitialAd = null
                             loadInterstitialAd()
-                            navController.navigate(R.id.addModulesFragment)
+                            navController.navigate(R.id.action_modules_fragment)
                         }
 
                         override fun onAdFailedToShowFullScreenContent(adError: AdError) {
                             // Called when fullscreen content failed to show.
                             interstitialAd = null
                             loadInterstitialAd()
-                            navController.navigate(R.id.addModulesFragment)
+                            navController.navigate(R.id.action_modules_fragment)
                         }
 
                         override fun onAdShowedFullScreenContent() {
@@ -130,31 +132,53 @@ class MainActivity : AppCompatActivity() , OnSharedPreferenceChangeListener {
         }
     }
 
+
+    private fun setupNetworkListener() {
+        val networkRequest = NetworkRequest.Builder()
+            .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+            .addTransportType(NetworkCapabilities.TRANSPORT_WIFI)
+            .addTransportType(NetworkCapabilities.TRANSPORT_CELLULAR)
+            .build()
+        val connectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        connectivityManager.requestNetwork(networkRequest, object : ConnectivityManager.NetworkCallback() {
+            override fun onAvailable(network: Network) {
+                super.onAvailable(network)
+                runOnUiThread {
+                    userDB.setIsOnline(true)
+                    binding.noInternet.visibility = View.GONE
+                }
+            }
+
+            override fun onLost(network: Network) {
+                super.onLost(network)
+                runOnUiThread {
+                    userDB.setIsOnline(false)
+                    binding.noInternet.visibility = View.VISIBLE
+                }
+            }
+        })
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         installSplashScreen()
         if (Firebase.auth.currentUser == null) {
-            Firebase.auth.signOut()
             startActivity(Intent(this, AuthActivity::class.java))
             finish()
             return
         }
         currentUser = Firebase.auth.currentUser!!
-
-        profileViewModel = ViewModelProvider(this)[ProfileViewModel::class.java]
-        profileViewModel.init(this)
-
-        profileViewModel.isOnline.observe(this){
-            if (it) {
-                binding.contentMain.noInternet.visibility = View.GONE
-            } else {
-                binding.contentMain.noInternet.visibility = View.VISIBLE
-            }
-        }
-
         binding = ActivityMainBinding.inflate(layoutInflater)
+        val user = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            intent.extras?.getParcelable(USER_ARG, User::class.java)
+        } else {
+            @Suppress("DEPRECATION")
+            intent.extras?.getParcelable(USER_ARG)
+        }
+        userDB = UserDB(this, user)
         setContentView(binding.root)
-        setSupportActionBar(binding.contentMain.toolbar)
+        setSupportActionBar(binding.toolbar)
+        setupNetworkListener()
 
         //Theme
         val color = SurfaceColors.SURFACE_1.getColor(this)
@@ -189,7 +213,7 @@ class MainActivity : AppCompatActivity() , OnSharedPreferenceChangeListener {
         // menu should be considered as top level destinations.
         appBarConfiguration = AppBarConfiguration(
             setOf(
-                R.id.nav_materials
+                R.id.nav_my_materials
             ), drawerLayout
         )
         setupActionBarWithNavController(navController, appBarConfiguration)
@@ -208,7 +232,7 @@ class MainActivity : AppCompatActivity() , OnSharedPreferenceChangeListener {
         headerView.findViewById<TextView>(R.id.user_name).text = currentUser.displayName
         headerView.findViewById<TextView>(R.id.user_email).text = currentUser.email
         headerView.findViewById<CardView>(R.id.profile_layout).setOnClickListener {
-            navController.navigate(R.id.profileFragment)
+            navController.navigate(R.id.action_profile_fragment)
             drawerLayout.close()
         }
 
@@ -252,9 +276,10 @@ class MainActivity : AppCompatActivity() , OnSharedPreferenceChangeListener {
                 .setPositiveButton(getString(R.string.logout)){d,_->
                     d.dismiss()
                     drawerLayout.close()
-                    Firebase.auth.signOut()
-                    startActivity(Intent(this, AuthActivity::class.java))
-                    finishAffinity()
+                    MyModulesDatabaseHelper(this).doOnSignOut {
+                        startActivity(Intent(this, AuthActivity::class.java))
+                        finishAffinity()
+                    }
                 }
                 .show()
             true
@@ -281,7 +306,7 @@ class MainActivity : AppCompatActivity() , OnSharedPreferenceChangeListener {
             if (openBlackboardApp){
                 try {
                     val blackboardIntent = Intent().apply {
-                        setClassName("com.blackboard.android.bbstudent2", "com.blackboard.android.bbstudent2.splash.SplashActivity")
+                        setClassName("com.blackboard.android.bbstudent", "com.blackboard.android.bbstudent.splash.SplashActivity")
                         addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK)
                         addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                     }
@@ -358,8 +383,8 @@ class MainActivity : AppCompatActivity() , OnSharedPreferenceChangeListener {
         MobileAds.initialize(this) {}
         adRequest = AdRequest.Builder().build()
         loadInterstitialAd()
-        binding.contentMain.adView.loadAd(adRequest)
-        binding.contentMain.adView.adListener = object: AdListener() {
+        binding.adView.loadAd(adRequest)
+        binding.adView.adListener = object: AdListener() {
             override fun onAdClicked() {
                 // Code to be executed when the user clicks on an ad.
             }

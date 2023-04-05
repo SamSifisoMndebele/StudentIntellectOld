@@ -56,6 +56,7 @@ class LoadingDialog(private val activity: Activity?) {
             this.doneText = dialog.findViewById(R.id.done_text)
             this.errorText = dialog.findViewById(R.id.error_text)
             this.cancelAction = dialog.findViewById(R.id.cancel_action)
+            this.cancelAction?.visibility = View.GONE
         }
     }
 
@@ -80,7 +81,6 @@ class LoadingDialog(private val activity: Activity?) {
             loadingView?.visibility = View.VISIBLE
             doneView?.visibility = View.GONE
             errorView?.visibility = View.GONE
-            cancelAction?.visibility = View.VISIBLE
 
             shownView = "loadingView"
         }
@@ -112,9 +112,11 @@ class LoadingDialog(private val activity: Activity?) {
         }
 
         Handler(Looper.getMainLooper()).postDelayed({
-            dismiss()
             onSuccess(this.dialog)
-        },2000)
+            Handler(Looper.getMainLooper()).postDelayed({
+                dismiss()
+            },500)
+        },1000)
     }
 
     fun isError(text: String? = null, onFailure : (dialog : Dialog?) -> Unit) {
@@ -137,14 +139,16 @@ class LoadingDialog(private val activity: Activity?) {
         }
 
         Handler(Looper.getMainLooper()).postDelayed({
-            dismiss()
             onFailure(this.dialog)
+            dismiss()
         },3500)
     }
 
     fun onCancel(onCancel : (dialog : Dialog?) -> Unit) {
+        cancelAction?.visibility = View.VISIBLE
         cancelAction?.setOnClickListener {
             onCancel(this.dialog)
+            dismiss()
         }
     }
 

@@ -72,13 +72,31 @@
                     android:scaleType="centerCrop"
                     app:srcCompat="@drawable/ic_pdf_upload"  />
                 <TextView
+                    android:id="@+id/select_material_size"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:lines="1"
+                    android:textColor="@color/grey"
+                    android:textStyle="italic" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:lines="1"
+                    android:text="@string/vl"
+                    android:textColor="@color/grey"
+                    android:singleLine="true" />
+                <TextView
                     android:id="@+id/select_material_text"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="8dp"
+                    android:ellipsize="start"
                     android:text="@string/select_a_study_material_pdf_file"
                     android:textColor="@color/grey"
-                    android:textStyle="italic" />
+                    android:textStyle="italic"
+                    android:singleLine="true" />
             </LinearLayout>
         </RelativeLayout>
 
@@ -128,13 +146,31 @@
                     android:contentDescription="@string/image"
                     app:srcCompat="@drawable/ic_pdf_upload" />
                 <TextView
+                    android:id="@+id/select_solutions_size"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:lines="1"
+                    android:layout_marginStart="8dp"
+                    android:textColor="@color/grey"
+                    android:textStyle="italic" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:lines="1"
+                    android:text="@string/vl"
+                    android:textColor="@color/grey"
+                    android:singleLine="true" />
+                <TextView
                     android:id="@+id/select_solutions_text"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="8dp"
+                    android:ellipsize="start"
                     android:text="@string/select_the_study_material_solutions_pdf_file"
                     android:textColor="@color/grey"
-                    android:textStyle="italic" />
+                    android:textStyle="italic"
+                    android:singleLine="true" />
             </LinearLayout>
         </RelativeLayout>
 
@@ -155,52 +191,6 @@
                 android:paddingVertical="16dp" />
         </com.google.android.material.textfield.TextInputLayout>
 
-        <RelativeLayout
-            android:id="@+id/material_ye"
-            android:gravity="center_vertical"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:visibility="gone"
-            android:focusable="true"
-            android:clickable="true"
-            android:layout_marginTop="8dp">
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/material_year_in"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:clickable="false"
-                android:textColorHint="@color/primaryColor"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
-                <com.google.android.material.textfield.TextInputEditText
-                    android:enabled="false"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="          "
-                    android:hint="@string/material_year"
-                    tools:ignore="HardcodedText" />
-            </com.google.android.material.textfield.TextInputLayout>
-            <Spinner
-                android:id="@+id/material_year_spin"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:background="?attr/selectableItemBackground"
-                android:layout_alignTop="@id/material_year_in"
-                android:layout_alignBottom="@id/material_year_in"
-                android:layout_marginTop="5dp"
-                android:paddingTop="3dp"
-                android:paddingHorizontal="8dp" />
-        </RelativeLayout>
-
-        <TextView
-            android:textColor="@color/red"
-            android:id="@+id/error_response"
-            android:visibility="gone"
-            android:textAlignment="center"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"/>
-
-
         <Button
             android:id="@+id/upload_material"
             android:backgroundTint="@color/primaryVariantColor"
@@ -216,8 +206,8 @@
             android:textSize="18sp"
             android:fontFamily="@font/sofia_pro_medium"
             app:cornerRadius="16dp"
-            app:icon="@drawable/ic_add_icon_white"
-            app:iconTint="@color/white"
+            app:icon="@drawable/ic_pdf"
+            app:iconTint="@null"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             tools:ignore="RtlSymmetry" />

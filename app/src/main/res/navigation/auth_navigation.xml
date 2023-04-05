@@ -22,13 +22,13 @@
     <fragment
         android:id="@+id/RegisterFragment"
         android:name="com.avidco.studentintellect.activities.auth.RegisterFragment"
-        android:label=" "
+        android:label="@string/register"
         tools:layout="@layout/fragment_register">
 
     </fragment>
     <fragment
         android:id="@+id/passwordFragment"
         android:name="com.avidco.studentintellect.activities.auth.PasswordFragment"
-        android:label=" "
+        android:label="@string/reset_password"
         tools:layout="@layout/fragment_password"/>
 </navigation>

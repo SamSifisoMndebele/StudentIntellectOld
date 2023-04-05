@@ -730,5 +730,12 @@
     <string name="grid_view">Grid View</string>
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="modules">Modules</string>
+    <string name="module_info">Module Info</string>
+    <string name="add_a_folder">Add a folder</string>
+    <string name="rename">Rename</string>
+    <string name="folder_info">Folder Info</string>
+    <string name="file_info">File Info</string>
+    <string name="vl">|</string>
 
 </resources>

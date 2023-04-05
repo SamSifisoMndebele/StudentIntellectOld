@@ -6,7 +6,7 @@
 
     <group android:checkableBehavior="single">
         <item
-            android:id="@+id/nav_materials"
+            android:id="@+id/nav_my_materials"
             android:icon="@drawable/ic_books"
             android:title="@string/study_materials" />
         <item
@@ -59,7 +59,7 @@
             android:visible="false"
             android:checkable="false"/>
         <item
-            android:id="@+id/action_settings"
+            android:id="@+id/action_settings_fragment"
             android:icon="@drawable/ic_settings"
             android:title="@string/settings"
             android:checkable="false"/>

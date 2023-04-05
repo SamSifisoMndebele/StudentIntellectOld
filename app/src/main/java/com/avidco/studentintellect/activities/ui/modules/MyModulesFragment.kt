@@ -1,4 +1,4 @@
-package com.avidco.studentintellect.activities.ui.home
+package com.avidco.studentintellect.activities.ui.modules
 
 import android.Manifest
 import android.annotation.SuppressLint
@@ -16,8 +16,7 @@ import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.avidco.studentintellect.activities.ui.MainActivity
 import com.avidco.studentintellect.R
-import com.avidco.studentintellect.databinding.FragmentModulesBinding
-import com.avidco.studentintellect.activities.ui.ProfileViewModel
+import com.avidco.studentintellect.databinding.FragmentMyModulesBinding
 import com.avidco.studentintellect.utils.Utils.appRatedCheck
 import com.avidco.studentintellect.utils.Utils.askPlayStoreRatings
 import com.avidco.studentintellect.utils.Utils.isGooglePlayServicesAvailable
@@ -27,18 +26,13 @@ import com.avidco.studentintellect.utils.Utils.tempDisable
 import com.google.android.gms.ads.*
 import com.google.android.gms.ads.interstitial.InterstitialAd
 import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
-import com.google.firebase.firestore.Query
-import com.google.firebase.firestore.ktx.firestore
-import com.google.firebase.ktx.Firebase
 
-class ModulesFragment : Fragment() {
+class MyModulesFragment : Fragment() {
 
-    private lateinit var binding: FragmentModulesBinding
-    private var adapter : ModulesAdapter? = null
+    private lateinit var binding: FragmentMyModulesBinding
+    private var myModulesAdapter : MyModulesAdapter? = null
 
-    private val database = Firebase.firestore
     private var interstitialAd : InterstitialAd? = null
-
     internal fun loadInterstitialAd() {
         InterstitialAd.load(requireActivity(), getString(R.string.activity_modulesSelectList_interstitialAdUnitId),
             AdRequest.Builder().build(), object : InterstitialAdLoadCallback() {
@@ -58,14 +52,14 @@ class ModulesFragment : Fragment() {
                             println( "Ad dismissed fullscreen content.")
                             //startActivity(Intent(activity, ModulesSelectActivity::class.java))
                             loadInterstitialAd()
-                            (requireActivity() as MainActivity).navController.navigate(R.id.addModulesFragment)
+                            (requireActivity() as MainActivity).navController.navigate(R.id.action_modules_fragment)
                         }
 
                         override fun onAdFailedToShowFullScreenContent(adError: AdError) {
                             // Called when ad fails to show.
                             println( "Ad failed to show fullscreen content.")
                             loadInterstitialAd()
-                            (requireActivity() as MainActivity).navController.navigate(R.id.addModulesFragment)
+                            (requireActivity() as MainActivity).navController.navigate(R.id.action_modules_fragment)
                         }
 
                         override fun onAdImpression() {
@@ -85,7 +79,6 @@ class ModulesFragment : Fragment() {
                 }
             })
     }
-
     private val requestMultiplePermissions = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
         var granted = true
         permissions.entries.forEach {
@@ -97,7 +90,7 @@ class ModulesFragment : Fragment() {
         if(!granted){
             askPermissionsAgain()
         } else {
-            adapter?.gotoMaterialsFragment()
+            myModulesAdapter?.gotoMaterialsFragment()
         }
     }
     private fun askPermissionsAgain() {
@@ -187,44 +180,37 @@ class ModulesFragment : Fragment() {
         }
     }
 
-
-    private lateinit var profileViewModel: ProfileViewModel
-    
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?): View {
-        binding = FragmentModulesBinding.inflate(inflater, container, false)
+        binding = FragmentMyModulesBinding.inflate(inflater, container, false)
         @Suppress("DEPRECATION")
         setHasOptionsMenu(true)
         MobileAds.initialize(requireContext()) {}
         loadInterstitialAd()
 
         binding.loadingAnim.visibility = View.VISIBLE
-        profileViewModel = (activity as MainActivity).profileViewModel
-        profileViewModel.modulesList.observe(viewLifecycleOwner) { modulesList ->
-            if (modulesList.isNullOrEmpty()) {
-                binding.welcomeLayout.visibility = View.VISIBLE
-                binding.moduleListLayout.visibility = View.GONE
-                binding.selectModules.setOnClickListener {
-                    it.tempDisable()
-                    (requireActivity() as MainActivity).navController.navigate(R.id.addModulesFragment)
-                }
-                binding.loadingAnim.visibility = View.GONE
-            }
-            else {
-                database.disableNetwork().addOnCompleteListener {
-                    // Do offline things
-                    binding.welcomeLayout.visibility = View.GONE
-                    binding.moduleListLayout.visibility = View.VISIBLE
-                    val query : Query = database.collection("Modules")
-                        .whereIn("code", modulesList.sortedBy { it.name }.take(10).toMutableList())
+        binding.welcomeLayout.visibility = View.GONE
+        binding.moduleListLayout.visibility = View.VISIBLE
 
-                    adapter = ModulesAdapter(activity as MainActivity, query, requestMultiplePermissions, modulesList.toMutableList())
-                    binding.moduleList.layoutManager = LinearLayoutManager(context)
-                    binding.moduleList.setHasFixedSize(true)
-                    binding.moduleList.adapter = adapter
-                    adapter!!.startListening()
+
+        (activity as MainActivity?)?.apply {
+            val databaseHelper = MyModulesDatabaseHelper(this)
+
+            databaseHelper.myModulesList.observe(this) { myModulesList ->
+                if (myModulesList.isNullOrEmpty()) {
+                    binding.welcomeLayout.visibility = View.VISIBLE
+                    binding.moduleListLayout.visibility = View.GONE
+                    binding.selectModules.setOnClickListener {
+                        it.tempDisable()
+                        navController.navigate(R.id.action_modules_fragment)
+                    }
                     binding.loadingAnim.visibility = View.GONE
-                    database.enableNetwork()
+                } else {
+                    myModulesAdapter = MyModulesAdapter(this, myModulesList, databaseHelper, requestMultiplePermissions)
+                    binding.moduleList.layoutManager = LinearLayoutManager(this)
+                    binding.moduleList.setHasFixedSize(true)
+                    binding.moduleList.adapter = myModulesAdapter
+                    binding.loadingAnim.visibility = View.GONE
                 }
             }
         }
@@ -251,7 +237,7 @@ class ModulesFragment : Fragment() {
         when(item.itemId){
             R.id.item_modules -> {
                 if (interstitialAd == null) {
-                    (requireActivity() as MainActivity).navController.navigate(R.id.addModulesFragment)
+                    (requireActivity() as MainActivity).navController.navigate(R.id.action_modules_fragment)
                 } else {
                     interstitialAd!!.show(requireActivity())
                 }

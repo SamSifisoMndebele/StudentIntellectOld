@@ -24,13 +24,13 @@ import com.avidco.studentintellect.models.ModuleData
 import com.avidco.studentintellect.utils.Constants
 import com.avidco.studentintellect.utils.OpenDocumentContract
 import com.avidco.studentintellect.R
-import com.avidco.studentintellect.activities.ui.ProfileViewModel
-import com.avidco.studentintellect.models.FileData
+import com.avidco.studentintellect.activities.ui.database.UserDB
+import com.avidco.studentintellect.models.PdfFile
 import com.avidco.studentintellect.utils.Extensions.buildMaterialName
+import com.avidco.studentintellect.utils.Utils.fixDecimalsTo
 import com.avidco.studentintellect.utils.Utils.hideKeyboard
-import com.avidco.studentintellect.utils.Utils.isOnline
-import com.avidco.studentintellect.utils.Utils.roundToRand
 import com.avidco.studentintellect.utils.Utils.tempDisable
+import com.avidco.studentintellect.utils.Utils.toRand
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.LoadAdError
 import com.google.android.gms.ads.rewarded.RewardItem
@@ -82,7 +82,7 @@ class UploadFragment222 : Fragment() {
                     val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
                     val sizeIndex = cursor.getColumnIndex(OpenableColumns.SIZE)
                     cursor.moveToFirst()
-                    solutionsSize = (cursor.getDouble(sizeIndex)/1000000).roundToRand().toDouble()
+                    solutionsSize = (cursor.getDouble(sizeIndex)/1000000).fixDecimalsTo(2).toDouble()
                     binding.selectSolutionsText.text = "$solutionsSize MB | "+cursor.getString(nameIndex)
                 }
             } finally {
@@ -103,7 +103,7 @@ class UploadFragment222 : Fragment() {
                     val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
                     val sizeIndex = cursor.getColumnIndex(OpenableColumns.SIZE)
                     cursor.moveToFirst()
-                    materialSize = (cursor.getDouble(sizeIndex)/1000000).roundToRand().toDouble()
+                    materialSize = (cursor.getDouble(sizeIndex)/1000000).fixDecimalsTo(2).toDouble()
                     binding.selectMaterialText.text = "$materialSize MB | "+cursor.getString(nameIndex)
                 }
             } finally {
@@ -142,12 +142,12 @@ class UploadFragment222 : Fragment() {
                     rewardedAd?.show(requireActivity()) { rewardItem->
                         this@UploadFragment222.rewardItem = rewardItem
                         val amount = if (solutionsUri != null) {
-                            (rewardItem.amount.toDouble()/100f).roundToRand()
+                            (rewardItem.amount.toDouble()/100f)
                         } else {
-                            (rewardItem.amount.toDouble()/200f).roundToRand()
+                            (rewardItem.amount.toDouble()/200f)
                         }
-                        binding.rewardBalance.text = amount
-                        Toast.makeText(context, "You earned the R$amount reward.", Toast.LENGTH_SHORT).show()
+                        binding.rewardBalance.text = amount.toRand()
+                        Toast.makeText(context, "You earned the ${amount.toRand()} reward.", Toast.LENGTH_SHORT).show()
                         rewardedAd = null
                         //binding.watchAd.setCardBackgroundColor(resources.getColor(R.color.grey))
                     }
@@ -450,7 +450,7 @@ class UploadFragment222 : Fragment() {
 
         val moduleCode = binding.moduleCode.editText?.text.toString().trim().uppercase()
 
-        if (requireActivity().isOnline()) {
+        if (true) {
             //Check if the module is available
             var checkOnServer = true
             database.collection("modules")
@@ -549,22 +549,22 @@ class UploadFragment222 : Fragment() {
                                         solutionsRef.downloadUrl
                                     }
                                         .addOnSuccessListener { uri ->
-                                            document.set(FileData(document.id, uri.toString()))
+                                            document.set(PdfFile(document.id, uri.toString()))
                                                 .addOnSuccessListener {
                                                     clear()
                                                    // binding.progressLayout.hideProgress()
 
                                                     if (rewardItem != null) {
                                                         val amount = rewardItem!!.amount.toDouble()/100.0
-                                                        Toast.makeText(requireActivity(), "Uploaded successfully.\nYou earned R${amount.roundToRand()} reward.", Toast.LENGTH_SHORT).show()
+                                                        Toast.makeText(requireActivity(), "Uploaded successfully.\nYou earned ${amount.toRand()} reward.", Toast.LENGTH_SHORT).show()
 
                                                         database.collection("users")
                                                             .document(auth.currentUser!!.uid)
-                                                            .update("balance", FieldValue.increment(amount.toDouble()))
+                                                            .update("balance", FieldValue.increment(amount))
 
                                                         val prefs = requireActivity().getSharedPreferences("pref", Context.MODE_PRIVATE)
-                                                        val dataViewModel = ViewModelProvider(requireActivity())[ProfileViewModel::class.java]
-                                                        dataViewModel.setBalance(amount)
+                                                        val userDB = UserDB(context, null)
+                                                        userDB.setBalance(amount)
                                                         binding.rewardBalance.text = getString(R.string.zero_rand)
                                                         rewardItem = null
                                                     } else {
@@ -590,7 +590,7 @@ class UploadFragment222 : Fragment() {
                                     }
                                 }
                                 else {
-                                    document.set(FileData(document.id, materialUri.toString(), ))
+                                    document.set(PdfFile(document.id, materialUri.toString(), ))
                                         .addOnSuccessListener {
                                             clear()
                                            // binding.progressLayout.hideProgress()
@@ -602,11 +602,11 @@ class UploadFragment222 : Fragment() {
                                                     .document(auth.currentUser!!.uid)
                                                     .update("balance", FieldValue.increment(amount.toDouble()))
 
-                                                Toast.makeText(requireActivity(), "Uploaded successfully.\nYou earned R${amount.roundToRand()} reward.", Toast.LENGTH_SHORT).show()
+                                                Toast.makeText(requireActivity(), "Uploaded successfully.\nYou earned ${amount.toRand()} reward.", Toast.LENGTH_SHORT).show()
 
                                                 val prefs = requireActivity().getSharedPreferences("pref", Context.MODE_PRIVATE)
-                                                val dataViewModel = ViewModelProvider(requireActivity())[ProfileViewModel::class.java]
-                                                dataViewModel.setBalance(amount)
+                                                val userDB = UserDB(context)
+                                                userDB.setBalance(amount)
                                                 binding.rewardBalance.text = getString(R.string.zero_rand)
                                                 rewardItem = null
                                             } else {

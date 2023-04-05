@@ -31,10 +31,10 @@
     </style>
 
     <style name="TextAppearance.App.Title" parent="TextAppearance.Material3.ActionBar.Title">
-        <item name="fontFamily">@font/bold</item>
+        <item name="fontFamily">@font/sofia_pro_bold</item>
         <item name="android:textSize">20sp</item>
         <item name="android:textStyle">bold</item>
-        <item name="android:fontFamily">@font/bold</item>
+        <item name="android:fontFamily">@font/sofia_pro_bold</item>
         <item name="android:textColor">#00695C</item>
     </style>
 

@@ -5,83 +5,85 @@ import android.content.Context.MODE_PRIVATE
 import android.content.res.ColorStateList
 import android.os.*
 import android.view.*
-import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.SearchView
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.withResumed
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import com.avidco.studentintellect.R
 import com.avidco.studentintellect.activities.ui.MainActivity
-import com.avidco.studentintellect.activities.ui.materials.database.DatabasesConnect.getFilesDataList
-import com.avidco.studentintellect.activities.ui.materials.database.DatabasesConnect.getFoldersDataList
-import com.avidco.studentintellect.activities.ui.materials.database.FilesDatabaseHelper
-import com.avidco.studentintellect.activities.ui.materials.database.FoldersDatabaseHelper
-import com.avidco.studentintellect.activities.ui.materials.edit.EditFileFragment
-import com.avidco.studentintellect.activities.ui.materials.edit.EditFolderFragment
+import com.avidco.studentintellect.activities.ui.database.FirestoreFiles
+import com.avidco.studentintellect.activities.ui.database.FirestoreFiles.Companion.addOnFailureListener
+import com.avidco.studentintellect.activities.ui.database.FirestoreFiles.Companion.addOnSuccessListener
+import com.avidco.studentintellect.activities.ui.database.FirestoreFolders
+import com.avidco.studentintellect.activities.ui.database.FirestoreFolders.Companion.addOnFailureListener
+import com.avidco.studentintellect.activities.ui.database.FirestoreFolders.Companion.addOnSuccessListener
+import com.avidco.studentintellect.activities.ui.materials.Utils.reloadFilesList
+import com.avidco.studentintellect.activities.ui.materials.files.EditFileFragment
+import com.avidco.studentintellect.activities.ui.materials.folders.EditFolderFragment
+import com.avidco.studentintellect.activities.ui.materials.files.FilesAdapter
+import com.avidco.studentintellect.activities.ui.materials.folders.FoldersAdapter
 import com.avidco.studentintellect.databinding.FragmentMaterialsBinding
-import com.avidco.studentintellect.models.FileData
-import com.avidco.studentintellect.models.FolderData
+import com.avidco.studentintellect.models.Folder
 import com.avidco.studentintellect.models.ModuleData
-import com.avidco.studentintellect.utils.LoadingDialog
-import com.avidco.studentintellect.utils.Utils.dpToPx
-import com.avidco.studentintellect.utils.Utils.isOnline
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
-import com.google.firebase.database.collection.LLRBNode
-import com.google.firebase.firestore.Source
-import com.google.firebase.firestore.ktx.firestore
-import com.google.firebase.ktx.Firebase
 import kotlinx.coroutines.*
 
 
 class MaterialsFragment : Fragment() {
 
     private lateinit var binding: FragmentMaterialsBinding
-    private var foldersAdapter : FoldersAdapter? = null
-    private var filesAdapter : FilesAdapter? = null
-    private var isListView = false
 
-    private lateinit var moduleData: ModuleData
-    private var folderData: FolderData? = null
-    private lateinit var folderPath: String
     private lateinit var path: String
+    private var databaseFolders: FirestoreFolders? = null
+    private var databaseFiles: FirestoreFiles? = null
+    private var adapterFolders : FoldersAdapter? = null
+    private var adapterFiles : FilesAdapter? = null
+
+
     private var isOnline = true
+    private var numberOfLoads = 0
+
+    private lateinit var myModuleData: ModuleData
+    private var folder: Folder? = null
+    private var pathDisplayText: String? = null
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putBoolean("editMode", editMode)
+        outState.putParcelable(MY_MODULE_DATA, myModuleData)
+        outState.putParcelable(FOLDER_DATA, folder)
+        outState.putString(PATH_DISPLAY_TEXT, pathDisplayText)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        (activity as MainActivity?)?.let {
-            it.profileViewModel.checkIsOnline(it)
-        }
+        val myArgs = savedInstanceState ?: requireArguments()
 
-        isListView = requireActivity().getSharedPreferences("view_type", MODE_PRIVATE)
-            .getBoolean("is_materials_list_view", false)
-        editMode = requireArguments().getBoolean("editMode", false)
-
-        moduleData = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            requireArguments().getParcelable(MODULE_DATA, ModuleData::class.java)!!
+        editMode = myArgs.getBoolean("editMode", false)
+        myModuleData = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            myArgs.getParcelable(MY_MODULE_DATA, ModuleData::class.java)!!
         } else {
             @Suppress("DEPRECATION")
-            requireArguments().getParcelable(MODULE_DATA)!!
+            myArgs.getParcelable(MY_MODULE_DATA)!!
         }
-        folderData = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            requireArguments().getParcelable(FOLDER_DATA, FolderData::class.java)
+        folder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            myArgs.getParcelable(FOLDER_DATA, Folder::class.java)
         } else {
             @Suppress("DEPRECATION")
-            requireArguments().getParcelable(FOLDER_DATA)
+            myArgs.getParcelable(FOLDER_DATA)
         }
-
-        val modulePath = "Modules/${moduleData.code}"
-        folderPath = folderData?.path ?: "" //if (folderData != null) "/Folders/${folderData.name}" else ""
-        path = modulePath + folderPath
+        pathDisplayText = if (folder == null){
+            null
+        } else{
+            myArgs.getString(PATH_DISPLAY_TEXT)
+        }
     }
 
-    private var numberOfLoads = 0
+    override fun onStart() {
+        super.onStart()
+        (activity as MainActivity?)?.supportActionBar?.title = myModuleData.code + " Materials"
+    }
 
-    private var reloadOnUp = false
-
-    @SuppressLint("NotifyDataSetChanged")
+    @SuppressLint("NotifyDataSetChanged", "SetTextI18n")
     @OptIn(DelicateCoroutinesApi::class)
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -89,99 +91,125 @@ class MaterialsFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View {
         binding = FragmentMaterialsBinding.inflate(inflater, container,false)
-        (activity as MainActivity?)?.supportActionBar?.title = moduleData.code + " Materials"
-
-        folderPath.replace("/Folders", "").removePrefix("/").ifEmpty {
-            binding.pathDirectoryText.visibility = View.GONE
-            null
-        }?.let {
-            binding.pathDirectoryText.visibility = View.VISIBLE
-            binding.pathDirectoryText.text = it
-        }
-
-
-        (activity as MainActivity?)?.profileViewModel?.isOnline?.observe(viewLifecycleOwner) {
-            isOnline = it
-        }
-
-        val nameFolders = path.replace(" ", "")
-            .replace("Modules", "Folders")
-            .replace("/", "_")
-        val databaseHelperFolders = FoldersDatabaseHelper(activity, "${nameFolders}_Table")
-        val nameFiles = path.replace(" ", "")
-            .replace("Modules", "Files")
-            .replace("/", "_")
-        val databaseHelperFiles = FilesDatabaseHelper(activity, "${nameFiles}_Table")
-
-        foldersAdapter = (activity as MainActivity?)?.let {
-            FoldersAdapter(it,folderData, moduleData, databaseHelperFolders, this@MaterialsFragment)
-        }
-        itemViewTypeItem(isListView, null, binding.foldersList)
-        binding.foldersList.setHasFixedSize(true)
-        binding.foldersList.adapter = foldersAdapter
-
-        filesAdapter = (activity as MainActivity?)?.let {
-            FilesAdapter(it,folderData, moduleData, databaseHelperFiles)
-        }
-        itemViewTypeItem(isListView, null, binding.filesList)
-        binding.filesList.setHasFixedSize(true)
-        binding.filesList.adapter = filesAdapter
-        filesAdapter!!.loadAd()
-
-
-        if (reloadOnUp){
-            GlobalScope.launch {
-                val folderDataListDeferred = async { (activity as MainActivity?)?.let { getFoldersDataList(it, path, isOnline) } }
-                val folderDataList = folderDataListDeferred.await()
-                (activity as MainActivity?)?.runOnUiThread {
-                    folderDataList?.let { foldersAdapter?.setFoldersList(it) }
-                }
-
-                val fileDataListDeferred = async { (activity as MainActivity?)?.let { getFilesDataList(it, path, isOnline) } }
-                val fileDataList = fileDataListDeferred.await()
-                (activity as MainActivity?)?.runOnUiThread {
-                    fileDataList?.let { filesAdapter?.setFilesList(it) }
-                    binding.swipeRefresh.isRefreshing = false
-                }
-            }
-        }
-        //binding.swipeRefresh.setSlingshotDistance(64.dpToPx().toInt())
-        binding.swipeRefresh.setOnRefreshListener {
-            GlobalScope.launch {
-                val folderDataListDeferred = async { (activity as MainActivity?)?.let { getFoldersDataList(it, path, numberOfLoads<3&&isOnline) } }
-                val folderDataList = folderDataListDeferred.await()
-                (activity as MainActivity?)?.runOnUiThread {
-                    folderDataList?.let { foldersAdapter?.setFoldersList(it) }
-                }
-
-                val fileDataListDeferred = async { (activity as MainActivity?)?.let { getFilesDataList(it, path, numberOfLoads<3&&isOnline) } }
-                val fileDataList = fileDataListDeferred.await()
-                (activity as MainActivity?)?.runOnUiThread {
-                    fileDataList?.let { filesAdapter?.setFilesList(it) }
-                    binding.swipeRefresh.isRefreshing = false
-                }
-
-                numberOfLoads++
-            }
-        }
-
         @Suppress("DEPRECATION")
         setHasOptionsMenu(true)
+        binding.swipeRefresh.isRefreshing = true
+
+
+        if (pathDisplayText == null){
+            binding.pathDisplayView.visibility = View.GONE
+        } else{
+            binding.pathDisplayView.visibility = View.VISIBLE
+            binding.pathDisplayView.text = pathDisplayText+ "/${folder?.name?:"\b"}"
+        }
+
+        path = if (folder?.path.isNullOrEmpty()) "Modules/${myModuleData.id}" else folder!!.path
+
+        val foldersTableName = path.replace(" ", "")
+            .replace("Modules", "Folders")
+            .replace("/", "_")+"_Table"
+        val filesTableName = path.replace(" ", "")
+            .replace("Modules", "Files")
+            .replace("/", "_")+"_Table"
+
+
+        (activity as MainActivity?)?.apply {
+            userDB.isOnline.observe(viewLifecycleOwner) { isOnline = it }
+
+            databaseFolders = FirestoreFolders(requireContext(), path, foldersTableName)
+            databaseFolders!!.get().addOnSuccessListener{_,_->}
+            databaseFolders!!.foldersList.observe(this) { foldersList ->
+                if (foldersList.isNullOrEmpty()) {
+                    binding.foldersList.visibility = View.GONE
+                } else {
+                    binding.foldersList.visibility = View.VISIBLE
+                    adapterFolders = FoldersAdapter(this, myModuleData, folder, databaseFolders!!, this@MaterialsFragment,
+                        if(pathDisplayText != null) pathDisplayText+"/${folder!!.name}" else myModuleData.code)
+                    binding.foldersList.setHasFixedSize(true)
+                    binding.foldersList.adapter = adapterFolders
+                }
+            }
+
+
+            databaseFiles = FirestoreFiles(this, path, filesTableName)
+            databaseFiles!!.get().addOnSuccessListener{_,_->}
+            databaseFiles!!.pdfFilesList.observe(this) { filesList ->
+                binding.swipeRefresh.isRefreshing = false
+                if (filesList.isNullOrEmpty()) {
+                    binding.filesList.visibility = View.GONE
+                } else {
+                    binding.filesList.visibility = View.VISIBLE
+                    adapterFiles = FilesAdapter(this,folder, myModuleData, databaseFiles!!,
+                        if(pathDisplayText != null) pathDisplayText+"/${folder!!.name}" else myModuleData.code)
+                    binding.filesList.setHasFixedSize(true)
+                    binding.filesList.adapter = adapterFiles
+                    adapterFiles!!.loadAd()
+                }
+            }
+
+
+            binding.swipeRefresh.setOnRefreshListener {
+                if (numberOfLoads<3&&isOnline) {
+                    databaseFolders?.get(numberOfLoads<1)
+                        ?.addOnFailureListener {
+                            binding.swipeRefresh.isRefreshing = false
+                            AlertDialog.Builder(this)
+                                .setMessage("Folders\n" +
+                                        "\nError:\n"+it.message)
+                                .show()
+                        }
+                        ?.addOnSuccessListener { updatedList, deletedList ->
+                            binding.swipeRefresh.isRefreshing = false
+                            numberOfLoads++
+
+                            AlertDialog.Builder(this)
+                                .setMessage(
+                                    "Folders\n\nUpdated List\n" + updatedList.joinToString("\n") { it.name }
+                                            + "\n\nDeleted List\n" + deletedList.joinToString("\n") { it.name }
+                                )
+                                .show()
+
+                        }
+                    databaseFiles?.get(numberOfLoads<1)
+                        ?.addOnFailureListener {
+                            binding.swipeRefresh.isRefreshing = false
+                            AlertDialog.Builder(this)
+                                .setMessage("Files\n" +
+                                        "\nError:\n"+it.message)
+                                .show()
+                        }
+                        ?.addOnSuccessListener { updatedList, deletedList ->
+                            binding.swipeRefresh.isRefreshing = false
+                            numberOfLoads++
+
+                            AlertDialog.Builder(this)
+                                .setMessage(
+                                    "Files\n\nUpdated List\n" + updatedList.joinToString("\n") { it.name }
+                                            + "\n\nDeleted List\n" + deletedList.joinToString("\n") { it.name }
+                                )
+                                .show()
+                        }
+                } else
+                    binding.swipeRefresh.isRefreshing = false
+            }
+        }
+
 
         binding.addFolder.setOnClickListener {
             val bundle = Bundle().apply {
-                putParcelable(EditFolderFragment.MODULE_DATA, moduleData)
-                putParcelable(EditFolderFragment.PARENT_FOLDER_DATA, folderData)
+                putParcelable(EditFolderFragment.MY_MODULE_DATA, myModuleData)
+                putParcelable(EditFolderFragment.PARENT_FOLDER_DATA, folder)
+                putString(EditFolderFragment.PATH_DISPLAY_TEXT, if(pathDisplayText != null) pathDisplayText+"/${folder!!.name}" else myModuleData.code)
             }
-            (activity as MainActivity?)?.navController?.navigate(R.id.editFolderFragment, bundle)
+            (activity as MainActivity?)?.navController?.navigate(R.id.action_edit_folder_fragment, bundle)
         }
         binding.addFile.setOnClickListener {
             val bundle = Bundle().apply {
-                putParcelable(EditFileFragment.MODULE_DATA, moduleData)
-                putParcelable(EditFileFragment.PARENT_FOLDER_DATA, folderData)
+                putParcelable(EditFileFragment.MY_MODULE_DATA, myModuleData)
+                putParcelable(EditFileFragment.PARENT_FOLDER_DATA, folder)
+                putString(EditFileFragment.PATH_DISPLAY_TEXT, if(pathDisplayText != null) pathDisplayText+"/${folder!!.name}" else myModuleData.code)
             }
-            (activity as MainActivity?)?.navController?.navigate(R.id.editFileFragment, bundle)
-            //(activity as MainActivity?)?.navController?.navigate(R.id.action_materialsFragment_to_editFileFragment, bundle)
+            (activity as MainActivity?)?.navController?.navigate(R.id.action_edit_file_fragment, bundle)
         }
         return binding.root
     }
@@ -189,12 +217,12 @@ class MaterialsFragment : Fragment() {
     override fun onResume() {
         super.onResume()
         Handler(Looper.getMainLooper()).postDelayed({
-            foldersAdapter?.checkItemChanged()
-            filesAdapter?.checkItemChanged()
+            adapterFolders?.checkItemChanged()
+            adapterFiles?.checkItemChanged()
         },300)
     }
 
-    private var clickable = true
+
     var editMode = false
     @Deprecated("Deprecated in Java")
     @Suppress("DEPRECATION")
@@ -214,24 +242,26 @@ class MaterialsFragment : Fragment() {
                 return false
             }
             override fun onQueryTextChange(string: String?): Boolean {
-                foldersAdapter?.filter?.filter(string)
-                filesAdapter?.filter?.filter(string)
+                adapterFolders?.filter?.filter(string)
+                adapterFiles?.filter?.filter(string)
                 return false
             }
         })
-        val viewType = menu.findItem(R.id.view_type)
-        itemViewTypeItem(isListView, viewType, null)
-        viewType.setOnMenuItemClickListener {
-            if (clickable){
-                itemViewTypeItem(foldersAdapter?.toggleItemViewType() == true, it, binding.foldersList)
-                itemViewTypeItem(filesAdapter?.toggleItemViewType() == true, it, binding.filesList)
-                clickable = false
-                Handler(Looper.getMainLooper()).postDelayed({
-                    clickable = true
-                }, 500)
-            }
-            true
+
+        val viewTypeItem = menu.findItem(R.id.view_type)
+        val viewTypePrefs = context?.getSharedPreferences("materials_view_type", MODE_PRIVATE)
+        if (viewTypePrefs?.getBoolean("is_list_view", true) == true){
+            viewTypeItem?.setIcon(R.drawable.ic_grid)
+            viewTypeItem?.setTitle(R.string.grid_view)
+            binding.filesList.layoutManager = LinearLayoutManager(context)
+            binding.foldersList.layoutManager = LinearLayoutManager(context)
+        } else {
+            viewTypeItem?.setIcon(R.drawable.ic_list)
+            viewTypeItem?.setTitle(R.string.list_view)
+            binding.filesList.layoutManager = GridLayoutManager(context, 2)
+            binding.foldersList.layoutManager = GridLayoutManager(context, 2)
         }
+
 
         val editMaterials = menu.findItem(R.id.edit_materials)
         editMaterialsItem(editMode, editMaterials)
@@ -240,20 +270,33 @@ class MaterialsFragment : Fragment() {
             editMaterialsItem(editMode, editMaterials)
             true
         }
-
     }
 
-    private fun itemViewTypeItem(isListView : Boolean, item: MenuItem?, recyclerView: RecyclerView?) {
-        if (isListView){
-            item?.setIcon(R.drawable.ic_grid)
-            item?.setTitle(R.string.grid_view)
-            recyclerView?.layoutManager = LinearLayoutManager(context)
-        } else {
-            item?.setIcon(R.drawable.ic_list)
-            item?.setTitle(R.string.list_view)
-            recyclerView?.layoutManager = GridLayoutManager(context, 2)
+    private var isListView = true
+    @Deprecated("Deprecated in Java")
+    @Suppress("DEPRECATION")
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        when(item.itemId){
+            R.id.view_type -> {
+                val viewTypePrefs = context?.getSharedPreferences("materials_view_type", MODE_PRIVATE)
+                val isListView = viewTypePrefs?.getBoolean("is_list_view", true) == true
+                val isCommitted = viewTypePrefs?.edit()?.putBoolean("is_list_view", !isListView)?.commit() == true
+                if (isCommitted && isListView) {
+                    item.setIcon(R.drawable.ic_list)
+                    item.setTitle(R.string.list_view)
+                    binding.filesList.layoutManager = GridLayoutManager(context, 2)
+                    binding.foldersList.layoutManager = GridLayoutManager(context, 2)
+                } else {
+                    item.setIcon(R.drawable.ic_grid)
+                    item.setTitle(R.string.grid_view)
+                    binding.filesList.layoutManager = LinearLayoutManager(context)
+                    binding.foldersList.layoutManager = LinearLayoutManager(context)
+                }
+            }
         }
+        return super.onOptionsItemSelected(item)
     }
+
     private fun editMaterialsItem(editMode : Boolean, item: MenuItem) {
         if (editMode){
             item.setIcon(R.drawable.ic_edit_off)
@@ -269,7 +312,8 @@ class MaterialsFragment : Fragment() {
     }
 
     companion object {
-        const val MODULE_DATA = "arg_module_data"
+        const val MY_MODULE_DATA = "arg_my_module_data"
         const val FOLDER_DATA = "arg_folder_data"
+        const val PATH_DISPLAY_TEXT = "arg_path_display_text"
     }
 }

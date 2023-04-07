@@ -9,15 +9,14 @@ import android.os.Handler
 import android.os.Looper
 import android.view.*
 import android.widget.*
+import androidx.appcompat.app.AlertDialog
 import androidx.recyclerview.widget.RecyclerView
 import com.avidco.studentintellect.R
-import com.avidco.studentintellect.activities.pdfview.PdfViewActivity
+import com.avidco.studentintellect.activities.pdfview.PdfFileActivity
 import com.avidco.studentintellect.activities.ui.MainActivity
-import com.avidco.studentintellect.activities.ui.database.FirestoreFiles
-import com.avidco.studentintellect.activities.ui.database.FirestoreFiles.Companion.addOnSuccessListener
+import com.avidco.studentintellect.activities.ui.database.FilesFirestoreDatabase
+import com.avidco.studentintellect.activities.ui.database.FilesFirestoreDatabase.Companion.addOnSuccessListener
 import com.avidco.studentintellect.models.*
-import com.avidco.studentintellect.utils.Utils
-import com.avidco.studentintellect.utils.Utils.fileExists
 import com.avidco.studentintellect.utils.Utils.hideKeyboard
 import com.avidco.studentintellect.utils.Utils.tempDisable
 import com.daimajia.numberprogressbar.NumberProgressBar
@@ -28,32 +27,29 @@ import com.google.android.gms.ads.LoadAdError
 import com.google.android.gms.ads.interstitial.InterstitialAd
 import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
 import com.google.firebase.auth.ktx.auth
-import com.google.firebase.firestore.FieldValue
-import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
-import com.google.firebase.storage.ktx.storage
-import java.io.File
 import java.text.DateFormat
 import java.util.*
 
-class FilesAdapter(val activity: MainActivity, private val parentFolder : Folder?, private val moduleData : ModuleData,
-                   private val databaseFiles: FirestoreFiles, private val pathDisplayText : String
+class FilesAdapter(val activity: MainActivity, private val parentFolder : Folder?, private val module : Module,
+                   private val databaseFiles: FilesFirestoreDatabase, private val pathDisplayText : String
 ) :
     RecyclerView.Adapter<FilesAdapter.MaterialViewHolder>(), Filterable {
     private var filesFiltered = databaseFiles.pdfFilesList.value?.toMutableList()?: mutableListOf()
     private var interstitialAd : InterstitialAd? = null
-    private var refreshPosition : Int? = null
-    private val materialsPath ="Modules/${moduleData.id}" + (parentFolder?.path?:"")
+    //private var refreshPosition : Int? = null
+    //private val materialsPath ="Modules/${module.id}" + (parentFolder?.path?:"")
     private val isListView : Boolean
         get() {
             val viewTypePrefs = activity.getSharedPreferences("materials_view_type", Context.MODE_PRIVATE)
             return viewTypePrefs.getBoolean("is_list_view", true)
         }
 
-    private fun pdfViewActivity(pdfFile : PdfFile) {
-        val intent = Intent(activity, PdfViewActivity::class.java).apply {
-            putExtra(PdfViewActivity.MODULE_DATA, moduleData)
-            putExtra(PdfViewActivity.FILE_DATA, pdfFile)
+    private fun gotoPdfFileActivity(pdfFile : PdfFile) {
+        val intent = Intent(activity, PdfFileActivity::class.java).apply {
+            val folder = parentFolder?:Folder(module.id, module.name, "Modules/"+module.id)
+            putExtra(PdfFileActivity.ARG_PARENT_FOLDER, folder)
+            putExtra(PdfFileActivity.ARG_PDF_FILE, pdfFile)
         }
         activity.startActivity(intent)
     }
@@ -70,15 +66,15 @@ class FilesAdapter(val activity: MainActivity, private val parentFolder : Folder
         })
     }
 
-    private fun showAd(materialData : PdfFile){
+    private fun showAd(pdfFile : PdfFile){
         interstitialAd!!.fullScreenContentCallback = object: FullScreenContentCallback() {
             override fun onAdClicked() {}
             override fun onAdDismissedFullScreenContent() {
-                pdfViewActivity(materialData)
+                gotoPdfFileActivity(pdfFile)
                 loadAd()
             }
             override fun onAdFailedToShowFullScreenContent(adError: AdError) {
-                pdfViewActivity(materialData)
+                gotoPdfFileActivity(pdfFile)
                 loadAd()
             }
             override fun onAdImpression() {}
@@ -87,9 +83,9 @@ class FilesAdapter(val activity: MainActivity, private val parentFolder : Folder
         interstitialAd!!.show(activity)
     }
 
-    fun checkItemChanged() {
+    /*fun checkItemChanged() {
         refreshPosition?.let { notifyItemChanged(it) }
-    }
+    }*/
 
     data class Progress(val bytesTransferred : Long = 0, val totalByteCount: Long = 0)
     inner class MaterialViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
@@ -109,7 +105,7 @@ class FilesAdapter(val activity: MainActivity, private val parentFolder : Folder
                 errorLayout.visibility = View.GONE
             }, 3000)
         }
-        private fun checkIfDownloaded(materialName: String){
+        /*private fun checkIfDownloaded(materialName: String){
             if (fileExists(materialsPath, materialName,0)){
                 materialDownload.visibility = View.GONE
                 materialDownloaded.visibility = View.VISIBLE
@@ -117,22 +113,22 @@ class FilesAdapter(val activity: MainActivity, private val parentFolder : Folder
                 materialDownloaded.visibility = View.GONE
                 materialDownload.visibility = View.VISIBLE
             }
-        }
+        }*/
         fun bind(pdfFile: PdfFile, position: Int) {
             titleMaterial.text = pdfFile.name
 
-            checkIfDownloaded(pdfFile.name)
+            //checkIfDownloaded(pdfFile.name)
 
             itemView.setOnClickListener {
-                it.tempDisable(2000)
+                it.tempDisable()
                 activity.hideKeyboard(it)
 
-                refreshPosition = if (fileExists(materialsPath, pdfFile.id,0)) null else position
+                //refreshPosition = if (fileExists(materialsPath, pdfFile.id,0)) null else position
 
                 if (interstitialAd != null) {
                     showAd(pdfFile)
                 } else {
-                    pdfViewActivity(pdfFile)
+                    gotoPdfFileActivity(pdfFile)
                 }
 
                 /*if (fileExists(materialsPath, pdfFile.id, 0)) {
@@ -141,7 +137,7 @@ class FilesAdapter(val activity: MainActivity, private val parentFolder : Folder
                     if (interstitialAd != null) {
                         showAd(pdfFile)
                     } else {
-                        pdfViewActivity(pdfFile)
+                        gotoPdfFileActivity(pdfFile)
                     }
                 } else {
                     showError(activity.getString(R.string.no_internet_connection))
@@ -158,12 +154,13 @@ class FilesAdapter(val activity: MainActivity, private val parentFolder : Folder
             }
 
 
-            checkDownloads(pdfFile, false)
+            materialDownload.visibility = View.GONE
+            //checkDownloads(pdfFile, false)
             materialDownload.setOnClickListener {
                 it.tempDisable()
                 progressLayout.visibility = View.VISIBLE
 
-                checkDownloads(pdfFile,  true)
+                //checkDownloads(pdfFile,  true)
             }
 
         }
@@ -177,9 +174,31 @@ class FilesAdapter(val activity: MainActivity, private val parentFolder : Folder
                 popupMenu.setForceShowIcon(true)
             popupMenu.menuInflater.inflate(R.menu.popup_menu_file, popupMenu.menu)
 
-            activity.userDB.userType.observe(activity) {
-                when(it){
-                    UserType.ADMIN -> {
+            when(activity.userDB?.userType?.value){
+                UserType.ADMIN -> {
+                    popupMenu.menu.findItem(R.id.item_delete).isVisible = true
+                    popupMenu.menu.findItem(R.id.item_edit).isVisible = true
+                    popupMenu.setOnMenuItemClickListener { item ->
+                        when(item.itemId) {
+                            R.id.item_delete -> {
+                                databaseFiles.delete(pdfFile.id)
+                                    .addOnSuccessListener {  }
+                            }
+                            R.id.item_edit -> {
+                                val bundle = Bundle().apply {
+                                    putParcelable(EditFileFragment.ARG_MY_MODULE, module)
+                                    putParcelable(EditFileFragment.ARG_PARENT_FOLDER, parentFolder)
+                                    putParcelable(EditFileFragment.ARG_PDF_FILE, pdfFile)
+                                    putString(EditFileFragment.ARG_PATH_DISPLAY_TEXT, pathDisplayText)
+                                }
+                                (activity as MainActivity?)?.navController?.navigate(R.id.action_edit_file_fragment, bundle)
+                            }
+                        }
+                        true
+                    }
+                }
+                UserType.STUDENT, UserType.TUTOR -> {
+                    if (pdfFile.uploader.uid == Firebase.auth.currentUser?.uid){
                         popupMenu.menu.findItem(R.id.item_delete).isVisible = true
                         popupMenu.menu.findItem(R.id.item_edit).isVisible = true
                         popupMenu.setOnMenuItemClickListener { item ->
@@ -190,43 +209,19 @@ class FilesAdapter(val activity: MainActivity, private val parentFolder : Folder
                                 }
                                 R.id.item_edit -> {
                                     val bundle = Bundle().apply {
-                                        putParcelable(EditFileFragment.MY_MODULE_DATA, moduleData)
-                                        putParcelable(EditFileFragment.PARENT_FOLDER_DATA, parentFolder)
-                                        putParcelable(EditFileFragment.FILE_DATA, pdfFile)
-                                        putString(EditFileFragment.PATH_DISPLAY_TEXT, pathDisplayText)
+                                        putParcelable(EditFileFragment.ARG_MY_MODULE, module)
+                                        putParcelable(EditFileFragment.ARG_PARENT_FOLDER, parentFolder)
+                                        putParcelable(EditFileFragment.ARG_PDF_FILE, pdfFile)
+                                        putString(EditFileFragment.ARG_PATH_DISPLAY_TEXT, pathDisplayText)
                                     }
                                     (activity as MainActivity?)?.navController?.navigate(R.id.action_edit_file_fragment, bundle)
                                 }
                             }
                             true
                         }
-                    }
-                    UserType.STUDENT, UserType.TUTOR -> {
-                        if (pdfFile.uploader.uid == Firebase.auth.currentUser?.uid){
-                            popupMenu.menu.findItem(R.id.item_delete).isVisible = true
-                            popupMenu.menu.findItem(R.id.item_edit).isVisible = true
-                            popupMenu.setOnMenuItemClickListener { item ->
-                                when(item.itemId) {
-                                    R.id.item_delete -> {
-                                        databaseFiles.delete(pdfFile.id)
-                                            .addOnSuccessListener {  }
-                                    }
-                                    R.id.item_edit -> {
-                                        val bundle = Bundle().apply {
-                                            putParcelable(EditFileFragment.MY_MODULE_DATA, moduleData)
-                                            putParcelable(EditFileFragment.PARENT_FOLDER_DATA, parentFolder)
-                                            putParcelable(EditFileFragment.FILE_DATA, pdfFile)
-                                            putString(EditFileFragment.PATH_DISPLAY_TEXT, pathDisplayText)
-                                        }
-                                        (activity as MainActivity?)?.navController?.navigate(R.id.action_edit_file_fragment, bundle)
-                                    }
-                                }
-                                true
-                            }
-                        } else {
-                            popupMenu.menu.findItem(R.id.item_delete).isVisible = false
-                            popupMenu.menu.findItem(R.id.item_edit).isVisible = false
-                        }
+                    } else {
+                        popupMenu.menu.findItem(R.id.item_delete).isVisible = false
+                        popupMenu.menu.findItem(R.id.item_edit).isVisible = false
                     }
                 }
             }
@@ -244,24 +239,24 @@ class FilesAdapter(val activity: MainActivity, private val parentFolder : Folder
             popupMenu.menu.findItem(R.id.item_downloads).title = "${pdfFile.downloads} downloads"
             val dateInstance = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT)
             popupMenu.menu.findItem(R.id.item_updated_date).title = "Updated at " +
-                    pdfFile.timeUpdated.toDate().let { dateInstance.format(it) }
+                    pdfFile.timeUpdated?.toDate()?.let { dateInstance.format(it) }
             popupMenu.menu.findItem(R.id.item_verified).title = if (pdfFile.isVerified) "Verified" else "Not Verified"
 
             return popupMenu
         }
 
-        private fun calculateProgress(materialProgress : Progress, solutionsTask : Progress) : Int {
+        /*private fun calculateProgress(materialProgress : Progress, solutionsTask : Progress) : Int {
             if (materialProgress.totalByteCount == -1L || solutionsTask.totalByteCount == -1L) {
                 return 0
             }
             val bytesTransferred = (materialProgress.bytesTransferred + solutionsTask.bytesTransferred)/1000.0
             val totalByteCount = (materialProgress.totalByteCount + solutionsTask.totalByteCount)/1000.0
             return (100.0 * bytesTransferred / totalByteCount).toInt()
-        }
+        }*/
 
-        private fun checkDownloads(materialData: PdfFile, download : Boolean) {
-            val materialRef = Firebase.storage.getReference("$materialsPath/Files/${materialData.name}.pdf")
-            val solutionsRef = Firebase.storage.getReference("$materialsPath/Files/${materialData.name} Solutions.pdf")
+        /*private fun checkDownloads(pdfFile: PdfFile, download : Boolean) {
+            val materialRef = Firebase.storage.getReferenceFromUrl(pdfFile.materialUrl)
+            val solutionsRef = pdfFile.solutionsUrl?.let { Firebase.storage.getReferenceFromUrl(it) }
 
             if (!true) {
                 if (download)
@@ -270,9 +265,9 @@ class FilesAdapter(val activity: MainActivity, private val parentFolder : Folder
             }
             else {
                 val materialTasks = materialRef.activeDownloadTasks
-                val solutionsTasks = solutionsRef.activeDownloadTasks
+                val solutionsTasks = solutionsRef?.activeDownloadTasks
                 when {
-                    materialTasks.isNotEmpty() && solutionsTasks.isNotEmpty() -> {
+                    materialTasks.isNotEmpty() && solutionsTasks?.isNotEmpty() == true -> {
                         progressLayout.visibility = View.VISIBLE
                         progressBar.visibility = View.VISIBLE
                         progressText.text = activity.getString(R.string.material_with_solutions_downloading)
@@ -287,7 +282,7 @@ class FilesAdapter(val activity: MainActivity, private val parentFolder : Folder
                                 materialTaskDone = true
                                 if (solutionsTaskDone){
                                     progressLayout.visibility = View.GONE
-                                    checkIfDownloaded(materialData.name)
+                                    checkIfDownloaded(pdfFile.name)
                                 }
                             }
                             .addOnFailureListener {
@@ -302,7 +297,7 @@ class FilesAdapter(val activity: MainActivity, private val parentFolder : Folder
                                 solutionsTaskDone = true
                                 if (materialTaskDone){
                                     progressLayout.visibility = View.GONE
-                                    checkIfDownloaded(materialData.name)
+                                    checkIfDownloaded(pdfFile.name)
                                 }
                             }
                             .addOnFailureListener {
@@ -320,7 +315,7 @@ class FilesAdapter(val activity: MainActivity, private val parentFolder : Folder
                         materialTasks[0]
                             .addOnSuccessListener {
                                 progressLayout.visibility = View.GONE
-                                checkIfDownloaded(materialData.name)
+                                checkIfDownloaded(pdfFile.name)
                             }
                             .addOnFailureListener {
                                 progressLayout.visibility = View.GONE
@@ -330,14 +325,14 @@ class FilesAdapter(val activity: MainActivity, private val parentFolder : Folder
                                 progressBar.progress = progress.toInt()
                             }
                     }
-                    solutionsTasks.isNotEmpty() -> {
+                    solutionsTasks?.isNotEmpty() == true -> {
                         progressText.text = activity.getString(R.string.solutions_downloading)
                         progressLayout.visibility = View.VISIBLE
                         progressBar.visibility = View.VISIBLE
                         solutionsTasks[0]
                             .addOnSuccessListener {
                                 progressLayout.visibility = View.GONE
-                                checkIfDownloaded(materialData.name)
+                                checkIfDownloaded(pdfFile.name)
                             }
                             .addOnFailureListener {
                                 progressLayout.visibility = View.GONE
@@ -348,8 +343,8 @@ class FilesAdapter(val activity: MainActivity, private val parentFolder : Folder
                             }
                     }
                     download -> {
-                        val materialFile = checkFile(materialData.name, false)
-                        val solutionsFile = if (materialData.solutionsUrl != null) checkFile(materialData.name, true) else null
+                        val materialFile = checkFile(pdfFile.name, false)
+                        val solutionsFile = if (pdfFile.solutionsUrl != null) checkFile(pdfFile.name, true) else null
                         when {
                             materialFile != null && solutionsFile != null -> {
                                 progressLayout.visibility = View.VISIBLE
@@ -368,10 +363,10 @@ class FilesAdapter(val activity: MainActivity, private val parentFolder : Folder
                                         materialTaskDone = true
                                         if (solutionsTaskDone){
                                             progressLayout.visibility = View.GONE
-                                            checkIfDownloaded(materialData.name)
+                                            checkIfDownloaded(pdfFile.name)
                                         }
                                         Firebase.firestore
-                                            .document("$materialsPath/Files/${materialData.name}")
+                                            .document("$materialsPath/Files/${pdfFile.name}")
                                             .update("downloads", FieldValue.increment(1))
                                     }
                                     .addOnFailureListener {
@@ -387,23 +382,23 @@ class FilesAdapter(val activity: MainActivity, private val parentFolder : Folder
                                     }
 
                                 solutionsFile.createNewFile()
-                                val solutionsTask = solutionsRef.getFile(solutionsFile)
+                                val solutionsTask = solutionsRef?.getFile(solutionsFile)
                                 solutionsTask
-                                    .addOnSuccessListener {
+                                    ?.addOnSuccessListener {
                                         solutionsTaskDone = true
                                         if (materialTaskDone){
                                             progressLayout.visibility = View.GONE
-                                            checkIfDownloaded(materialData.name)
+                                            checkIfDownloaded(pdfFile.name)
                                         }
                                     }
-                                    .addOnFailureListener {
+                                    ?.addOnFailureListener {
                                         it.message?.let { it1 -> showError(it1) }
                                         if (solutionsFile.length() == 0L)
                                             solutionsFile.delete()
                                         solutionsTask.cancel()
                                         progressLayout.visibility = View.GONE
                                     }
-                                    .addOnProgressListener {
+                                    ?.addOnProgressListener {
                                         solutionsProgress = Progress(it.bytesTransferred, it.totalByteCount)
                                         progressBar.progress = calculateProgress(materialProgress, solutionsProgress)
                                     }
@@ -417,9 +412,9 @@ class FilesAdapter(val activity: MainActivity, private val parentFolder : Folder
                                 materialTask
                                     .addOnSuccessListener {
                                         progressLayout.visibility = View.GONE
-                                        checkIfDownloaded(materialData.name)
+                                        checkIfDownloaded(pdfFile.name)
                                         Firebase.firestore
-                                            .document("$materialsPath/Files/${materialData.name}")
+                                            .document("$materialsPath/Files/${pdfFile.name}")
                                             .update("downloads", FieldValue.increment(1))
                                     }
                                     .addOnFailureListener {
@@ -439,13 +434,13 @@ class FilesAdapter(val activity: MainActivity, private val parentFolder : Folder
                                 progressLayout.visibility = View.VISIBLE
                                 progressBar.visibility = View.VISIBLE
                                 solutionsFile.createNewFile()
-                                val solutionsTask = solutionsRef.getFile(solutionsFile)
+                                val solutionsTask = solutionsRef?.getFile(solutionsFile)
                                 solutionsTask
-                                    .addOnSuccessListener {
+                                    ?.addOnSuccessListener {
                                         progressLayout.visibility = View.GONE
-                                        checkIfDownloaded(materialData.name)
+                                        checkIfDownloaded(pdfFile.name)
                                     }
-                                    .addOnFailureListener {
+                                    ?.addOnFailureListener {
                                         // Handle any errors
                                         it.message?.let { it1 -> showError(it1) }
                                         if (solutionsFile.length() == 0L)
@@ -453,7 +448,7 @@ class FilesAdapter(val activity: MainActivity, private val parentFolder : Folder
                                         solutionsTask.cancel()
                                         progressLayout.visibility = View.GONE
                                     }
-                                    .addOnProgressListener {
+                                    ?.addOnProgressListener {
                                         val progress = ((100.0 * it.bytesTransferred) / it.totalByteCount)
                                         progressBar.progress = progress.toInt()
                                     }
@@ -463,9 +458,9 @@ class FilesAdapter(val activity: MainActivity, private val parentFolder : Folder
                 }
             }
 
-        }
+        }*/
 
-        private fun checkFile(materialName: String, isSolutions : Boolean, i : Int = 0) : File? {
+        /*private fun checkFile(materialName: String, isSolutions : Boolean, i : Int = 0) : File? {
             val file = if (isSolutions) {
                 if (i == 0)
                     File(Utils.documentsDir(materialsPath), "$materialName Solutions.pdf")
@@ -488,7 +483,7 @@ class FilesAdapter(val activity: MainActivity, private val parentFolder : Folder
                 try { file.deleteOnExit() } catch (_: Exception) { }
                 file
             }
-        }
+        }*/
     }
 
     override fun getItemViewType(position: Int): Int {
@@ -505,13 +500,13 @@ class FilesAdapter(val activity: MainActivity, private val parentFolder : Folder
     }
 
     override fun onBindViewHolder(holder: MaterialViewHolder, position: Int) {
-        if (position < filesFiltered!!.size){
-            holder.bind(filesFiltered!![position], position)
+        if (position < filesFiltered.size){
+            holder.bind(filesFiltered[position], position)
         }
     }
 
     override fun getItemCount(): Int {
-        return filesFiltered!!.size
+        return filesFiltered.size
     }
 
     override fun getFilter(): Filter {

@@ -23,11 +23,11 @@ import androidx.core.widget.doOnTextChanged
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import com.avidco.studentintellect.databinding.FragmentMaterialUploadBinding
-import com.avidco.studentintellect.models.ModuleData
+import com.avidco.studentintellect.models.Module
 import com.avidco.studentintellect.utils.Constants
 import com.avidco.studentintellect.utils.OpenDocumentContract
 import com.avidco.studentintellect.R
-import com.avidco.studentintellect.activities.ui.database.UserDB
+import com.avidco.studentintellect.activities.ui.database.UserDatabase
 import com.avidco.studentintellect.models.PdfFile
 import com.avidco.studentintellect.utils.Utils.fixDecimalsTo
 import com.avidco.studentintellect.utils.Utils.hideKeyboard
@@ -144,7 +144,7 @@ class UploadMultipleFragment : Fragment() {
         binding.materialSubmit.startAnimation()
         for (pdfName in multiPdfUri.keys) {
             val document = database.collection("modules").document(pdfName[0])
-            val module = ModuleData(pdfName[0], pdfName[0], Timestamp.now())
+            val module = Module(pdfName[0], pdfName[0], Timestamp.now())
             document.set(module, SetOptions.merge())
 
             val collection = document.collection("materials")
@@ -528,7 +528,7 @@ class UploadMultipleFragment : Fragment() {
                 return false
             }
             database.collection("modules").document(moduleCode)
-                .set(ModuleData(moduleCode, moduleDescription))
+                .set(Module(moduleCode, moduleDescription))
         }
 
         return true
@@ -655,7 +655,7 @@ class UploadMultipleFragment : Fragment() {
                                                             .update("balance", FieldValue.increment(amount.toDouble()))
 
                                                         val prefs = requireActivity().getSharedPreferences("pref", Context.MODE_PRIVATE)
-                                                        val userDB = UserDB(context)
+                                                        val userDB = UserDatabase(context)
                                                         userDB.setBalance(amount)
                                                         binding.rewardBalance.text = getString(R.string.zero_rand)
                                                         rewardItem = null
@@ -697,7 +697,7 @@ class UploadMultipleFragment : Fragment() {
                                                 Toast.makeText(requireActivity(), "Uploaded successfully.\nYou earned ${amount.toRand()} reward.", Toast.LENGTH_SHORT).show()
 
                                                 val prefs = requireActivity().getSharedPreferences("pref", Context.MODE_PRIVATE)
-                                                val userDB = UserDB(context)
+                                                val userDB = UserDatabase(context)
                                                 userDB.setBalance(amount)
                                                 binding.rewardBalance.text = getString(R.string.zero_rand)
                                                 rewardItem = null

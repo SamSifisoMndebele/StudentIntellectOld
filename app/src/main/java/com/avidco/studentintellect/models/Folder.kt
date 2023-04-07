@@ -9,20 +9,19 @@ data class Folder(
     val id: String = "",
     var name: String = "",
     val path: String = "",
-    val filesCount: Int = 0,
+    val filesCount: Long = 0,
     var timeUpdated: Timestamp = Timestamp.now(),
     val creator: UserInfo = UserInfo(),
     @JvmField val isVerified: Boolean = false,
     val verifier: UserInfo? = null,
-    @JvmField val isDelete: Boolean = false,
-    val deleter: UserInfo? = null,
-    val timeDeleted: Timestamp? = null
+    @JvmField val isDeleted: Boolean = false,
+    val deleter: UserInfo? = null
 ) : Parcelable {
     constructor(parcel: Parcel) : this(
         parcel.readString()!!,
         parcel.readString()!!,
         parcel.readString()!!,
-        parcel.readInt(),
+        parcel.readLong(),
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU){
             parcel.readParcelable(Timestamp::class.java.classLoader, Timestamp::class.java)!!
         } else {
@@ -37,38 +36,31 @@ data class Folder(
         },
         parcel.readByte() != 0.toByte(),
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU){
-            parcel.readParcelable(UserInfo::class.java.classLoader, UserInfo::class.java)!!
+            parcel.readParcelable(UserInfo::class.java.classLoader, UserInfo::class.java)
         } else {
             @Suppress("DEPRECATION")
-            parcel.readParcelable(UserInfo::class.java.classLoader)!!
+            parcel.readParcelable(UserInfo::class.java.classLoader)
         },
         parcel.readByte() != 0.toByte(),
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU){
-            parcel.readParcelable(UserInfo::class.java.classLoader, UserInfo::class.java)!!
+            parcel.readParcelable(UserInfo::class.java.classLoader, UserInfo::class.java)
         } else {
             @Suppress("DEPRECATION")
-            parcel.readParcelable(UserInfo::class.java.classLoader)!!
-        },
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU){
-            parcel.readParcelable(Timestamp::class.java.classLoader, Timestamp::class.java)!!
-        } else {
-            @Suppress("DEPRECATION")
-            parcel.readParcelable(Timestamp::class.java.classLoader)!!
-        },
+            parcel.readParcelable(UserInfo::class.java.classLoader)
+        }
     )
 
     override fun writeToParcel(parcel: Parcel, flags: Int) {
         parcel.writeString(id)
         parcel.writeString(name)
         parcel.writeString(path)
-        parcel.writeInt(filesCount)
+        parcel.writeLong(filesCount)
         parcel.writeParcelable(timeUpdated, flags)
         parcel.writeParcelable(creator, flags)
         parcel.writeByte(if (isVerified) 1 else 0)
         parcel.writeParcelable(verifier, flags)
-        parcel.writeByte(if (isDelete) 1 else 0)
+        parcel.writeByte(if (isDeleted) 1 else 0)
         parcel.writeParcelable(deleter, flags)
-        parcel.writeParcelable(timeDeleted, flags)
     }
 
     override fun describeContents(): Int {

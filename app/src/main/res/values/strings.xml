@@ -1,17 +1,38 @@
 <resources>
     <string name="app_name">Student Intellect</string>
 
+    <!--<string translatable="false" name="activity_material_list_bannerAdUnitId">ca-app-pub-2845958345291323/1639209409</string>
+        <string translatable="false" name="activity_pdf_view_bannerAdUnitId">ca-app-pub-2845958345291323/2673374880</string>
+        <string translatable="false" name="activity_auth_bannerAdUnitId">ca-app-pub-2845958345291323/2684450344</string>>
+        <string translatable="false" name="activity_main_bannerAdUnitId">ca-app-pub-2845958345291323/6926291148</string>
+        <string translatable="false" name="activity_modulesSelectList_interstitialAdUnitId">ca-app-pub-2845958345291323/3555034100</string>
+        <string translatable="false" name="activity_materialsList_interstitialAdUnitId">ca-app-pub-2845958345291323/3582954269</string>
+        <string translatable="false" name="upload_material_rewardedAdUnitId">ca-app-pub-2845958345291323/6097653539</string>-->
+
+
+    <string name="testBannerAdUnitId" translatable="false">ca-app-pub-3940256099942544/6300978111---</string>
+    <string name="testInterstitialAdUnitId" translatable="false">ca-app-pub-3940256099942544/1033173712---</string>
+    <string name="activity_material_list_bannerAdUnitId" translatable="false">@string/testBannerAdUnitId</string>
+    <string name="activity_pdf_view_bannerAdUnitId" translatable="false">@string/testBannerAdUnitId</string>
+    <string name="activity_auth_bannerAdUnitId" translatable="false">@string/testBannerAdUnitId</string>
+    <string name="activity_main_bannerAdUnitId" translatable="false">@string/testBannerAdUnitId</string>
+    <string name="activity_modulesSelectList_interstitialAdUnitId" translatable="false">@string/testInterstitialAdUnitId</string>
+    <string name="activity_materialsList_interstitialAdUnitId" translatable="false">@string/testInterstitialAdUnitId</string>
+    <string name="upload_material_rewardedAdUnitId" translatable="false">ca-app-pub-3940256099942544/5224354917---</string>
+
+
+    <string name="web_client_id" translatable="false">888190263110-ub9bfguv838e3ij6hhfqs2jrlncae5tq.apps.googleusercontent.com</string>
+    <string name="night_mode" translatable="false">off</string>
+
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
     <string name="nav_header_email">avidco4u@gmail.com</string>
     <string name="nav_header_desc">Navigation header</string>
-
     <string name="action_settings">Settings</string>
     <string name="action_blackboard">Blackboard Learn</string>
     <string name="action_info">Info</string>
 
-    <string name="web_client_id" translatable="false">888190263110-ub9bfguv838e3ij6hhfqs2jrlncae5tq.apps.googleusercontent.com</string>
-    <string name="night_mode" translatable="false">off</string>
+
 
     <string name="onboarding_slide1_title">Create an account</string>
     <string name="onboarding_slide1_subtitle">Connect with people around the world</string>
@@ -177,22 +198,6 @@
     <string name="save_selected_modules">Save selected modules</string>
     <string name="accept">Accept</string>
     <string name="terms">Terms.</string>
-
-    <!--<string translatable="false" name="activity_material_list_bannerAdUnitId">ca-app-pub-2845958345291323/1639209409</string>
-    <string translatable="false" name="activity_pdf_view_bannerAdUnitId">ca-app-pub-2845958345291323/2673374880</string>
-    <string translatable="false" name="activity_auth_bannerAdUnitId">ca-app-pub-2845958345291323/2684450344</string>>
-    <string translatable="false" name="activity_main_bannerAdUnitId">ca-app-pub-2845958345291323/6926291148</string>
-    <string translatable="false" name="activity_modulesSelectList_interstitialAdUnitId">ca-app-pub-2845958345291323/3555034100</string>
-    <string translatable="false" name="activity_materialsList_interstitialAdUnitId">ca-app-pub-2845958345291323/3582954269</string>
-    <string translatable="false" name="upload_material_rewardedAdUnitId">ca-app-pub-2845958345291323/6097653539</string>-->
-
-    <string name="activity_material_list_bannerAdUnitId" translatable="false">ca-app-pub-3940256099942544/6300978111</string>
-    <string name="activity_pdf_view_bannerAdUnitId" translatable="false">ca-app-pub-3940256099942544/6300978111</string>
-    <string name="activity_auth_bannerAdUnitId" translatable="false">ca-app-pub-3940256099942544/6300978111</string>
-    <string name="activity_main_bannerAdUnitId" translatable="false">ca-app-pub-3940256099942544/6300978111</string>
-    <string name="activity_modulesSelectList_interstitialAdUnitId" translatable="false">ca-app-pub-3940256099942544/1033173712</string>
-    <string name="activity_materialsList_interstitialAdUnitId" translatable="false">ca-app-pub-3940256099942544/1033173712</string>
-    <string name="upload_material_rewardedAdUnitId" translatable="false">ca-app-pub-3940256099942544/5224354917</string>
 
 
     <string name="admin_profile">Admin <b>Profile</b></string>
@@ -728,8 +733,6 @@
     <string name="edit_off">Edit Off</string>
     <string name="list_view">List View</string>
     <string name="grid_view">Grid View</string>
-    <!-- TODO: Remove or change this placeholder text -->
-    <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="modules">Modules</string>
     <string name="module_info">Module Info</string>
     <string name="add_a_folder">Add a folder</string>

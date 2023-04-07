@@ -95,37 +95,10 @@ object Utils {
         }, delayMillis)
     }
 
-    fun FragmentPdfBinding.loadPdf(file: File, onError : () -> Unit, onLoad : () -> Unit, page : Int = 0) {
-        pdfView.fromFile(file)
-            .enableSwipe(true)
-            .enableDoubletap(true)
-            .swipeHorizontal(false)
-            .enableDoubletap(true)
-            .enableAnnotationRendering(true)
-            .defaultPage(page)
-            .onLoad {
-               // progressLayout.visibility = View.GONE
-                try { onLoad() } catch (_: Exception) {}
-            }
-            .onError {
-                Toast.makeText(pdfView.context, it.message, Toast.LENGTH_SHORT).show()
-                if (file.delete())
-                    try { onError() } catch (_: Exception) {}
-            }
-            .onTap { false }
-            .enableAntialiasing(true)
-            .spacing(0)
-            .password(null)
-            .scrollHandle(object : MyScrollHandle(pdfView.context){})
-            .autoSpacing(false)
-            .pageFitPolicy(FitPolicy.WIDTH)
-            .fitEachPage(true)
-            .nightMode(pdfView.context.getString(R.string.night_mode) == "on")
-            .load()
-    }
+
 
     ///Directories
-    fun documentsDir(folderPath : String) : File {
+    fun filesDir(folderPath : String) : File {
         val directory = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R)
             File(Environment.getExternalStoragePublicDirectory(
                     Environment.DIRECTORY_DOCUMENTS),"Student Intellect")
@@ -136,20 +109,20 @@ object Utils {
             if (!exists()) mkdirs()
         }
     }
-    fun imagesDir() : File {
+    private fun imagesDir() : File {
         return File(
             Environment.getExternalStoragePublicDirectory(
             Environment.DIRECTORY_DCIM),"Student Intellect").apply { if (!exists()) mkdirs() }
     }
 
-    fun makeFolderIfNotExists(folderPath : String, folderName: String) {
-        File(documentsDir(folderPath), folderName).apply {
+    private fun makeFolderIfNotExists(folderPath : String, folderName: String) {
+        File(filesDir(folderPath), folderName).apply {
             if (!exists()) mkdirs()
         }
     }
-    fun fileExists(folderPath : String, fileName: String, i : Int = 0): Boolean {
-        val file = if (i == 0) File(documentsDir(folderPath), "$fileName.pdf")
-        else File(documentsDir(folderPath), "$fileName($i).pdf")
+    private fun fileExists(folderPath : String, fileName: String, i : Int = 0): Boolean {
+        val file = if (i == 0) File(filesDir(folderPath), "$fileName.pdf")
+        else File(filesDir(folderPath), "$fileName($i).pdf")
 
         return if (file.exists() && file.length() != 0L) {
             if (file.canRead()){

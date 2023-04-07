@@ -11,7 +11,7 @@
         android:id="@+id/item_share"
         android:title="@string/share_the_app"
         android:showAsAction="ifRoom|withText"
-        android:icon="@drawable/ic_share"
+        android:icon="@drawable/icon_share"
         tools:ignore="AppCompatResource" />
     <item
         android:id="@+id/item_rate"

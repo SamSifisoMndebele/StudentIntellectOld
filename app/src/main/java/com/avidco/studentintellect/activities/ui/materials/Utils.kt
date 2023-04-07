@@ -2,7 +2,7 @@ package com.avidco.studentintellect.activities.ui.materials
 
 import android.content.Context
 import com.avidco.studentintellect.activities.ui.MainActivity
-import com.avidco.studentintellect.activities.ui.database.FirestoreFiles
+import com.avidco.studentintellect.activities.ui.database.FilesFirestoreDatabase
 import com.avidco.studentintellect.models.PdfFile
 import com.google.android.gms.tasks.RuntimeExecutionException
 import com.google.firebase.Timestamp
@@ -10,7 +10,7 @@ import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 
 object Utils {
-    fun MainActivity.reloadFilesList(path: String, databaseHelper : FirestoreFiles, onComplete : () -> Unit) {
+    fun MainActivity.reloadFilesList(path: String, databaseHelper : FilesFirestoreDatabase, onComplete : () -> Unit) {
         val prefs = getSharedPreferences("last_files_read_time_prefs", Context.MODE_PRIVATE)
         val currentTime = Timestamp.now()
         val lastReadTime = Timestamp(prefs.getLong("last_read_time", 0),0)

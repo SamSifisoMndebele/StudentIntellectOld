@@ -13,8 +13,8 @@ import androidx.recyclerview.widget.RecyclerView
 import com.avidco.studentintellect.R
 import com.avidco.studentintellect.activities.ui.MainActivity
 import com.avidco.studentintellect.activities.ui.materials.MaterialsFragment
-import com.avidco.studentintellect.activities.ui.modules.add.ModulesDatabaseHelper
-import com.avidco.studentintellect.models.ModuleData
+import com.avidco.studentintellect.activities.ui.database.MyModulesLocalDatabase
+import com.avidco.studentintellect.models.Module
 import com.avidco.studentintellect.utils.Utils.hideKeyboard
 import com.avidco.studentintellect.utils.Utils.tempDisable
 import com.bumptech.glide.Glide
@@ -23,18 +23,18 @@ import java.util.*
 
 class MyModulesAdapter(
     private val activity: MainActivity,
-    private val myModulesList: List<ModuleData>,
-    private val databaseHelper: MyModulesDatabaseHelper,
+    private val myModulesList: List<Module>,
+    private val databaseHelper: MyModulesLocalDatabase,
     private val requestMultiplePermissions: ActivityResultLauncher<Array<String>>) :
     RecyclerView.Adapter<MyModulesAdapter.ViewHolder>() {
 
-    private fun List<ModuleData>?.itContains(module : ModuleData) : Boolean {
+    private fun List<Module>?.itContains(module : Module) : Boolean {
         if (this == null) return false
         return map { it.id.trim() }.contains(module.id.trim())
     }
 
 
-    private var clickedModule: ModuleData? = null
+    private var clickedModule: Module? = null
 
     inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         private val code: TextView = itemView.findViewById(R.id.module_code)
@@ -43,23 +43,23 @@ class MyModulesAdapter(
         private val menu: ImageView = itemView.findViewById(R.id.menu_button)
 
         @SuppressLint("SetTextI18n")
-        fun bind(moduleData: ModuleData) {
-            code.text = moduleData.code
-            name.text = moduleData.name
-            if (moduleData.imageUrl != null) {
+        fun bind(module: Module) {
+            code.text = module.code
+            name.text = module.name
+            if (module.imageUrl != null) {
                 Glide.with(activity)
-                    .load(moduleData.imageUrl)
+                    .load(module.imageUrl)
                     .into(image)
             }
 
             itemView.setOnClickListener {
                 it.tempDisable(2000)
                 itemView.context.hideKeyboard(itemView.rootView)
-                clickedModule = moduleData
+                clickedModule = module
                 checkPermissionsAndOpenMaterialsList()
             }
 
-            val popupMenu = setPopupMenu(moduleData)
+            val popupMenu = setPopupMenu(module)
             menu.setOnClickListener { menu->
                 menu.tempDisable()
                 popupMenu.show()
@@ -68,7 +68,7 @@ class MyModulesAdapter(
         }
 
         @SuppressLint("NotifyDataSetChanged")
-        private fun setPopupMenu(moduleData: ModuleData) : PopupMenu {
+        private fun setPopupMenu(module: Module) : PopupMenu {
             val popupMenu = PopupMenu(activity, menu)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
                 popupMenu.gravity = Gravity.END
@@ -79,17 +79,17 @@ class MyModulesAdapter(
             popupMenu.setOnMenuItemClickListener {
                 when(it.itemId) {
                     R.id.item_delete -> {
-                        databaseHelper.deleteModule(moduleData.id, true)
+                        databaseHelper.deleteModule(module.id, true)
                     }
                 }
                 true
             }
 
-            popupMenu.menu.findItem(R.id.item_adder_name).title = "Added by ${moduleData.adderName}"
+            popupMenu.menu.findItem(R.id.item_adder_name).title = "Added by ${module.adder.name}"
             val dateInstance = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT)
             popupMenu.menu.findItem(R.id.item_updated_date).title = "Updated at " +
-                    moduleData.timeUpdated.toDate().let { dateInstance.format(it) }
-            popupMenu.menu.findItem(R.id.item_verified).title = if (moduleData.isVerified) "Verified" else "Not Verified"
+                    module.timeUpdated.toDate().let { dateInstance.format(it) }
+            popupMenu.menu.findItem(R.id.item_verified).title = if (module.isVerified) "Verified" else "Not Verified"
 
             return popupMenu
         }

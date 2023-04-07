@@ -12,12 +12,12 @@ import android.view.View
 import android.view.ViewGroup
 import com.avidco.studentintellect.R
 import com.avidco.studentintellect.activities.ui.MainActivity
-import com.avidco.studentintellect.activities.ui.database.FirestoreFolders
-import com.avidco.studentintellect.activities.ui.database.FirestoreFolders.Companion.addOnFailureListener
-import com.avidco.studentintellect.activities.ui.database.FirestoreFolders.Companion.addOnSuccessListener
+import com.avidco.studentintellect.activities.ui.database.FoldersFirestoreDatabase
+import com.avidco.studentintellect.activities.ui.database.FoldersFirestoreDatabase.Companion.addOnFailureListener
+import com.avidco.studentintellect.activities.ui.database.FoldersFirestoreDatabase.Companion.addOnSuccessListener
 import com.avidco.studentintellect.databinding.FragmentEditFolderBinding
 import com.avidco.studentintellect.models.Folder
-import com.avidco.studentintellect.models.ModuleData
+import com.avidco.studentintellect.models.Module
 import com.avidco.studentintellect.utils.LoadingDialog
 import com.avidco.studentintellect.utils.Utils.hideKeyboard
 import com.avidco.studentintellect.utils.Utils.tempDisable
@@ -29,10 +29,10 @@ import com.google.firebase.ktx.Firebase
 class EditFolderFragment : Fragment() {
     private lateinit var binding: FragmentEditFolderBinding
     private lateinit var loadingDialog: LoadingDialog
-    private lateinit var databaseFolders: FirestoreFolders
+    private lateinit var databaseFolders: FoldersFirestoreDatabase
     private lateinit var path: String
 
-    private lateinit var myModuleData: ModuleData
+    private lateinit var myModuleData: Module
     private var parentFolder: Folder? = null
     private var folder: Folder? = null
     private var pathDisplayText: String? = null
@@ -66,7 +66,7 @@ class EditFolderFragment : Fragment() {
         val myArgs = savedInstanceState ?: requireArguments()
 
         myModuleData = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            myArgs.getParcelable(MY_MODULE_DATA, ModuleData::class.java)!!
+            myArgs.getParcelable(MY_MODULE_DATA, Module::class.java)!!
         } else {
             @Suppress("DEPRECATION")
             myArgs.getParcelable(MY_MODULE_DATA)!!
@@ -92,7 +92,7 @@ class EditFolderFragment : Fragment() {
         val foldersTableName = path.replace(" ", "")
             .replace("Modules", "Folders")
             .replace("/", "_")+"_Table"
-        databaseFolders = FirestoreFolders(requireContext(), path, foldersTableName)
+        databaseFolders = FoldersFirestoreDatabase(requireContext(), path, foldersTableName)
 
 
         binding.saveFolder.setOnClickListener {

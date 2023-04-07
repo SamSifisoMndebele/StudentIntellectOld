@@ -3,16 +3,16 @@ package com.avidco.studentintellect.activities.ui.database
 import android.content.Context
 import android.content.SharedPreferences
 import com.avidco.studentintellect.models.PdfFile
-import com.avidco.studentintellect.models.PdfFileDeleted
 import com.google.android.gms.tasks.Task
 import com.google.firebase.Timestamp
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.QuerySnapshot
 import com.google.firebase.firestore.SetOptions
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 
-class FirestoreFiles(context: Context, path: String, tableName: String)
-    : LocalFiles(context,tableName) {
+class FilesFirestoreDatabase(context: Context, path: String, tableName: String)
+    : FilesLocalDatabase(context,tableName) {
 
     private val prefs: SharedPreferences = context.getSharedPreferences("${tableName}_last_pdfFiles_read_time_prefs", Context.MODE_PRIVATE)
     private val lastReadTime = Timestamp(prefs.getLong("last_read_time", 0),0)
@@ -63,10 +63,20 @@ class FirestoreFiles(context: Context, path: String, tableName: String)
         }
         return UpdatePdfFilesMapTask(updateBatchTask, pdfFilesValues, this)
     }
+    fun updateDownloads(pdfFile: PdfFile) {
+        val docRef = pdfFilesColRef.document(pdfFile.id)
+        Firebase.firestore.runTransaction { transaction ->
+            val snapshot = transaction.get(docRef)
+            val newDownloads = snapshot.getLong("downloads")!! + 1
+            transaction.update(docRef, "downloads", newDownloads)
+            updatePdfFileDownloads(pdfFile.id, newDownloads.toInt())
+            null
+        }
+    }
 
     fun delete(pdfFileID: String) : DeletePdfFileTask {
         val deleteTask = pdfFilesColRef.document(pdfFileID)
-            .update("isDelete", true)
+            .update("isDeleted", true)
 
         return DeletePdfFileTask(deleteTask, pdfFileID, this)
     }
@@ -75,13 +85,12 @@ class FirestoreFiles(context: Context, path: String, tableName: String)
 
         val deleteTransaction = Firebase.firestore.runTransaction { transaction ->
             transaction.delete(deleteDocRef)
-            transaction.set(deleteDocRef, PdfFileDeleted(pdfFileID))
+            transaction.set(pdfFilesColRef.document("DeletedPermanently"),
+                mapOf("deletedIds" to FieldValue.arrayUnion(mapOf(pdfFileID to Timestamp.now())),
+                    "isDeletedPermanently" to true), SetOptions.merge())
+
             null
         }
-
-        /*val deleteTask = pdfFilesColRef.document(pdfFileID).delete()
-        val deletedSetTask = pdfFilesColRef.document(pdfFileID)
-            .set(PdfFileDeleted(pdfFileID))*/
 
         return DeletePdfFilePermTask(deleteTransaction, pdfFileID, this)
     }
@@ -90,17 +99,17 @@ class FirestoreFiles(context: Context, path: String, tableName: String)
     fun get(isRefresh : Boolean = false) : GetPdfFilesTask {
         val currentTime = Timestamp.now()
         val modifiedTask = if (isRefresh) {
-            pdfFilesColRef.whereEqualTo("isDelete", false).get()
+            pdfFilesColRef.whereEqualTo("isDeleted", false).get()
         } else {
-            pdfFilesColRef.whereEqualTo("isDelete", false)
+            pdfFilesColRef.whereEqualTo("isDeleted", false)
                 .whereGreaterThanOrEqualTo("timeUpdated", lastReadTime)
                 .get()
         }
         val deletedTask = if (isRefresh) {
-            pdfFilesColRef.whereEqualTo("isDelete", true).get()
+            pdfFilesColRef.whereEqualTo("isDeleted", true).get()
         } else {
-            pdfFilesColRef.whereEqualTo("isDelete", true)
-                .whereGreaterThanOrEqualTo("timeDeleted", lastReadTime)
+            pdfFilesColRef.whereEqualTo("isDeleted", true)
+                .whereGreaterThanOrEqualTo("timeUpdated", lastReadTime)
                 .get()
         }
 
@@ -111,7 +120,7 @@ class FirestoreFiles(context: Context, path: String, tableName: String)
     companion object {
 
         //Put pdfFiles
-        data class PutPdfFileTask(val putTask: Task<Void>, val pdfFile : PdfFile, val database : FirestoreFiles)
+        data class PutPdfFileTask(val putTask: Task<Void>, val pdfFile : PdfFile, val database : FilesFirestoreDatabase)
         fun PutPdfFileTask.addOnFailureListener(onFailure: (e : Exception, notAddedPdfFile : PdfFile) -> Unit) : PutPdfFileTask {
             putTask.addOnFailureListener {
                 onFailure(it, pdfFile)
@@ -125,7 +134,7 @@ class FirestoreFiles(context: Context, path: String, tableName: String)
             }
             return this
         }
-        data class PutPdfFilesTask(val putBatchTask: Task<Void>, val pdfFiles : List<PdfFile>, val database : FirestoreFiles)
+        data class PutPdfFilesTask(val putBatchTask: Task<Void>, val pdfFiles : List<PdfFile>, val database : FilesFirestoreDatabase)
         fun PutPdfFilesTask.addOnFailureListener(onFailure: (e : Exception, notAddedPdfFiles : List<PdfFile>) -> Unit) : PutPdfFilesTask {
             putBatchTask.addOnFailureListener {
                 onFailure(it, pdfFiles)
@@ -142,7 +151,7 @@ class FirestoreFiles(context: Context, path: String, tableName: String)
 
 
         //Update pdfFiles
-        data class UpdatePdfFileTask(val updateTask: Task<Void>, val pdfFile: PdfFile, val database : FirestoreFiles)
+        data class UpdatePdfFileTask(val updateTask: Task<Void>, val pdfFile: PdfFile, val database : FilesFirestoreDatabase)
         fun UpdatePdfFileTask.addOnFailureListener(onFailure: (e : Exception) -> Unit) : UpdatePdfFileTask {
             updateTask.addOnFailureListener {
                 onFailure(it)
@@ -156,7 +165,7 @@ class FirestoreFiles(context: Context, path: String, tableName: String)
             }
             return this
         }
-        data class UpdatePdfFileMapTask(val updateBatchTask: Task<Void>, val pdfFileValues: HashMap<String, Any>, val database : FirestoreFiles)
+        data class UpdatePdfFileMapTask(val updateBatchTask: Task<Void>, val pdfFileValues: HashMap<String, Any>, val database : FilesFirestoreDatabase)
         fun UpdatePdfFileMapTask.addOnFailureListener(onFailure: (e : Exception, notUpdatedPdfFileValues: HashMap<String, Any>) -> Unit) : UpdatePdfFileMapTask {
             updateBatchTask.addOnFailureListener {
                 onFailure(it, pdfFileValues)
@@ -170,7 +179,7 @@ class FirestoreFiles(context: Context, path: String, tableName: String)
             }
             return this
         }
-        data class UpdatePdfFilesMapTask(val updateBatchTask: Task<Void>, val pdfFilesValues : List<HashMap<String, Any>>, val database : FirestoreFiles)
+        data class UpdatePdfFilesMapTask(val updateBatchTask: Task<Void>, val pdfFilesValues : List<HashMap<String, Any>>, val database : FilesFirestoreDatabase)
         fun UpdatePdfFilesMapTask.addOnFailureListener(onFailure: (e : Exception, notUpdatedPdfFilesValues: List<HashMap<String, Any>>) -> Unit) : UpdatePdfFilesMapTask {
             updateBatchTask.addOnFailureListener {
                 onFailure(it, pdfFilesValues)
@@ -187,7 +196,7 @@ class FirestoreFiles(context: Context, path: String, tableName: String)
 
 
         //Delete pdfFiles
-        data class DeletePdfFileTask(val deleteTask: Task<Void>, val pdfFileID: String, val database : FirestoreFiles)
+        data class DeletePdfFileTask(val deleteTask: Task<Void>, val pdfFileID: String, val database : FilesFirestoreDatabase)
         fun DeletePdfFileTask.addOnFailureListener(onFailure: (e : Exception, notDeletedPdfFileID: String) -> Unit) : DeletePdfFileTask {
             deleteTask.addOnFailureListener {
                 onFailure(it, pdfFileID)
@@ -201,7 +210,7 @@ class FirestoreFiles(context: Context, path: String, tableName: String)
             }
             return this
         }
-        data class DeletePdfFilePermTask(val deleteTransaction: Task<Nothing>, val pdfFileID: String, val database : FirestoreFiles)
+        data class DeletePdfFilePermTask(val deleteTransaction: Task<Nothing>, val pdfFileID: String, val database : FilesFirestoreDatabase)
         fun DeletePdfFilePermTask.addOnFailureListener(onFailure: (e : Exception, notDeletedPdfFileID: String) -> Unit) : DeletePdfFilePermTask {
             deleteTransaction.addOnFailureListener {
                 onFailure(it, pdfFileID)
@@ -221,7 +230,7 @@ class FirestoreFiles(context: Context, path: String, tableName: String)
         data class GetPdfFilesTask(val updatedTask : Task<QuerySnapshot>,
                                   val deletedTask : Task<QuerySnapshot>,
                                   val prefs: SharedPreferences,
-                                  val database : FirestoreFiles,
+                                  val database : FilesFirestoreDatabase,
                                   val currentTime: Timestamp)
         fun GetPdfFilesTask.addOnFailureListener (onFailure: (e : Exception) -> Unit) : GetPdfFilesTask {
             var notFailed = true

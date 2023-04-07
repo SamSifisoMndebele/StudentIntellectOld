@@ -23,7 +23,7 @@
         android:layout_width="match_parent"
         android:layout_height="28dp"/>
 
-    <FrameLayout
+    <!--<FrameLayout
         android:id="@+id/crop_view_layout"
         android:layout_width="match_parent"
         android:visibility="gone"
@@ -69,7 +69,7 @@
             android:src="@drawable/ic_cancel"
             android:padding="8dp"
             android:contentDescription="@null" />
-    </FrameLayout>
+    </FrameLayout>-->
 
     <androidx.viewpager2.widget.ViewPager2
         android:id="@+id/view_pager"

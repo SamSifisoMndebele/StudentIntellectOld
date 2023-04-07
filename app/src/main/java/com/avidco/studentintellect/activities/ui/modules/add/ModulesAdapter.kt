@@ -2,23 +2,21 @@ package com.avidco.studentintellect.activities.ui.modules.add
 
 import android.annotation.SuppressLint
 import android.content.Context
-import android.os.Build
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.*
 import androidx.recyclerview.widget.RecyclerView
 import com.avidco.studentintellect.R
-import com.avidco.studentintellect.activities.ui.modules.MyModulesDatabaseHelper
-import com.avidco.studentintellect.models.ModuleData
+import com.avidco.studentintellect.activities.ui.database.MyModulesLocalDatabase
+import com.avidco.studentintellect.models.Module
 import com.avidco.studentintellect.utils.Utils.tempDisable
 import java.util.*
-import kotlin.collections.ArrayList
 
 class ModulesAdapter(
     private val context: Context?,
-    private val modulesList: List<ModuleData>,
-    private val databaseHelper: MyModulesDatabaseHelper
+    private val modulesList: List<Module>,
+    private val databaseHelper: MyModulesLocalDatabase
 ) : RecyclerView.Adapter<ModulesAdapter.ViewHolder>(), Filterable {
 
     init {
@@ -32,7 +30,7 @@ class ModulesAdapter(
 
     private var snapshotsFiltered = modulesList.sortedBy { it.code }
 
-    private fun List<ModuleData>.itContains(module : ModuleData) : Boolean {
+    private fun List<Module>.itContains(module : Module) : Boolean {
         return map { it.id.trim() }.contains(module.id.trim())
     }
 
@@ -42,7 +40,7 @@ class ModulesAdapter(
         private val name: TextView = itemView.findViewById(R.id.module_name)
         private val checkBox: CheckBox = itemView.findViewById(R.id.select_check_box)
 
-        fun bind(module: ModuleData) {
+        fun bind(module: Module) {
             code.text = module.code
             name.text = module.id
             checkBox.isChecked = databaseHelper.myModulesList.value?.itContains(module)?:false
@@ -84,7 +82,7 @@ class ModulesAdapter(
                 snapshotsFiltered = if (pattern.isEmpty()) {
                     modulesList.sortedBy { it.code }
                 } else {
-                    val filteredList = mutableListOf<ModuleData>()
+                    val filteredList = mutableListOf<Module>()
                     for (data in modulesList) {
                         if (data.name.lowercase().contains(pattern) || data.code.lowercase().contains(pattern)) {
                             filteredList.add(data)
@@ -99,7 +97,7 @@ class ModulesAdapter(
             @SuppressLint("NotifyDataSetChanged")
             @Suppress("UNCHECKED_CAST")
             override fun publishResults(constraint: CharSequence?, results: FilterResults) {
-                snapshotsFiltered = (results.values as List<ModuleData>).sortedBy { it.code }
+                snapshotsFiltered = (results.values as List<Module>).sortedBy { it.code }
                 notifyDataSetChanged()
             }
         }

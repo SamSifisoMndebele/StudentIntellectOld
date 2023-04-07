@@ -12,12 +12,12 @@ import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.avidco.studentintellect.R
 import com.avidco.studentintellect.activities.ui.MainActivity
-import com.avidco.studentintellect.activities.ui.database.FirestoreFiles
-import com.avidco.studentintellect.activities.ui.database.FirestoreFiles.Companion.addOnFailureListener
-import com.avidco.studentintellect.activities.ui.database.FirestoreFiles.Companion.addOnSuccessListener
-import com.avidco.studentintellect.activities.ui.database.FirestoreFolders
-import com.avidco.studentintellect.activities.ui.database.FirestoreFolders.Companion.addOnFailureListener
-import com.avidco.studentintellect.activities.ui.database.FirestoreFolders.Companion.addOnSuccessListener
+import com.avidco.studentintellect.activities.ui.database.FilesFirestoreDatabase
+import com.avidco.studentintellect.activities.ui.database.FilesFirestoreDatabase.Companion.addOnFailureListener
+import com.avidco.studentintellect.activities.ui.database.FilesFirestoreDatabase.Companion.addOnSuccessListener
+import com.avidco.studentintellect.activities.ui.database.FoldersFirestoreDatabase
+import com.avidco.studentintellect.activities.ui.database.FoldersFirestoreDatabase.Companion.addOnFailureListener
+import com.avidco.studentintellect.activities.ui.database.FoldersFirestoreDatabase.Companion.addOnSuccessListener
 import com.avidco.studentintellect.activities.ui.materials.Utils.reloadFilesList
 import com.avidco.studentintellect.activities.ui.materials.files.EditFileFragment
 import com.avidco.studentintellect.activities.ui.materials.folders.EditFolderFragment
@@ -25,7 +25,7 @@ import com.avidco.studentintellect.activities.ui.materials.files.FilesAdapter
 import com.avidco.studentintellect.activities.ui.materials.folders.FoldersAdapter
 import com.avidco.studentintellect.databinding.FragmentMaterialsBinding
 import com.avidco.studentintellect.models.Folder
-import com.avidco.studentintellect.models.ModuleData
+import com.avidco.studentintellect.models.Module
 import kotlinx.coroutines.*
 
 
@@ -34,8 +34,8 @@ class MaterialsFragment : Fragment() {
     private lateinit var binding: FragmentMaterialsBinding
 
     private lateinit var path: String
-    private var databaseFolders: FirestoreFolders? = null
-    private var databaseFiles: FirestoreFiles? = null
+    private var databaseFolders: FoldersFirestoreDatabase? = null
+    private var databaseFiles: FilesFirestoreDatabase? = null
     private var adapterFolders : FoldersAdapter? = null
     private var adapterFiles : FilesAdapter? = null
 
@@ -43,7 +43,7 @@ class MaterialsFragment : Fragment() {
     private var isOnline = true
     private var numberOfLoads = 0
 
-    private lateinit var myModuleData: ModuleData
+    private lateinit var myModuleData: Module
     private var folder: Folder? = null
     private var pathDisplayText: String? = null
     override fun onSaveInstanceState(outState: Bundle) {
@@ -60,7 +60,7 @@ class MaterialsFragment : Fragment() {
 
         editMode = myArgs.getBoolean("editMode", false)
         myModuleData = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            myArgs.getParcelable(MY_MODULE_DATA, ModuleData::class.java)!!
+            myArgs.getParcelable(MY_MODULE_DATA, Module::class.java)!!
         } else {
             @Suppress("DEPRECATION")
             myArgs.getParcelable(MY_MODULE_DATA)!!
@@ -93,7 +93,6 @@ class MaterialsFragment : Fragment() {
         binding = FragmentMaterialsBinding.inflate(inflater, container,false)
         @Suppress("DEPRECATION")
         setHasOptionsMenu(true)
-        binding.swipeRefresh.isRefreshing = true
 
 
         if (pathDisplayText == null){
@@ -114,9 +113,9 @@ class MaterialsFragment : Fragment() {
 
 
         (activity as MainActivity?)?.apply {
-            userDB.isOnline.observe(viewLifecycleOwner) { isOnline = it }
+            userDB?.isOnline?.observe(viewLifecycleOwner) { isOnline = it }
 
-            databaseFolders = FirestoreFolders(requireContext(), path, foldersTableName)
+            databaseFolders = FoldersFirestoreDatabase(requireContext(), path, foldersTableName)
             databaseFolders!!.get().addOnSuccessListener{_,_->}
             databaseFolders!!.foldersList.observe(this) { foldersList ->
                 if (foldersList.isNullOrEmpty()) {
@@ -131,10 +130,9 @@ class MaterialsFragment : Fragment() {
             }
 
 
-            databaseFiles = FirestoreFiles(this, path, filesTableName)
+            databaseFiles = FilesFirestoreDatabase(this, path, filesTableName)
             databaseFiles!!.get().addOnSuccessListener{_,_->}
             databaseFiles!!.pdfFilesList.observe(this) { filesList ->
-                binding.swipeRefresh.isRefreshing = false
                 if (filesList.isNullOrEmpty()) {
                     binding.filesList.visibility = View.GONE
                 } else {
@@ -146,7 +144,6 @@ class MaterialsFragment : Fragment() {
                     adapterFiles!!.loadAd()
                 }
             }
-
 
             binding.swipeRefresh.setOnRefreshListener {
                 if (numberOfLoads<3&&isOnline) {
@@ -205,9 +202,9 @@ class MaterialsFragment : Fragment() {
         }
         binding.addFile.setOnClickListener {
             val bundle = Bundle().apply {
-                putParcelable(EditFileFragment.MY_MODULE_DATA, myModuleData)
-                putParcelable(EditFileFragment.PARENT_FOLDER_DATA, folder)
-                putString(EditFileFragment.PATH_DISPLAY_TEXT, if(pathDisplayText != null) pathDisplayText+"/${folder!!.name}" else myModuleData.code)
+                putParcelable(EditFileFragment.ARG_MY_MODULE, myModuleData)
+                putParcelable(EditFileFragment.ARG_PARENT_FOLDER, folder)
+                putString(EditFileFragment.ARG_PATH_DISPLAY_TEXT, if(pathDisplayText != null) pathDisplayText+"/${folder!!.name}" else myModuleData.code)
             }
             (activity as MainActivity?)?.navController?.navigate(R.id.action_edit_file_fragment, bundle)
         }
@@ -218,7 +215,7 @@ class MaterialsFragment : Fragment() {
         super.onResume()
         Handler(Looper.getMainLooper()).postDelayed({
             adapterFolders?.checkItemChanged()
-            adapterFiles?.checkItemChanged()
+            //adapterFiles?.checkItemChanged()
         },300)
     }
 

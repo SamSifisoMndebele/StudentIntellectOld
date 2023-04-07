@@ -91,12 +91,21 @@
     <style name="Theme.StudentIntellect.Splash" parent="Theme.SplashScreen">
         <item name="windowSplashScreenAnimatedIcon">@drawable/ic_launcher_icon</item>
         <item name="postSplashScreenTheme">@style/Theme.StudentIntellect</item>
-        <item name="android:windowSplashScreenBrandingImage" tools:targetApi="s">@drawable/ic_launcher_branding</item>
+        <item name="android:windowSplashScreenBrandingImage" tools:targetApi="s">
+            @drawable/ic_launcher_branding
+        </item>
     </style>
 
     <style name="Theme.StudentIntellect.LoadingBackground">
         <item name="android:background">#F7CDCDCD</item>
     </style>
 
+    <style name="Theme.StudentIntellect.NoActionBar">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+    </style>
 
+    <style name="Theme.StudentIntellect.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
+
+    <style name="Theme.StudentIntellect.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
 </resources>

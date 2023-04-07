@@ -12,7 +12,7 @@ data class User (
     val balance : Double = 0.0,
     val imageUrl: String? = null,
     @JvmField val isOnline : Boolean = false,
-    val myModulesList: List<ModuleData>? = null
+    val myModulesList: List<Module>? = null
 ) : Parcelable {
     constructor(parcel: Parcel) : this(
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU){
@@ -26,15 +26,15 @@ data class User (
         parcel.readString(),
         parcel.readByte() != 0.toByte(),
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            parcel.readArrayList(ModuleData::class.java.classLoader, ModuleData::class.java)?.toList()
+            parcel.readArrayList(Module::class.java.classLoader, Module::class.java)?.toList()
         } else {
-            var modulesList : List<ModuleData>? = null
+            var modulesList : List<Module>? = null
             @Suppress("DEPRECATION")
-            val arrayList = parcel.readArrayList(ModuleData::class.java.classLoader)
+            val arrayList = parcel.readArrayList(Module::class.java.classLoader)
             if(!arrayList.isNullOrEmpty()){
                 modulesList = mutableListOf()
                 arrayList.forEach {
-                    modulesList.add(it as ModuleData)
+                    modulesList.add(it as Module)
                 }
             }
             modulesList

@@ -20,11 +20,11 @@ import androidx.core.widget.doOnTextChanged
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import com.avidco.studentintellect.databinding.FragmentMaterialUploadBinding
-import com.avidco.studentintellect.models.ModuleData
+import com.avidco.studentintellect.models.Module
 import com.avidco.studentintellect.utils.Constants
 import com.avidco.studentintellect.utils.OpenDocumentContract
 import com.avidco.studentintellect.R
-import com.avidco.studentintellect.activities.ui.database.UserDB
+import com.avidco.studentintellect.activities.ui.database.UserDatabase
 import com.avidco.studentintellect.models.PdfFile
 import com.avidco.studentintellect.utils.Extensions.buildMaterialName
 import com.avidco.studentintellect.utils.Utils.fixDecimalsTo
@@ -436,7 +436,7 @@ class UploadFragment222 : Fragment() {
                 return false
             }
             database.collection("modules").document(moduleCode)
-                .set(ModuleData(moduleCode, moduleDescription))
+                .set(Module(moduleCode, moduleDescription))
         }
 
         return true
@@ -563,7 +563,7 @@ class UploadFragment222 : Fragment() {
                                                             .update("balance", FieldValue.increment(amount))
 
                                                         val prefs = requireActivity().getSharedPreferences("pref", Context.MODE_PRIVATE)
-                                                        val userDB = UserDB(context, null)
+                                                        val userDB = UserDatabase(context, null)
                                                         userDB.setBalance(amount)
                                                         binding.rewardBalance.text = getString(R.string.zero_rand)
                                                         rewardItem = null
@@ -605,7 +605,7 @@ class UploadFragment222 : Fragment() {
                                                 Toast.makeText(requireActivity(), "Uploaded successfully.\nYou earned ${amount.toRand()} reward.", Toast.LENGTH_SHORT).show()
 
                                                 val prefs = requireActivity().getSharedPreferences("pref", Context.MODE_PRIVATE)
-                                                val userDB = UserDB(context)
+                                                val userDB = UserDatabase(context)
                                                 userDB.setBalance(amount)
                                                 binding.rewardBalance.text = getString(R.string.zero_rand)
                                                 rewardItem = null

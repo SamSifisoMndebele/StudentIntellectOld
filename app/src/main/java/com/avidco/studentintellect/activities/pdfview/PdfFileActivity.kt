@@ -1,51 +1,67 @@
 package com.avidco.studentintellect.activities.pdfview
 
-import android.app.Dialog
+import android.annotation.SuppressLint
 import android.content.ActivityNotFoundException
 import android.content.ClipData
 import android.content.Intent
-import android.graphics.Bitmap
-import android.graphics.Bitmap.CompressFormat
-import android.graphics.Canvas
-import android.graphics.Color
+import android.content.res.ColorStateList
 import android.graphics.drawable.ColorDrawable
+import android.graphics.drawable.Drawable
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import android.view.*
-import android.widget.LinearLayout
+import android.util.LayoutDirection
+import android.view.Menu
+import android.view.MenuItem
+import android.view.View
+import android.view.WindowManager
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
+import com.google.android.material.floatingactionbutton.FloatingActionButton
+import com.google.android.material.snackbar.Snackbar
+import com.google.android.material.tabs.TabLayout
+import androidx.viewpager.widget.ViewPager
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.view.menu.MenuBuilder
 import androidx.core.content.FileProvider
+import androidx.core.content.res.ResourcesCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import com.avidco.studentintellect.BuildConfig
 import com.avidco.studentintellect.R
-import com.avidco.studentintellect.databinding.ActivityPdfViewBinding
-import com.avidco.studentintellect.utils.Utils.documentsDir
+import com.avidco.studentintellect.activities.auth.AuthActivity
+import com.avidco.studentintellect.databinding.ActivityPdfFileBinding
+import com.avidco.studentintellect.models.Folder
+import com.avidco.studentintellect.models.Module
+import com.avidco.studentintellect.models.PdfFile
+import com.avidco.studentintellect.utils.Utils
 import com.avidco.studentintellect.utils.Utils.getAdSize
-import com.avidco.studentintellect.utils.Utils.tempDisable
+import com.avidco.studentintellect.utils.Utils.isGooglePlayServicesAvailable
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.AdView
 import com.google.android.gms.ads.MobileAds
-import com.avidco.studentintellect.BuildConfig
-import com.avidco.studentintellect.activities.auth.AuthActivity
-import com.avidco.studentintellect.activities.ui.materials.MaterialsFragment
-import com.avidco.studentintellect.models.PdfFile
-import com.avidco.studentintellect.models.ModuleData
-import com.avidco.studentintellect.utils.Utils.imagesDir
 import com.google.android.material.elevation.SurfaceColors
 import com.google.android.material.tabs.TabLayoutMediator
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
-import com.theartofdev.edmodo.cropper.CropImageView
-import java.io.*
+import java.io.File
 
+class PdfFileActivity : AppCompatActivity() {
 
-class PdfViewActivity : AppCompatActivity() {
+    companion object {
+        const val ARG_PDF_FILE = "arg_pdf_file"
+        const val ARG_PARENT_FOLDER = "arg_parent_folder"
+    }
 
-    lateinit var binding: ActivityPdfViewBinding
+    private lateinit var binding: ActivityPdfFileBinding
     private lateinit var pdfFile: PdfFile
-    private lateinit var moduleCode: String
+    private lateinit var parentFolder: Folder
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putParcelable(ARG_PDF_FILE, pdfFile)
+        outState.putParcelable(ARG_PARENT_FOLDER, parentFolder)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -55,7 +71,7 @@ class PdfViewActivity : AppCompatActivity() {
             finishAffinity()
             return
         }
-        binding = ActivityPdfViewBinding.inflate(layoutInflater)
+        binding = ActivityPdfFileBinding.inflate(layoutInflater)
         setContentView(binding.root)
         setSupportActionBar(binding.toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
@@ -67,35 +83,42 @@ class PdfViewActivity : AppCompatActivity() {
         window.navigationBarColor = color
         supportActionBar?.setBackgroundDrawable(ColorDrawable(color))
 
-
+        val extras = savedInstanceState ?: intent.extras
         pdfFile = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            intent.extras?.getParcelable(FILE_DATA, PdfFile::class.java)!!
+            extras?.getParcelable(ARG_PDF_FILE, PdfFile::class.java)!!
         } else {
             @Suppress("DEPRECATION")
-            intent.extras?.getParcelable(FILE_DATA)!!
+            extras?.getParcelable(ARG_PDF_FILE)!!
         }
-        val moduleData = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            intent.extras?.getParcelable(MODULE_DATA, ModuleData::class.java)!!
+        parentFolder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            extras.getParcelable(ARG_PARENT_FOLDER, Folder::class.java)!!
         } else {
             @Suppress("DEPRECATION")
-            intent.extras?.getParcelable(MODULE_DATA)!!
+            extras.getParcelable(ARG_PARENT_FOLDER)!!
         }
-        moduleCode = moduleData.code
 
-        supportActionBar?.title = pdfFile.name + " | " + moduleCode
-
-        binding.viewPager.adapter = SectionsPagerAdapter( pdfFile , moduleData,this)
+        val sectionsPagerAdapter = SectionsPagerAdapter(pdfFile, parentFolder, this)
+        binding.viewPager.adapter = sectionsPagerAdapter
         binding.viewPager.offscreenPageLimit = 2
 
-        if (pdfFile.solutionsUrl != null){
-            TabLayoutMediator(binding.tabLayout, binding.viewPager) { tab, position ->
-                tab.text = if (position == 0) "Questions" else "Solutions"
-            }.attach()
-            binding.viewPager.isUserInputEnabled = false
-        } else {
+        if (pdfFile.solutionsUrl.isNullOrEmpty()) {
+            supportActionBar?.title = pdfFile.name
             binding.tabLayout.visibility = View.GONE
             binding.viewPager.isUserInputEnabled = false
+        } else {
+            TabLayoutMediator(binding.tabLayout, binding.viewPager) { tab, position ->
+                if (position == 0) {
+                    tab.setIcon(R.drawable.ic_open_book)
+                } else {
+                    tab.text = "Solutions"
+                }
+            }.attach()
+            supportActionBar?.title = pdfFile.name
+            binding.tabLayout.visibility = View.VISIBLE
+            binding.tabLayout.setBackgroundColor(color)
+            binding.viewPager.isUserInputEnabled = true
         }
+
 
         MobileAds.initialize(this) {}
         val adRequest = AdRequest.Builder().build()
@@ -119,16 +142,9 @@ class PdfViewActivity : AppCompatActivity() {
         return true
     }
 
-    var menuItem : MenuItem? = null
-    override fun onCreateOptionsMenu(menu: Menu): Boolean {
-        menuInflater.inflate(R.menu.menu_pdf, menu)
-        this.menuItem = menu.findItem(R.id.item_menu)
-        return true
-    }
-
     private lateinit var file : File
     private var i = 0
-    private fun searchFile(file :File, directory: File, function : () -> Unit){
+    private fun searchFile(file : File, directory: File, function : () -> Unit){
         if (file.exists() && file.length() != 0L){
             if (file.canRead()) {
                 i=0
@@ -146,89 +162,74 @@ class PdfViewActivity : AppCompatActivity() {
         }
     }
 
-    private var showMenu = true
+
+    var menu : Menu? = null
+    @SuppressLint("RestrictedApi")
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        this.menu = menu
+        menuInflater.inflate(R.menu.menu_pdf, menu)
+        if (menu is MenuBuilder) menu.setOptionalIconsVisible(true)
+        menu.setGroupVisible(0, false)
+        return true
+    }
+
     override fun onOptionsItemSelected(menuItem: MenuItem): Boolean {
         when (menuItem.itemId) {
-            R.id.item_menu -> {
-                if (showMenu){
-                    showMenuDialog()
-                    showMenu = false
-                    Handler(Looper.getMainLooper()).postDelayed({
-                        showMenu = true
-                    }, 1000)
-                }
+            R.id.item_export -> {
+                /*try {
+                    val path = "modules/${Folder.code}/materials/${pdfFile.name}"
+
+                    file = if (binding.viewPager.currentItem == 0) File(
+                        Utils.documentsDir(
+                            module.code
+                        ), "${pdfFile.name}.pdf")
+                    else File(Utils.documentsDir(module.code), "${pdfFile.name} Solutions.pdf")
+                    searchFile(file, Utils.documentsDir(module.code)) {
+                        val uri = FileProvider.getUriForFile(this, BuildConfig.APPLICATION_ID + ".provider", file)
+                        val pdfOpenIntent = Intent(Intent.ACTION_VIEW)
+                        pdfOpenIntent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP
+                        pdfOpenIntent.clipData = ClipData.newRawUri("", uri)
+                        pdfOpenIntent.setDataAndType(uri, "application/pdf")
+                        pdfOpenIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+                        startActivity(pdfOpenIntent)
+                    }
+                } catch (activityNotFoundException: ActivityNotFoundException) {
+                    Toast.makeText(this, "There is no app to export the PDF", Toast.LENGTH_LONG)
+                        .show()
+                }*/
+            }
+            R.id.item_share -> {
+                /*try {
+                    val path = "modules/${module.code}/materials/${pdfFile.name}"
+                    file = if (binding.viewPager.currentItem == 0) File(
+                        Utils.documentsDir(
+                            module.code
+                        ), "${pdfFile.name}.pdf")
+                    else File(Utils.documentsDir(path), "${pdfFile.name} Solutions.pdf")
+                    searchFile(file, Utils.documentsDir(module.code)) {
+                        val uri = FileProvider.getUriForFile(this, BuildConfig.APPLICATION_ID + ".provider", file)
+                        val intent = Intent(Intent.ACTION_SEND)
+                        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                        intent.type = "application/pdf"
+                        intent.putExtra(Intent.EXTRA_STREAM, uri)
+                        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                        startActivity(intent)
+                    }
+
+                } catch (e: java.lang.Exception) {
+                    e.printStackTrace()
+                    Toast.makeText(this, e.message, Toast.LENGTH_LONG).show()
+                }*/
+            }
+            R.id.item_feedback -> {
+
             }
         }
         return super.onOptionsItemSelected(menuItem)
     }
 
-    private fun showMenuDialog() {
-        val dialog = Dialog(this)
-        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
-        dialog.setContentView(R.layout.menu_pdf_activity_bottomsheet)
-        val crop = dialog.findViewById<LinearLayout>(R.id.crop)
-        val export = dialog.findViewById<LinearLayout>(R.id.export)
-        val shareDoc = dialog.findViewById<LinearLayout>(R.id.share_doc)
-        crop.setOnClickListener {
-            it.tempDisable()
-            dialog.dismiss()
-            startCroppingPdf()
-        }
-        export.setOnClickListener {
-            it.tempDisable()
-            dialog.dismiss()
-            try {
-                val path = "modules/$moduleCode/materials/${pdfFile.name}"
-                
-                file = if (binding.viewPager.currentItem == 0) File(documentsDir(moduleCode), "${pdfFile.name}.pdf")
-                else File(documentsDir(moduleCode), "${pdfFile.name} Solutions.pdf")
-                searchFile(file, documentsDir(moduleCode)) {
-                    val uri = FileProvider.getUriForFile(this, BuildConfig.APPLICATION_ID + ".provider", file)
-                    val pdfOpenIntent = Intent(Intent.ACTION_VIEW)
-                    pdfOpenIntent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP
-                    pdfOpenIntent.clipData = ClipData.newRawUri("", uri)
-                    pdfOpenIntent.setDataAndType(uri, "application/pdf")
-                    pdfOpenIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
-                    startActivity(pdfOpenIntent)
-                }
-            } catch (activityNotFoundException: ActivityNotFoundException) {
-                Toast.makeText(this, "There is no app to export the PDF", Toast.LENGTH_LONG)
-                    .show()
-            }
-        }
-        shareDoc.setOnClickListener {
-            it.tempDisable()
-            dialog.dismiss()
-            try {
-                val path = "modules/$moduleCode/materials/${pdfFile.name}"
-                file = if (binding.viewPager.currentItem == 0) File(documentsDir(moduleCode), "${pdfFile.name}.pdf")
-                else File(documentsDir(path), "${pdfFile.name} Solutions.pdf")
-                searchFile(file, documentsDir(moduleCode)) {
-                    val uri = FileProvider.getUriForFile(this, BuildConfig.APPLICATION_ID + ".provider", file)
-                    val intent = Intent(Intent.ACTION_SEND)
-                    intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                    intent.type = "application/pdf"
-                    intent.putExtra(Intent.EXTRA_STREAM, uri)
-                    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
-                    startActivity(intent)
-                }
 
-            } catch (e: java.lang.Exception) {
-                e.printStackTrace()
-                Toast.makeText(this, e.message, Toast.LENGTH_LONG).show()
-            }
-        }
-
-        dialog.show()
-        dialog.window!!.setLayout(
-            ViewGroup.LayoutParams.MATCH_PARENT,
-            ViewGroup.LayoutParams.WRAP_CONTENT
-        )
-        dialog.window!!.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
-        dialog.window!!.setGravity(Gravity.BOTTOM)
-    }
-
-    private fun startCroppingPdf() {
+    /*private fun startCroppingPdf() {
         val view = binding.viewPager
         val bitmap = Bitmap.createBitmap(view.width, view.height, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bitmap)
@@ -301,10 +302,5 @@ class PdfViewActivity : AppCompatActivity() {
             share = true
             binding.cropImageView.getCroppedImageAsync()
         }
-    }
-
-    companion object {
-        const val FILE_DATA = "arg_file_data"
-        const val MODULE_DATA = "arg_module_data"
-    }
+    }*/
 }

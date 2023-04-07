@@ -4,16 +4,16 @@ import android.content.Context
 import android.content.SharedPreferences
 import androidx.appcompat.app.AlertDialog
 import com.avidco.studentintellect.models.Folder
-import com.avidco.studentintellect.models.FolderDeleted
 import com.google.android.gms.tasks.Task
 import com.google.firebase.Timestamp
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.QuerySnapshot
 import com.google.firebase.firestore.SetOptions
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 
-class FirestoreFolders(context: Context, path: String, tableName: String)
-    : LocalFolders(context,tableName) {
+class FoldersFirestoreDatabase(context: Context, path: String, tableName: String)
+    : FoldersLocalDatabase(context,tableName) {
 
     private val prefs: SharedPreferences = context.getSharedPreferences("${tableName}_last_folders_read_time_prefs", Context.MODE_PRIVATE)
     private val lastReadTime = Timestamp(prefs.getLong("last_read_time", 0),0)
@@ -74,7 +74,7 @@ class FirestoreFolders(context: Context, path: String, tableName: String)
 
     fun delete(folderID: String) : DeleteFolderTask {
         val deleteTask = foldersColRef.document(folderID)
-            .update("isDelete", true)
+            .update("isDeleted", true)
 
         return DeleteFolderTask(deleteTask, folderID, this)
     }
@@ -83,13 +83,11 @@ class FirestoreFolders(context: Context, path: String, tableName: String)
 
         val deleteTransaction = Firebase.firestore.runTransaction { transaction ->
             transaction.delete(deleteDocRef)
-            transaction.set(deleteDocRef, FolderDeleted(folderID))
+            transaction.set(foldersColRef.document("DeletedPermanently"),
+                mapOf("deletedIds" to FieldValue.arrayUnion(mapOf(folderID to Timestamp.now())),
+                "isDeletedPermanently" to true), SetOptions.merge())
             null
         }
-
-        /*val deleteTask = foldersColRef.document(folderID).delete()
-        val deletedSetTask = foldersColRef.document(folderID)
-            .set(FolderDeleted(folderID))*/
 
         return DeleteFolderPermTask(deleteTransaction, folderID, this)
     }
@@ -98,17 +96,17 @@ class FirestoreFolders(context: Context, path: String, tableName: String)
     fun get(isRefresh : Boolean = false) : GetFoldersTask {
         val currentTime = Timestamp.now()
         val modifiedTask = if (isRefresh) {
-            foldersColRef.whereEqualTo("isDelete", false).get()
+            foldersColRef.whereEqualTo("isDeleted", false).get()
         } else {
-            foldersColRef.whereEqualTo("isDelete", false)
+            foldersColRef.whereEqualTo("isDeleted", false)
                 .whereGreaterThanOrEqualTo("timeUpdated", lastReadTime)
                 .get()
         }
         val deletedTask = if (isRefresh) {
-            foldersColRef.whereEqualTo("isDelete", true).get()
+            foldersColRef.whereEqualTo("isDeleted", true).get()
         } else {
-            foldersColRef.whereEqualTo("isDelete", true)
-                .whereGreaterThanOrEqualTo("timeDeleted", lastReadTime)
+            foldersColRef.whereEqualTo("isDeleted", true)
+                .whereGreaterThanOrEqualTo("timeUpdated", lastReadTime)
                 .get()
         }
 
@@ -119,7 +117,7 @@ class FirestoreFolders(context: Context, path: String, tableName: String)
     companion object {
 
         //Put folders
-        data class PutFolderTask(val putTask: Task<Void>, val folder : Folder, val database : FirestoreFolders)
+        data class PutFolderTask(val putTask: Task<Void>, val folder : Folder, val database : FoldersFirestoreDatabase)
         fun PutFolderTask.addOnFailureListener(onFailure: (e : Exception, notAddedFolder : Folder) -> Unit) : PutFolderTask {
             putTask.addOnFailureListener {
                 onFailure(it, folder)
@@ -133,7 +131,7 @@ class FirestoreFolders(context: Context, path: String, tableName: String)
             }
             return this
         }
-        data class PutFoldersTask(val putBatchTask: Task<Void>, val folders : List<Folder>, val database : FirestoreFolders)
+        data class PutFoldersTask(val putBatchTask: Task<Void>, val folders : List<Folder>, val database : FoldersFirestoreDatabase)
         fun PutFoldersTask.addOnFailureListener(onFailure: (e : Exception, notAddedFolders : List<Folder>) -> Unit) : PutFoldersTask {
             putBatchTask.addOnFailureListener {
                 onFailure(it, folders)
@@ -153,7 +151,7 @@ class FirestoreFolders(context: Context, path: String, tableName: String)
 
 
         //Update folders
-        data class UpdateFolderTask(val updateTask: Task<Void>,val folder: Folder, val database : FirestoreFolders)
+        data class UpdateFolderTask(val updateTask: Task<Void>,val folder: Folder, val database : FoldersFirestoreDatabase)
         fun UpdateFolderTask.addOnFailureListener(onFailure: (e : Exception) -> Unit) : UpdateFolderTask {
             updateTask.addOnFailureListener {
                 onFailure(it)
@@ -167,7 +165,7 @@ class FirestoreFolders(context: Context, path: String, tableName: String)
             }
             return this
         }
-        data class UpdateFolderMapTask(val updateBatchTask: Task<Void>, val folderValues: HashMap<String, Any>, val database : FirestoreFolders)
+        data class UpdateFolderMapTask(val updateBatchTask: Task<Void>, val folderValues: HashMap<String, Any>, val database : FoldersFirestoreDatabase)
         fun UpdateFolderMapTask.addOnFailureListener(onFailure: (e : Exception) -> Unit) : UpdateFolderMapTask {
             updateBatchTask.addOnFailureListener {
                 onFailure(it)
@@ -181,7 +179,7 @@ class FirestoreFolders(context: Context, path: String, tableName: String)
             }
             return this
         }
-        data class UpdateFoldersMapTask(val updateBatchTask: Task<Void>, val foldersValues : List<HashMap<String, Any>>, val database : FirestoreFolders)
+        data class UpdateFoldersMapTask(val updateBatchTask: Task<Void>, val foldersValues : List<HashMap<String, Any>>, val database : FoldersFirestoreDatabase)
         fun UpdateFoldersMapTask.addOnFailureListener(onFailure: (e : Exception) -> Unit) : UpdateFoldersMapTask {
             updateBatchTask.addOnFailureListener {
                 onFailure(it)
@@ -198,7 +196,7 @@ class FirestoreFolders(context: Context, path: String, tableName: String)
 
 
         //Delete folders
-        data class DeleteFolderTask(val deleteTask: Task<Void>, val folderID: String, val database : FirestoreFolders)
+        data class DeleteFolderTask(val deleteTask: Task<Void>, val folderID: String, val database : FoldersFirestoreDatabase)
         fun DeleteFolderTask.addOnFailureListener(onFailure: (e : Exception, notDeletedFolderID: String) -> Unit) : DeleteFolderTask {
             deleteTask.addOnFailureListener {
                 onFailure(it, folderID)
@@ -212,7 +210,7 @@ class FirestoreFolders(context: Context, path: String, tableName: String)
             }
             return this
         }
-        data class DeleteFolderPermTask(val deleteTransaction: Task<Nothing>, val folderID: String, val database : FirestoreFolders)
+        data class DeleteFolderPermTask(val deleteTransaction: Task<Nothing>, val folderID: String, val database : FoldersFirestoreDatabase)
         fun DeleteFolderPermTask.addOnFailureListener(onFailure: (e : Exception, notDeletedFolderID: String) -> Unit) : DeleteFolderPermTask {
             deleteTransaction.addOnFailureListener {
                 onFailure(it, folderID)
@@ -232,7 +230,7 @@ class FirestoreFolders(context: Context, path: String, tableName: String)
         data class GetFoldersTask(val updatedTask : Task<QuerySnapshot>,
                                   val deletedTask : Task<QuerySnapshot>,
                                   val prefs: SharedPreferences,
-                                  val database : FirestoreFolders,
+                                  val database : FoldersFirestoreDatabase,
                                   val currentTime: Timestamp)
         fun GetFoldersTask.addOnFailureListener (onFailure: (e : Exception) -> Unit) : GetFoldersTask {
             var notFailed = true

@@ -3,24 +3,22 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools">
     <item
-        android:id="@+id/item_menu"
-        android:title="@string/menu"
-        app:showAsAction="always"
-        android:visible="false"
-        android:icon="@drawable/ic_dots"
+        android:id="@+id/item_export"
+        android:title="@string/export"
+        app:showAsAction="never"
+        android:icon="@drawable/ic_export"
         tools:ignore="AlwaysShowAction" />
     <item
         android:id="@+id/item_share"
-        android:title="@string/share_the_app"
-        android:showAsAction="ifRoom|withText"
-        android:icon="@drawable/ic_share"
-        android:visible="false"
+        android:title="@string/share"
+        android:showAsAction="never"
+        android:icon="@drawable/icon_share"
         tools:ignore="AppCompatResource" />
     <item
         android:id="@+id/item_feedback"
         android:title="@string/feedback"
-        android:showAsAction="ifRoom|withText"
+        android:showAsAction="never"
         android:icon="@drawable/ic_feedback"
-        android:visible="false"
         tools:ignore="AppCompatResource" />
+
 </menu>

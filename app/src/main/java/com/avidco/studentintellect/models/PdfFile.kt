@@ -12,13 +12,13 @@ data class PdfFile(
     var materialSize: Double = 0.0,
     var solutionsUrl: String? = null,
     var solutionsSize: Double? = null,
-    val downloads: Int = 0,
+    val downloads: Long = 0,
     var timeUpdated: Timestamp = Timestamp.now(),
     val uploader: UserInfo = UserInfo(),
     @JvmField val isExportable: Boolean = false,
     @JvmField val isVerified: Boolean = false,
     val verifier: UserInfo? = null,
-    @JvmField val isDelete: Boolean = false,
+    @JvmField val isDeleted: Boolean = false,
     val deleter: UserInfo? = null
 ) : Parcelable {
     constructor(parcel: Parcel) : this(
@@ -27,15 +27,15 @@ data class PdfFile(
         parcel.readString()!!,
         parcel.readDouble(),
         parcel.readString(),
-        parcel.readDouble(),
-        parcel.readInt(),
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU){
+        parcel.readValue(Double::class.java.classLoader) as? Double,
+        parcel.readLong(),
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             parcel.readParcelable(Timestamp::class.java.classLoader, Timestamp::class.java)!!
         } else {
             @Suppress("DEPRECATION")
             parcel.readParcelable(Timestamp::class.java.classLoader)!!
         },
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU){
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             parcel.readParcelable(UserInfo::class.java.classLoader, UserInfo::class.java)!!
         } else {
             @Suppress("DEPRECATION")
@@ -43,18 +43,18 @@ data class PdfFile(
         },
         parcel.readByte() != 0.toByte(),
         parcel.readByte() != 0.toByte(),
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU){
-            parcel.readParcelable(UserInfo::class.java.classLoader, UserInfo::class.java)!!
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            parcel.readParcelable(UserInfo::class.java.classLoader, UserInfo::class.java)
         } else {
             @Suppress("DEPRECATION")
-            parcel.readParcelable(UserInfo::class.java.classLoader)!!
+            parcel.readParcelable(UserInfo::class.java.classLoader)
         },
         parcel.readByte() != 0.toByte(),
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU){
-            parcel.readParcelable(UserInfo::class.java.classLoader, UserInfo::class.java)!!
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            parcel.readParcelable(UserInfo::class.java.classLoader, UserInfo::class.java)
         } else {
             @Suppress("DEPRECATION")
-            parcel.readParcelable(UserInfo::class.java.classLoader)!!
+            parcel.readParcelable(UserInfo::class.java.classLoader)
         }
     )
 
@@ -65,13 +65,13 @@ data class PdfFile(
         parcel.writeDouble(materialSize)
         parcel.writeString(solutionsUrl)
         parcel.writeValue(solutionsSize)
-        parcel.writeInt(downloads)
+        parcel.writeLong(downloads)
         parcel.writeParcelable(timeUpdated, flags)
         parcel.writeParcelable(uploader, flags)
         parcel.writeByte(if (isExportable) 1 else 0)
         parcel.writeByte(if (isVerified) 1 else 0)
         parcel.writeParcelable(verifier, flags)
-        parcel.writeByte(if (isDelete) 1 else 0)
+        parcel.writeByte(if (isDeleted) 1 else 0)
         parcel.writeParcelable(deleter, flags)
     }
 

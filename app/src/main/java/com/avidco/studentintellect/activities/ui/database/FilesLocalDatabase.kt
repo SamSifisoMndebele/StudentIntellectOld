@@ -5,6 +5,7 @@ import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 import androidx.core.database.getDoubleOrNull
+import androidx.core.database.getIntOrNull
 import androidx.core.database.getStringOrNull
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -12,8 +13,8 @@ import com.avidco.studentintellect.models.PdfFile
 import com.avidco.studentintellect.models.UserInfo
 import com.google.firebase.Timestamp
 
-abstract class LocalFiles(val context: Context?, private val tableName: String) :
-    SQLiteOpenHelper(context, tableName, null, 8) {
+abstract class FilesLocalDatabase(val context: Context?, private val tableName: String) :
+    SQLiteOpenHelper(context, tableName, null, 1) {
     
     companion object {
         private const val ID = "Id"
@@ -26,8 +27,14 @@ abstract class LocalFiles(val context: Context?, private val tableName: String) 
         private const val TIME_UPDATED_SEC = "TimeUpdated"
         private const val UPLOADER_UID = "UploaderUID"
         private const val UPLOADER_NAME = "UploaderName"
+        private const val UPLOADER_EMAIL = "UploaderEmail"
+        private const val UPLOADER_USER_TYPE = "UploaderUserType"
         private const val IS_EXPORTABLE = "IsExportable"
         private const val IS_VERIFIED = "IsVerified"
+        private const val VERIFIER_UID = "VerifierUID"
+        private const val VERIFIER_NAME = "VerifierName"
+        private const val VERIFIER_EMAIL = "VerifierEmail"
+        private const val VERIFIER_USER_TYPE = "VerifierUserType"
     }
 
     override fun onCreate(db: SQLiteDatabase) {
@@ -37,12 +44,18 @@ abstract class LocalFiles(val context: Context?, private val tableName: String) 
                                                        $MATERIAL_SIZE DOUBLE NOT NULL default 0.0,
                                                        $SOLUTIONS_URL TEXT, 
                                                        $SOLUTIONS_SIZE DOUBLE,
-                                                       $DOWNLOADS INT NOT NULL default 0,
+                                                       $DOWNLOADS LONG NOT NULL default 0,
                                                        $TIME_UPDATED_SEC LONG NOT NULL,
                                                        $UPLOADER_UID TEXT NOT NULL, 
                                                        $UPLOADER_NAME TEXT NOT NULL, 
+                                                       $UPLOADER_EMAIL TEXT NOT NULL, 
+                                                       $UPLOADER_USER_TYPE INT NOT NULL, 
                                                        $IS_EXPORTABLE BOOLEAN NOT NULL, 
-                                                       $IS_VERIFIED BOOLEAN NOT NULL)"""
+                                                       $IS_VERIFIED BOOLEAN NOT NULL,
+                                                       $VERIFIER_UID TEXT, 
+                                                       $VERIFIER_NAME TEXT, 
+                                                       $VERIFIER_EMAIL TEXT, 
+                                                       $VERIFIER_USER_TYPE INT)"""
         db.execSQL(createTable)
     }
 
@@ -64,8 +77,14 @@ abstract class LocalFiles(val context: Context?, private val tableName: String) 
             put(TIME_UPDATED_SEC, pdfFile.timeUpdated.seconds)
             put(UPLOADER_UID, pdfFile.uploader.uid)
             put(UPLOADER_NAME, pdfFile.uploader.name)
+            put(UPLOADER_EMAIL, pdfFile.uploader.email)
+            put(UPLOADER_USER_TYPE, pdfFile.uploader.userType)
             put(IS_EXPORTABLE, pdfFile.isExportable)
             put(IS_VERIFIED, pdfFile.isVerified)
+            put(VERIFIER_UID, pdfFile.verifier?.uid)
+            put(VERIFIER_NAME, pdfFile.verifier?.name)
+            put(VERIFIER_EMAIL, pdfFile.verifier?.email)
+            put(VERIFIER_USER_TYPE, pdfFile.verifier?.userType)
         }
         val isSuccess = writableDatabase.insert(tableName, null, contentValues) != -1L
         if (isSuccess && updateList) _pdfFilesList.value = getPdfFilesList()
@@ -85,8 +104,14 @@ abstract class LocalFiles(val context: Context?, private val tableName: String) 
                 put(TIME_UPDATED_SEC, pdfFile.timeUpdated.seconds)
                 put(UPLOADER_UID, pdfFile.uploader.uid)
                 put(UPLOADER_NAME, pdfFile.uploader.name)
+                put(UPLOADER_EMAIL, pdfFile.uploader.email)
+                put(UPLOADER_USER_TYPE, pdfFile.uploader.userType)
                 put(IS_EXPORTABLE, pdfFile.isExportable)
                 put(IS_VERIFIED, pdfFile.isVerified)
+                put(VERIFIER_UID, pdfFile.verifier?.uid)
+                put(VERIFIER_NAME, pdfFile.verifier?.name)
+                put(VERIFIER_EMAIL, pdfFile.verifier?.email)
+                put(VERIFIER_USER_TYPE, pdfFile.verifier?.userType)
             }
             isSuccess = isSuccess && (
                     writableDatabase.insert(tableName, null, contentValues.apply { put(ID, pdfFile.id) }) != -1L
@@ -108,8 +133,14 @@ abstract class LocalFiles(val context: Context?, private val tableName: String) 
             put(TIME_UPDATED_SEC, pdfFile.timeUpdated.seconds)
             put(UPLOADER_UID, pdfFile.uploader.uid)
             put(UPLOADER_NAME, pdfFile.uploader.name)
+            put(UPLOADER_EMAIL, pdfFile.uploader.email)
+            put(UPLOADER_USER_TYPE, pdfFile.uploader.userType)
             put(IS_EXPORTABLE, pdfFile.isExportable)
             put(IS_VERIFIED, pdfFile.isVerified)
+            put(VERIFIER_UID, pdfFile.verifier?.uid)
+            put(VERIFIER_NAME, pdfFile.verifier?.name)
+            put(VERIFIER_EMAIL, pdfFile.verifier?.email)
+            put(VERIFIER_USER_TYPE, pdfFile.verifier?.userType)
         }
 
         val isSuccess = writableDatabase.update(tableName, contentValues, "$ID = '${pdfFile.id}'", null) > 0
@@ -129,8 +160,14 @@ abstract class LocalFiles(val context: Context?, private val tableName: String) 
             put(TIME_UPDATED_SEC, pdfFile.timeUpdated.seconds)
             put(UPLOADER_UID, pdfFile.uploader.uid)
             put(UPLOADER_NAME, pdfFile.uploader.name)
+            put(UPLOADER_EMAIL, pdfFile.uploader.email)
+            put(UPLOADER_USER_TYPE, pdfFile.uploader.userType)
             put(IS_EXPORTABLE, pdfFile.isExportable)
             put(IS_VERIFIED, pdfFile.isVerified)
+            put(VERIFIER_UID, pdfFile.verifier?.uid)
+            put(VERIFIER_NAME, pdfFile.verifier?.name)
+            put(VERIFIER_EMAIL, pdfFile.verifier?.email)
+            put(VERIFIER_USER_TYPE, pdfFile.verifier?.userType)
             }
             isSuccess = isSuccess && writableDatabase.update(tableName, contentValues, "$ID = '${pdfFile.id}'", null) > 0
         }
@@ -151,17 +188,24 @@ abstract class LocalFiles(val context: Context?, private val tableName: String) 
             if (solutionsUrl != null){ put(SOLUTIONS_URL, solutionsUrl) }
             val solutionsSize = pdfFile["materialUrl"] as Double?
             if (solutionsSize != null){ put(SOLUTIONS_SIZE, solutionsSize) }
-            val downloads = pdfFile["filesCount"] as Int?
+            val downloads = pdfFile["filesCount"] as Long?
             if (downloads != null){ put(DOWNLOADS, downloads) }
             val timeUpdated = pdfFile["timeUpdated"] as Timestamp?
             if (timeUpdated != null){ put(TIME_UPDATED_SEC, timeUpdated.seconds) }
             val uploader = pdfFile["uploader"] as UserInfo?
             if (uploader?.uid != null){ put(UPLOADER_UID, uploader.uid) }
             if (uploader?.name != null){ put(UPLOADER_NAME, uploader.name) }
+            if (uploader?.email != null){ put(UPLOADER_EMAIL, uploader.email) }
+            if (uploader?.userType != null){ put(UPLOADER_USER_TYPE, uploader.userType) }
             val isExportable = pdfFile["isExportable"] as Boolean?
             if (isExportable != null){ put(IS_EXPORTABLE, isExportable) }
             val isVerified = pdfFile["isVerified"] as Boolean?
             if (isVerified != null){ put(IS_VERIFIED, isVerified) }
+            val verifier = pdfFile["verifier"] as UserInfo?
+            if (verifier?.uid != null){ put(VERIFIER_UID, verifier.uid) }
+            if (verifier?.name != null){ put(VERIFIER_NAME, verifier.name) }
+            if (verifier?.email != null){ put(VERIFIER_EMAIL, verifier.email) }
+            if (verifier?.userType != null){ put(VERIFIER_USER_TYPE, verifier.userType) }
         }
 
         val isSuccess = writableDatabase.update(tableName, contentValues, "$ID = '$id'", null) > 0
@@ -183,17 +227,24 @@ abstract class LocalFiles(val context: Context?, private val tableName: String) 
                 if (solutionsUrl != null){ put(SOLUTIONS_URL, solutionsUrl) }
                 val solutionsSize = pdfFile["materialUrl"] as Double?
                 if (solutionsSize != null){ put(SOLUTIONS_SIZE, solutionsSize) }
-                val downloads = pdfFile["filesCount"] as Int?
+                val downloads = pdfFile["filesCount"] as Long?
                 if (downloads != null){ put(DOWNLOADS, downloads) }
                 val timeUpdated = pdfFile["timeUpdated"] as Timestamp?
                 if (timeUpdated != null){ put(TIME_UPDATED_SEC, timeUpdated.seconds) }
                 val uploader = pdfFile["uploader"] as UserInfo?
                 if (uploader?.uid != null){ put(UPLOADER_UID, uploader.uid) }
                 if (uploader?.name != null){ put(UPLOADER_NAME, uploader.name) }
+                if (uploader?.email != null){ put(UPLOADER_EMAIL, uploader.email) }
+                if (uploader?.userType != null){ put(UPLOADER_USER_TYPE, uploader.userType) }
                 val isExportable = pdfFile["isExportable"] as Boolean?
                 if (isExportable != null){ put(IS_EXPORTABLE, isExportable) }
                 val isVerified = pdfFile["isVerified"] as Boolean?
                 if (isVerified != null){ put(IS_VERIFIED, isVerified) }
+                val verifier = pdfFile["verifier"] as UserInfo?
+                if (verifier?.uid != null){ put(VERIFIER_UID, verifier.uid) }
+                if (verifier?.name != null){ put(VERIFIER_NAME, verifier.name) }
+                if (verifier?.email != null){ put(VERIFIER_EMAIL, verifier.email) }
+                if (verifier?.userType != null){ put(VERIFIER_USER_TYPE, verifier.userType) }
             }
             isSuccess = isSuccess && writableDatabase.update(tableName, contentValues, "$ID = '$id'", null) > 0
         }
@@ -239,11 +290,18 @@ abstract class LocalFiles(val context: Context?, private val tableName: String) 
                     cursor.getDouble(3),
                     cursor.getStringOrNull(4),
                     cursor.getDoubleOrNull(5),
-                    cursor.getInt(6),
+                    cursor.getLong(6),
                     Timestamp(cursor.getLong(7), 0),
-                    UserInfo(cursor.getString(8),cursor.getString(9),"", -1),
+                    UserInfo(cursor.getString(8),
+                        cursor.getString(9),
+                        cursor.getString(9),
+                        cursor.getInt(9)),
                     cursor.getString(10).toBoolean(),
-                    cursor.getString(11).toBoolean()
+                    cursor.getString(11).toBoolean(),
+                    UserInfo(cursor.getStringOrNull(8)?:"",
+                        cursor.getStringOrNull(9)?:"",
+                        cursor.getStringOrNull(9)?:"",
+                        cursor.getIntOrNull(9)?:-1)
                 ))
         }
         cursor.close()

@@ -2,7 +2,6 @@ package com.avidco.studentintellect.activities.ui
 
 import android.app.Dialog
 import android.content.ActivityNotFoundException
-import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener
@@ -10,10 +9,7 @@ import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.net.*
-import android.os.Build
-import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
+import android.os.*
 import android.view.View
 import android.view.ViewGroup
 import android.view.Window
@@ -29,7 +25,6 @@ import androidx.browser.customtabs.CustomTabsIntent
 import androidx.cardview.widget.CardView
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.drawerlayout.widget.DrawerLayout
-import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.NavController
 import androidx.navigation.findNavController
 import androidx.navigation.ui.AppBarConfiguration
@@ -39,8 +34,8 @@ import androidx.navigation.ui.setupWithNavController
 import androidx.preference.PreferenceManager
 import com.avidco.studentintellect.R
 import com.avidco.studentintellect.activities.auth.AuthActivity
-import com.avidco.studentintellect.activities.ui.database.UserDB
-import com.avidco.studentintellect.activities.ui.modules.MyModulesDatabaseHelper
+import com.avidco.studentintellect.activities.ui.database.UserDatabase
+import com.avidco.studentintellect.activities.ui.database.MyModulesLocalDatabase
 import com.avidco.studentintellect.databinding.ActivityMainBinding
 import com.avidco.studentintellect.models.User
 import com.avidco.studentintellect.utils.Utils.appRateCheck
@@ -74,7 +69,7 @@ class MainActivity : AppCompatActivity() , OnSharedPreferenceChangeListener {
     lateinit var navController : NavController
     private lateinit var navView: NavigationView
     private lateinit var binding: ActivityMainBinding
-    lateinit var userDB: UserDB
+    var userDB: UserDatabase? = null
     companion object{
         private const val UPDATE_REQUEST_CODE = 12
         const val USER_ARG = "user_arg"
@@ -132,19 +127,18 @@ class MainActivity : AppCompatActivity() , OnSharedPreferenceChangeListener {
         }
     }
 
-
     private fun setupNetworkListener() {
         val networkRequest = NetworkRequest.Builder()
             .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
             .addTransportType(NetworkCapabilities.TRANSPORT_WIFI)
             .addTransportType(NetworkCapabilities.TRANSPORT_CELLULAR)
             .build()
-        val connectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val connectivityManager = getSystemService(CONNECTIVITY_SERVICE) as ConnectivityManager
         connectivityManager.requestNetwork(networkRequest, object : ConnectivityManager.NetworkCallback() {
             override fun onAvailable(network: Network) {
                 super.onAvailable(network)
                 runOnUiThread {
-                    userDB.setIsOnline(true)
+                    userDB?.setIsOnline(true)
                     binding.noInternet.visibility = View.GONE
                 }
             }
@@ -152,7 +146,7 @@ class MainActivity : AppCompatActivity() , OnSharedPreferenceChangeListener {
             override fun onLost(network: Network) {
                 super.onLost(network)
                 runOnUiThread {
-                    userDB.setIsOnline(false)
+                    userDB?.setIsOnline(false)
                     binding.noInternet.visibility = View.VISIBLE
                 }
             }
@@ -175,7 +169,7 @@ class MainActivity : AppCompatActivity() , OnSharedPreferenceChangeListener {
             @Suppress("DEPRECATION")
             intent.extras?.getParcelable(USER_ARG)
         }
-        userDB = UserDB(this, user)
+        userDB = UserDatabase(this, user)
         setContentView(binding.root)
         setSupportActionBar(binding.toolbar)
         setupNetworkListener()
@@ -276,7 +270,7 @@ class MainActivity : AppCompatActivity() , OnSharedPreferenceChangeListener {
                 .setPositiveButton(getString(R.string.logout)){d,_->
                     d.dismiss()
                     drawerLayout.close()
-                    MyModulesDatabaseHelper(this).doOnSignOut {
+                    MyModulesLocalDatabase(this).doOnSignOut {
                         startActivity(Intent(this, AuthActivity::class.java))
                         finishAffinity()
                     }

@@ -7,35 +7,33 @@ import android.widget.*
 import androidx.appcompat.widget.SearchView
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.avidco.studentintellect.R
 import com.avidco.studentintellect.activities.ui.MainActivity
-import com.avidco.studentintellect.activities.ui.modules.MyModulesAdapter
-import com.avidco.studentintellect.activities.ui.modules.MyModulesDatabaseHelper
+import com.avidco.studentintellect.activities.ui.database.ModulesLocalDatabase
+import com.avidco.studentintellect.activities.ui.database.MyModulesLocalDatabase
 import com.avidco.studentintellect.databinding.FragmentAddModulesBinding
-import com.avidco.studentintellect.models.ModuleData
+import com.avidco.studentintellect.models.Module
 import com.avidco.studentintellect.utils.LoadingDialog
 import com.avidco.studentintellect.utils.Utils.hideKeyboard
 import com.avidco.studentintellect.utils.Utils.tempDisable
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
-import kotlinx.coroutines.tasks.await
 
 class ModulesFragment : Fragment() {
 
     private lateinit var binding: FragmentAddModulesBinding
     private lateinit var loadingDialog: LoadingDialog
-    private lateinit var databaseHelperMyModules: MyModulesDatabaseHelper
+    private lateinit var databaseHelperMyModules: MyModulesLocalDatabase
     private var addAdapter : ModulesAdapter? = null
 
-    private fun MainActivity.reloadModules(databaseHelper : ModulesDatabaseHelper, exitOnCancel: Boolean = false) {
+    private fun MainActivity.reloadModules(databaseHelper : ModulesLocalDatabase, exitOnCancel: Boolean = false) {
         val prefs = getSharedPreferences("last_modules_read_time_prefs", Context.MODE_PRIVATE)
         val currentTime = Timestamp.now()
         val lastReadTime = Timestamp(prefs.getLong("last_read_time", 0),0)
         val lastMapReadTime = prefs.getLong("last_deleted_map_read_time", 0)
 
         Firebase.firestore.collection("Modules")
-            .whereGreaterThanOrEqualTo("timeAdded", lastReadTime)
+            .whereGreaterThanOrEqualTo("timeUpdated", lastReadTime)
             .get()
             .addOnCompleteListener { addedTask ->
                 Firebase.firestore.collection("Modules")
@@ -50,8 +48,8 @@ class ModulesFragment : Fragment() {
                                     ?.filter { (it.value as Timestamp).seconds > lastMapReadTime }
 
                                 databaseHelper.listUpdateFromFireStore(
-                                    addedTask.result?.toObjects(ModuleData::class.java),
-                                    modifiedTask.result?.toObjects(ModuleData::class.java),
+                                    addedTask.result?.toObjects(Module::class.java),
+                                    modifiedTask.result?.toObjects(Module::class.java),
                                     deletedIDs?.keys?.toList()
                                 )
                                 prefs.edit().putLong("last_read_time",currentTime.seconds).apply()
@@ -74,11 +72,11 @@ class ModulesFragment : Fragment() {
                               savedInstanceState: Bundle?): View {
         binding = FragmentAddModulesBinding.inflate(inflater, container, false)
         loadingDialog = LoadingDialog(activity)
-        databaseHelperMyModules = MyModulesDatabaseHelper(activity as MainActivity?)
+        databaseHelperMyModules = MyModulesLocalDatabase(activity as MainActivity?)
 
         loadingDialog.show()
         (activity as MainActivity?)?.apply {
-            val databaseHelper = ModulesDatabaseHelper(this)
+            val databaseHelper = ModulesLocalDatabase(this)
             databaseHelper.modulesList.observe(this) { modulesList ->
                 if (!modulesList.isNullOrEmpty()) {
                     addAdapter = ModulesAdapter(this, modulesList, databaseHelperMyModules)

@@ -16,6 +16,7 @@ import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.avidco.studentintellect.activities.ui.MainActivity
 import com.avidco.studentintellect.R
+import com.avidco.studentintellect.activities.ui.database.MyModulesLocalDatabase
 import com.avidco.studentintellect.databinding.FragmentMyModulesBinding
 import com.avidco.studentintellect.utils.Utils.appRatedCheck
 import com.avidco.studentintellect.utils.Utils.askPlayStoreRatings
@@ -194,7 +195,7 @@ class MyModulesFragment : Fragment() {
 
 
         (activity as MainActivity?)?.apply {
-            val databaseHelper = MyModulesDatabaseHelper(this)
+            val databaseHelper = MyModulesLocalDatabase(this)
 
             databaseHelper.myModulesList.observe(this) { myModulesList ->
                 if (myModulesList.isNullOrEmpty()) {

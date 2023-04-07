@@ -17,14 +17,14 @@ import android.widget.ArrayAdapter
 import android.widget.Toast
 import com.avidco.studentintellect.R
 import com.avidco.studentintellect.activities.ui.MainActivity
-import com.avidco.studentintellect.activities.ui.database.FirestoreFiles
-import com.avidco.studentintellect.activities.ui.database.FirestoreFiles.Companion.addOnFailureListener
-import com.avidco.studentintellect.activities.ui.database.FirestoreFiles.Companion.addOnSuccessListener
+import com.avidco.studentintellect.activities.ui.database.FilesFirestoreDatabase
+import com.avidco.studentintellect.activities.ui.database.FilesFirestoreDatabase.Companion.addOnFailureListener
+import com.avidco.studentintellect.activities.ui.database.FilesFirestoreDatabase.Companion.addOnSuccessListener
 import com.avidco.studentintellect.activities.ui.materials.folders.EditFolderFragment
 import com.avidco.studentintellect.databinding.FragmentEditFileBinding
 import com.avidco.studentintellect.models.PdfFile
 import com.avidco.studentintellect.models.Folder
-import com.avidco.studentintellect.models.ModuleData
+import com.avidco.studentintellect.models.Module
 import com.avidco.studentintellect.utils.LoadingDialog
 import com.avidco.studentintellect.utils.OpenDocumentContract
 import com.avidco.studentintellect.utils.Utils.fixDecimalsTo
@@ -51,10 +51,10 @@ class EditFileFragment : Fragment() {
     private val storage = Firebase.storage
 
     companion object {
-        const val MY_MODULE_DATA = "arg_my_module_data_file"
-        const val FILE_DATA = "arg_file_data_file"
-        const val PARENT_FOLDER_DATA = "arg_parent_folder_data_folder"
-        const val PATH_DISPLAY_TEXT = "arg_path_display_text"
+        const val ARG_MY_MODULE = "arg_my_module"
+        const val ARG_PDF_FILE = "arg_pdf_file"
+        const val ARG_PARENT_FOLDER = "arg_parent_folder"
+        const val ARG_PATH_DISPLAY_TEXT = "arg_path_display_text"
     }
 
     private var rewardedAd: RewardedAd? = null
@@ -176,10 +176,10 @@ class EditFileFragment : Fragment() {
 
     private lateinit var binding: FragmentEditFileBinding
     private lateinit var loadingDialog : LoadingDialog
-    private lateinit var databaseFiles: FirestoreFiles
+    private lateinit var databaseFiles: FilesFirestoreDatabase
     private lateinit var path: String
 
-    private lateinit var myModuleData: ModuleData
+    private lateinit var myModuleData: Module
     private var parentFolder: Folder? = null
     private var pdfFile: PdfFile? = null
     private var pathDisplayText: String? = null
@@ -190,10 +190,10 @@ class EditFileFragment : Fragment() {
 
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
-        outState.putParcelable(MY_MODULE_DATA, myModuleData)
-        outState.putParcelable(PARENT_FOLDER_DATA, parentFolder)
-        outState.putParcelable(FILE_DATA, pdfFile)
-        outState.putString(PATH_DISPLAY_TEXT, pathDisplayText)
+        outState.putParcelable(ARG_MY_MODULE, myModuleData)
+        outState.putParcelable(ARG_PARENT_FOLDER, parentFolder)
+        outState.putParcelable(ARG_PDF_FILE, pdfFile)
+        outState.putString(ARG_PATH_DISPLAY_TEXT, pathDisplayText)
         outState.putParcelable("materialUri", materialUri)
         outState.putParcelable("solutionsUri", solutionsUri)
         outState.putDouble("solutionsSize", solutionsSize)
@@ -204,22 +204,22 @@ class EditFileFragment : Fragment() {
         super.onCreate(savedInstanceState)
         val myArgs = savedInstanceState ?: requireArguments()
         myModuleData = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            myArgs.getParcelable(MY_MODULE_DATA, ModuleData::class.java)!!
+            myArgs.getParcelable(ARG_MY_MODULE, Module::class.java)!!
         } else {
             @Suppress("DEPRECATION")
-            myArgs.getParcelable(MY_MODULE_DATA)!!
+            myArgs.getParcelable(ARG_MY_MODULE)!!
         }
         parentFolder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            myArgs.getParcelable(PARENT_FOLDER_DATA, Folder::class.java)
+            myArgs.getParcelable(ARG_PARENT_FOLDER, Folder::class.java)
         } else {
             @Suppress("DEPRECATION")
-            myArgs.getParcelable(PARENT_FOLDER_DATA)
+            myArgs.getParcelable(ARG_PARENT_FOLDER)
         }
         pdfFile = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            myArgs.getParcelable(FILE_DATA, PdfFile::class.java)
+            myArgs.getParcelable(ARG_PDF_FILE, PdfFile::class.java)
         } else {
             @Suppress("DEPRECATION")
-            myArgs.getParcelable(FILE_DATA)
+            myArgs.getParcelable(ARG_PDF_FILE)
         }
         pathDisplayText = myArgs.getString(EditFolderFragment.PATH_DISPLAY_TEXT, myModuleData.code)
         if (savedInstanceState != null){
@@ -269,7 +269,7 @@ class EditFileFragment : Fragment() {
         val pdfFilesTableName = path.replace(" ", "")
             .replace("Modules", "PdfFiles")
             .replace("/", "_")+"_Table"
-        databaseFiles = FirestoreFiles(requireContext(), path, pdfFilesTableName)
+        databaseFiles = FilesFirestoreDatabase(requireContext(), path, pdfFilesTableName)
 
 
         binding.uploadMaterial.setOnClickListener {

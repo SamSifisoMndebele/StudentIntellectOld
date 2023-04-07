@@ -9,15 +9,14 @@ import android.widget.*
 import androidx.recyclerview.widget.RecyclerView
 import com.avidco.studentintellect.R
 import com.avidco.studentintellect.activities.ui.MainActivity
-import com.avidco.studentintellect.activities.ui.database.FirestoreFolders
-import com.avidco.studentintellect.activities.ui.database.FirestoreFolders.Companion.addOnSuccessListener
+import com.avidco.studentintellect.activities.ui.database.FoldersFirestoreDatabase
+import com.avidco.studentintellect.activities.ui.database.FoldersFirestoreDatabase.Companion.addOnSuccessListener
 import com.avidco.studentintellect.activities.ui.materials.MaterialsFragment
 import com.avidco.studentintellect.models.Folder
-import com.avidco.studentintellect.models.ModuleData
+import com.avidco.studentintellect.models.Module
 import com.avidco.studentintellect.models.UserType
 import com.avidco.studentintellect.utils.Utils
 import com.avidco.studentintellect.utils.Utils.hideKeyboard
-import com.avidco.studentintellect.utils.Utils.makeFolderIfNotExists
 import com.avidco.studentintellect.utils.Utils.tempDisable
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
@@ -25,8 +24,8 @@ import java.io.File
 import java.text.DateFormat
 import java.util.*
 
-class FoldersAdapter(val activity: MainActivity, private val moduleData : ModuleData, private val parentFolder : Folder?,
-                     private val databaseFolders: FirestoreFolders, private val fragment: MaterialsFragment, private val pathDisplayText : String
+class FoldersAdapter(val activity: MainActivity, private val module : Module, private val parentFolder : Folder?,
+                     private val databaseFolders: FoldersFirestoreDatabase, private val fragment: MaterialsFragment, private val pathDisplayText : String
 ) :
     RecyclerView.Adapter<FoldersAdapter.MaterialViewHolder>(), Filterable {
 
@@ -41,7 +40,7 @@ class FoldersAdapter(val activity: MainActivity, private val moduleData : Module
 
     private fun gotoFolderMaterialsFragment(folder : Folder) {
         val bundle = Bundle().apply {
-            putParcelable(MaterialsFragment.MY_MODULE_DATA, moduleData)
+            putParcelable(MaterialsFragment.MY_MODULE_DATA, module)
             putParcelable(MaterialsFragment.FOLDER_DATA, folder)
             putBoolean("editMode", fragment.editMode)
             putString(MaterialsFragment.PATH_DISPLAY_TEXT, pathDisplayText)
@@ -67,8 +66,8 @@ class FoldersAdapter(val activity: MainActivity, private val moduleData : Module
                 it.tempDisable(2000)
                 activity.hideKeyboard(it)
 
-                val path = "$folderPath/Folders/${folder.id}"
-                makeFolderIfNotExists(moduleData.id+path, folder.id)
+                //val path = "$folderPath/Folders/${folder.id}"
+                //makeFolderIfNotExists(module.id+path, folder.id)
 
                 gotoFolderMaterialsFragment(folder)
             }
@@ -92,7 +91,7 @@ class FoldersAdapter(val activity: MainActivity, private val moduleData : Module
                 popupMenu.setForceShowIcon(true)
             popupMenu.menuInflater.inflate(R.menu.popup_menu_folder, popupMenu.menu)
 
-            when(activity.userDB.userType.value){
+            when(activity.userDB?.userType?.value){
                 UserType.ADMIN -> {
                     popupMenu.menu.findItem(R.id.item_delete).isVisible = true
                     popupMenu.menu.findItem(R.id.item_edit).isVisible = true
@@ -104,7 +103,7 @@ class FoldersAdapter(val activity: MainActivity, private val moduleData : Module
                             }
                             R.id.item_edit -> {
                                 val bundle = Bundle().apply {
-                                    putParcelable(EditFolderFragment.MY_MODULE_DATA, moduleData)
+                                    putParcelable(EditFolderFragment.MY_MODULE_DATA, module)
                                     putParcelable(EditFolderFragment.FOLDER_DATA, folder)
                                     putBoolean("editMode", fragment.editMode)
                                     putString(EditFolderFragment.PATH_DISPLAY_TEXT, pathDisplayText)
@@ -127,7 +126,7 @@ class FoldersAdapter(val activity: MainActivity, private val moduleData : Module
                                 }
                                 R.id.item_edit -> {
                                     val bundle = Bundle().apply {
-                                        putParcelable(EditFolderFragment.MY_MODULE_DATA, moduleData)
+                                        putParcelable(EditFolderFragment.MY_MODULE_DATA, module)
                                         putParcelable(EditFolderFragment.FOLDER_DATA, folder)
                                         putBoolean("editMode", fragment.editMode)
                                         putString(EditFolderFragment.PATH_DISPLAY_TEXT, pathDisplayText)
@@ -152,31 +151,6 @@ class FoldersAdapter(val activity: MainActivity, private val moduleData : Module
             popupMenu.menu.findItem(R.id.item_verified).title = if (folder.isVerified) "Verified" else "Not Verified"
 
             return popupMenu
-        }
-
-        private fun checkFile(materialName: String, isSolutions : Boolean, i : Int = 0) : File? {
-            val file = if (isSolutions) {
-                if (i == 0)
-                    File(Utils.documentsDir(folderPath), "$materialName Solutions.pdf")
-                else
-                    File(Utils.documentsDir(folderPath), "$materialName Solutions($i).pdf")
-            } else {
-                if (i == 0)
-                    File(Utils.documentsDir(folderPath), "$materialName.pdf")
-                else
-                    File(Utils.documentsDir(folderPath), "$materialName($i).pdf")
-            }
-
-            return if (file.exists() && file.length() != 0L) {
-                if (file.canRead()) {
-                    null
-                } else {
-                    checkFile(materialName,isSolutions, i+1)
-                }
-            } else {
-                try { file.deleteOnExit() } catch (_: Exception) { }
-                file
-            }
         }
     }
 

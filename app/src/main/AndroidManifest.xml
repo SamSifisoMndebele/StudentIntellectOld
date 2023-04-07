@@ -20,6 +20,16 @@
         android:theme="@style/Theme.StudentIntellect"
         android:windowSoftInputMode="stateHidden|adjustPan"
         tools:targetApi="33">
+
+        <activity
+            android:name=".activities.pdfview.PdfFileActivity"
+            android:exported="true"
+            android:hardwareAccelerated="true"
+            android:theme="@style/Theme.StudentIntellect.Splash">
+            <meta-data
+                android:name="android.app.lib_name"
+                android:value="" />
+        </activity>
         <activity
             android:name=".activities.auth.AuthActivity"
             android:exported="true"
@@ -34,15 +44,6 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
-            <meta-data
-                android:name="android.app.lib_name"
-                android:value="" />
-        </activity>
-        <activity
-            android:name=".activities.pdfview.PdfViewActivity"
-            android:exported="false"
-            android:hardwareAccelerated="true"
-            android:theme="@style/Theme.StudentIntellect.Splash">
             <meta-data
                 android:name="android.app.lib_name"
                 android:value="" />

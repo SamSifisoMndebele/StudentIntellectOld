@@ -20,7 +20,7 @@ import com.avidco.studentintellect.databinding.FragmentLoginBinding
 import com.avidco.studentintellect.databinding.PopupTermsBinding
 import com.avidco.studentintellect.models.User
 import com.avidco.studentintellect.activities.ui.MainActivity
-import com.avidco.studentintellect.activities.ui.modules.MyModulesDatabaseHelper
+import com.avidco.studentintellect.activities.ui.database.MyModulesLocalDatabase
 import com.avidco.studentintellect.utils.Utils.isGooglePlayServicesAvailable
 import com.avidco.studentintellect.utils.Constants
 import com.avidco.studentintellect.utils.LoadingDialog
@@ -132,7 +132,7 @@ class LoginFragment : Fragment() {
                 val user = userSnapshot.toObject<User>()
                 if (user != null){
                     user.myModulesList?.let {
-                        MyModulesDatabaseHelper(context).addModulesFromFirebase(it)
+                        MyModulesLocalDatabase(context).addModulesFromFirebase(it)
                     }
                     loadingDialog.isDone {
                         startActivity(Intent(activity, MainActivity::class.java).apply {

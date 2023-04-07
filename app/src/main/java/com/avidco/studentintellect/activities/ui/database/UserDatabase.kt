@@ -8,22 +8,20 @@ import android.net.Uri
 import androidx.core.database.getStringOrNull
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-import com.avidco.studentintellect.activities.ui.modules.MyModulesDatabaseHelper
-import com.avidco.studentintellect.models.ModuleData
+import com.avidco.studentintellect.models.Module
 import com.avidco.studentintellect.models.User
 import com.avidco.studentintellect.models.UserInfo
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.auth.ktx.userProfileChangeRequest
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.ktx.firestore
-import com.google.firebase.firestore.ktx.toObject
 import com.google.firebase.ktx.Firebase
 
-class UserDB(context: Context?, user : User? = null) :
+class UserDatabase(context: Context?, user : User? = null) :
     SQLiteOpenHelper(context, TABLE_NAME, null, 1) {
 
     var currentUser = Firebase.auth.currentUser!!
-    private val myModulesList : List<ModuleData>?
+    private val myModulesList : List<Module>?
     init {
         if (user != null){
             insertUser(user)
@@ -60,36 +58,6 @@ class UserDB(context: Context?, user : User? = null) :
         onCreate(db)
     }
 
-    private val myUser = getUser()
-    private val _user = MutableLiveData<User>().also {
-        it.value = myUser
-    }
-    private val _userInfo = MutableLiveData<UserInfo>().also {
-        it.value = myUser.userInfo
-    }
-
-    private val _name = MutableLiveData<String>().also {
-        it.value = myUser.userInfo.name
-    }
-    private val _email = MutableLiveData<String>().also {
-        it.value = myUser.userInfo.email
-    }
-    private val _userType = MutableLiveData<Int>().also {
-        it.value = myUser.userInfo.userType
-    }
-    private val _phone = MutableLiveData<String?>().also {
-        it.value = myUser.phone
-    }
-    private val _balance = MutableLiveData<Double>().also {
-        it.value = myUser.balance
-    }
-    private val _imageUrl = MutableLiveData<String?>().also {
-        it.value = myUser.imageUrl
-    }
-    private val _isOnline = MutableLiveData<Boolean>().also {
-        it.value = myUser.isOnline
-    }
-
     private fun insertUser(user : User) {
         if (user.userInfo.uid != currentUser.uid) return
         val contentValues = ContentValues().apply {
@@ -105,30 +73,31 @@ class UserDB(context: Context?, user : User? = null) :
         writableDatabase.insert(TABLE_NAME, null, contentValues) != -1L
     }
 
+    fun deleteUser() {
+        writableDatabase.delete(TABLE_NAME, null, null) != 0
+    }
 
-/*    fun doOnSignIn(onComplete : (isSuccess: Boolean, e: Exception?, userData: User?) -> Unit) {
+    fun addModule(module : Module){
         Firebase.firestore.collection("Users")
-            .document(Firebase.auth.currentUser!!.uid)
-            .get()
-            .addOnSuccessListener { userDataSnapshot ->
-                val userData = userDataSnapshot.toObject<User>()
-                //Update user info
-                if (userData == null || !userData.isTermsAccepted){
-                    onComplete(false, null, userData)
-                } else {
-                    if (userData.myModulesList.isNullOrEmpty()){
-                        onComplete(addModulesFromFirebase(userData), null, userData)
-                    } else {
-                        onComplete(
-                            MyModulesDatabaseHelper(context).addModulesFromFirebase(userData.myModulesList)
-                                && addModulesFromFirebase(userData), null, userData)
-                    }
-                }
-            }
-            .addOnFailureListener {
-                onComplete(false, it, null)
-            }
-    }*/
+            .document(currentUser.uid)
+            .collection("MyModules")
+            .document(module.id)
+            .set(module)
+    }
+    fun deleteModule(module : Module){
+        Firebase.firestore.collection("Users")
+            .document(currentUser.uid)
+            .collection("MyModules")
+            .document(module.id)
+            .delete()
+    }
+    fun deleteModule(moduleId : String){
+        Firebase.firestore.collection("Users")
+            .document(currentUser.uid)
+            .collection("MyModules")
+            .document(moduleId)
+            .delete()
+    }
 
 
     fun setUser(user : User) {
@@ -232,33 +201,6 @@ class UserDB(context: Context?, user : User? = null) :
     }
 
 
-    fun deleteUser() {
-        writableDatabase.delete(TABLE_NAME, null, null) != 0
-    }
-
-    fun addModule(module : ModuleData){
-        Firebase.firestore.collection("Users")
-            .document(currentUser.uid)
-            .collection("MyModules")
-            .document(module.id)
-            .set(module)
-    }
-    fun deleteModule(module : ModuleData){
-        Firebase.firestore.collection("Users")
-            .document(currentUser.uid)
-            .collection("MyModules")
-            .document(module.id)
-            .delete()
-    }
-    fun deleteModule(moduleId : String){
-        Firebase.firestore.collection("Users")
-            .document(currentUser.uid)
-            .collection("MyModules")
-            .document(moduleId)
-            .delete()
-    }
-
-
     private fun getUser() : User {
         val query = "SELECT * FROM $TABLE_NAME"
         val cursor = writableDatabase.rawQuery(query, null)
@@ -284,6 +226,35 @@ class UserDB(context: Context?, user : User? = null) :
         return user
     }
 
+    private val myUser = getUser()
+    private val _user = MutableLiveData<User>().also {
+        it.value = myUser
+    }
+    private val _userInfo = MutableLiveData<UserInfo>().also {
+        it.value = myUser.userInfo
+    }
+
+    private val _name = MutableLiveData<String>().also {
+        it.value = myUser.userInfo.name
+    }
+    private val _email = MutableLiveData<String>().also {
+        it.value = myUser.userInfo.email
+    }
+    private val _userType = MutableLiveData<Int>().also {
+        it.value = myUser.userInfo.userType
+    }
+    private val _phone = MutableLiveData<String?>().also {
+        it.value = myUser.phone
+    }
+    private val _balance = MutableLiveData<Double>().also {
+        it.value = myUser.balance
+    }
+    private val _imageUrl = MutableLiveData<String?>().also {
+        it.value = myUser.imageUrl
+    }
+    private val _isOnline = MutableLiveData<Boolean>().also {
+        it.value = myUser.isOnline
+    }
 
 
     val user: LiveData<User> = _user

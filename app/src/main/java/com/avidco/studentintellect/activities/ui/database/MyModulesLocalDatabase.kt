@@ -1,28 +1,23 @@
-package com.avidco.studentintellect.activities.ui.modules
+package com.avidco.studentintellect.activities.ui.database
 
 import android.content.ContentValues
 import android.content.Context
-import android.content.Intent
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
-import android.widget.Toast
+import androidx.core.database.getIntOrNull
 import androidx.core.database.getStringOrNull
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-import com.avidco.studentintellect.activities.ui.MainActivity
-import com.avidco.studentintellect.activities.ui.database.UserDB
-import com.avidco.studentintellect.activities.ui.modules.add.ModulesDatabaseHelper
-import com.avidco.studentintellect.models.ModuleData
+import com.avidco.studentintellect.models.Module
+import com.avidco.studentintellect.models.UserInfo
 import com.google.android.gms.tasks.Task
 import com.google.firebase.Timestamp
 import com.google.firebase.auth.ktx.auth
-import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.SetOptions
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
-import kotlinx.coroutines.tasks.await
 
-class MyModulesDatabaseHelper(val context: Context?) : SQLiteOpenHelper(context, TABLE_NAME, null, 2) {
+class MyModulesLocalDatabase(val context: Context?) : SQLiteOpenHelper(context, TABLE_NAME, null, 1) {
 
     companion object {
         private const val TABLE_NAME = "MyModulesDatabaseTable"
@@ -30,12 +25,16 @@ class MyModulesDatabaseHelper(val context: Context?) : SQLiteOpenHelper(context,
         private const val CODE = "Code"
         private const val NAME = "Name"
         private const val IMAGE_URL = "ImageUrl"
-        private const val TIME_ADDED = "TimeAdded"
+        private const val TIME_UPDATED = "TimeUpdated"
         private const val ADDER_UID = "AdderUID"
         private const val ADDER_NAME = "AdderName"
-        private const val TIME_UPDATED = "TimeUpdated"
+        private const val ADDER_EMAIL = "AdderEmail"
+        private const val ADDER_USER_TYPE = "AdderUserType"
         private const val IS_VERIFIED = "isVerified"
-        private const val VERIFIED_BY_UID = "verifiedByUID"
+        private const val VERIFIER_UID = "VerifierUID"
+        private const val VERIFIER_NAME = "VerifierName"
+        private const val VERIFIER_EMAIL = "VerifierEmail"
+        private const val VERIFIER_USER_TYPE = "VerifierUserType"
     }
 
     override fun onCreate(db: SQLiteDatabase?) {
@@ -43,12 +42,16 @@ class MyModulesDatabaseHelper(val context: Context?) : SQLiteOpenHelper(context,
                                                        $CODE TEXT NOT NULL UNIQUE, 
                                                        $NAME TEXT NOT NULL, 
                                                        $IMAGE_URL TEXT,
-                                                       $TIME_ADDED LONG NOT NULL,
+                                                       $TIME_UPDATED LONG NOT NULL,
                                                        $ADDER_UID TEXT NOT NULL,
                                                        $ADDER_NAME TEXT NOT NULL,
-                                                       $TIME_UPDATED LONG NOT NULL, 
+                                                       $ADDER_EMAIL TEXT NOT NULL,
+                                                       $ADDER_USER_TYPE INT NOT NULL,
                                                        $IS_VERIFIED BOOLEAN NOT NULL,
-                                                       $VERIFIED_BY_UID TEXT)"""
+                                                       $VERIFIER_UID TEXT,
+                                                       $VERIFIER_NAME TEXT,
+                                                       $VERIFIER_EMAIL TEXT,
+                                                       $VERIFIER_USER_TYPE INT)"""
         db?.execSQL(createTable)
     }
 
@@ -58,20 +61,24 @@ class MyModulesDatabaseHelper(val context: Context?) : SQLiteOpenHelper(context,
     }
 
     //Add all the modules from firebase
-    fun addModulesFromFirebase(myModules : List<ModuleData>): Boolean {
+    fun addModulesFromFirebase(myModules : List<Module>): Boolean {
         var isSuccess = true
-        myModules.forEach { moduleData ->
+        myModules.forEach { module ->
             val contentValues = ContentValues().apply {
-                put(ID, moduleData.id)
-                put(CODE, moduleData.code)
-                put(NAME, moduleData.name)
-                put(IMAGE_URL, moduleData.imageUrl)
-                put(TIME_ADDED, moduleData.timeAdded.seconds)
-                put(ADDER_UID, moduleData.adderUID)
-                put(ADDER_NAME, moduleData.adderName)
-                put(TIME_UPDATED, moduleData.timeUpdated.seconds)
-                put(IS_VERIFIED, moduleData.isVerified)
-                put(VERIFIED_BY_UID, moduleData.verifiedByUID)
+                put(ID, module.id)
+                put(CODE, module.code)
+                put(NAME, module.name)
+                put(IMAGE_URL, module.imageUrl)
+                put(TIME_UPDATED, module.timeUpdated.seconds)
+                put(ADDER_UID, module.adder.uid)
+                put(ADDER_NAME, module.adder.name)
+                put(ADDER_EMAIL, module.adder.email)
+                put(ADDER_USER_TYPE, module.adder.userType)
+                put(IS_VERIFIED, module.isVerified)
+                put(VERIFIER_UID, module.verifier?.uid)
+                put(VERIFIER_NAME, module.verifier?.name)
+                put(VERIFIER_EMAIL, module.verifier?.email)
+                put(VERIFIER_USER_TYPE, module.verifier?.userType)
             }
             isSuccess = isSuccess && writableDatabase.insert(TABLE_NAME, null, contentValues) != -1L
         }
@@ -90,37 +97,45 @@ class MyModulesDatabaseHelper(val context: Context?) : SQLiteOpenHelper(context,
     }
 
     //Add a module
-    fun addModule(moduleData : ModuleData): Boolean {
+    fun addModule(module : Module): Boolean {
         val contentValues = ContentValues().apply {
-            put(ID, moduleData.id)
-            put(CODE, moduleData.code)
-            put(NAME, moduleData.name)
-            put(IMAGE_URL, moduleData.imageUrl)
-            put(TIME_ADDED, moduleData.timeAdded.seconds)
-            put(ADDER_UID, moduleData.adderUID)
-            put(ADDER_NAME, moduleData.adderName)
-            put(TIME_UPDATED, moduleData.timeUpdated.seconds)
-            put(IS_VERIFIED, moduleData.isVerified)
-            put(VERIFIED_BY_UID, moduleData.verifiedByUID)
+            put(ID, module.id)
+            put(CODE, module.code)
+            put(NAME, module.name)
+            put(IMAGE_URL, module.imageUrl)
+            put(TIME_UPDATED, module.timeUpdated.seconds)
+            put(ADDER_UID, module.adder.uid)
+            put(ADDER_NAME, module.adder.name)
+            put(ADDER_EMAIL, module.adder.email)
+            put(ADDER_USER_TYPE, module.adder.userType)
+            put(IS_VERIFIED, module.isVerified)
+            put(VERIFIER_UID, module.verifier?.uid)
+            put(VERIFIER_NAME, module.verifier?.name)
+            put(VERIFIER_EMAIL, module.verifier?.email)
+            put(VERIFIER_USER_TYPE, module.verifier?.userType)
         }
         val isSuccess = writableDatabase.insert(TABLE_NAME, null, contentValues) != -1L
         if (isSuccess) _myModulesList.value = getModulesList()
         return isSuccess
     }
-    fun addModules(myModules : List<ModuleData>): Boolean {
+    fun addModules(myModules : List<Module>): Boolean {
         var isSuccess = true
-        myModules.forEach { moduleData ->
+        myModules.forEach { module ->
             val contentValues = ContentValues().apply {
-                put(ID, moduleData.id)
-                put(CODE, moduleData.code)
-                put(NAME, moduleData.name)
-                put(IMAGE_URL, moduleData.imageUrl)
-                put(TIME_ADDED, moduleData.timeAdded.seconds)
-                put(ADDER_UID, moduleData.adderUID)
-                put(ADDER_NAME, moduleData.adderName)
-                put(TIME_UPDATED, moduleData.timeUpdated.seconds)
-                put(IS_VERIFIED, moduleData.isVerified)
-                put(VERIFIED_BY_UID, moduleData.verifiedByUID)
+                put(ID, module.id)
+                put(CODE, module.code)
+                put(NAME, module.name)
+                put(IMAGE_URL, module.imageUrl)
+                put(TIME_UPDATED, module.timeUpdated.seconds)
+                put(ADDER_UID, module.adder.uid)
+                put(ADDER_NAME, module.adder.name)
+                put(ADDER_EMAIL, module.adder.email)
+                put(ADDER_USER_TYPE, module.adder.userType)
+                put(IS_VERIFIED, module.isVerified)
+                put(VERIFIER_UID, module.verifier?.uid)
+                put(VERIFIER_NAME, module.verifier?.name)
+                put(VERIFIER_EMAIL, module.verifier?.email)
+                put(VERIFIER_USER_TYPE, module.verifier?.userType)
             }
             isSuccess = isSuccess && writableDatabase.insert(TABLE_NAME, null, contentValues) != -1L
         }
@@ -129,20 +144,24 @@ class MyModulesDatabaseHelper(val context: Context?) : SQLiteOpenHelper(context,
     }
 
     // Update modules
-    fun updateModule(moduleData : ModuleData): Boolean {
+    fun updateModule(module : Module): Boolean {
         val contentValues = ContentValues().apply {
-            put(ID, moduleData.id)
-            put(CODE, moduleData.code)
-            put(NAME, moduleData.name)
-            put(IMAGE_URL, moduleData.imageUrl)
-            put(TIME_ADDED, moduleData.timeAdded.seconds)
-            put(ADDER_UID, moduleData.adderUID)
-            put(ADDER_NAME, moduleData.adderName)
-            put(TIME_UPDATED, moduleData.timeUpdated.seconds)
-            put(IS_VERIFIED, moduleData.isVerified)
-            put(VERIFIED_BY_UID, moduleData.verifiedByUID)
+            put(ID, module.id)
+            put(CODE, module.code)
+            put(NAME, module.name)
+            put(IMAGE_URL, module.imageUrl)
+            put(TIME_UPDATED, module.timeUpdated.seconds)
+            put(ADDER_UID, module.adder.uid)
+            put(ADDER_NAME, module.adder.name)
+            put(ADDER_EMAIL, module.adder.email)
+            put(ADDER_USER_TYPE, module.adder.userType)
+            put(IS_VERIFIED, module.isVerified)
+            put(VERIFIER_UID, module.verifier?.uid)
+            put(VERIFIER_NAME, module.verifier?.name)
+            put(VERIFIER_EMAIL, module.verifier?.email)
+            put(VERIFIER_USER_TYPE, module.verifier?.userType)
         }
-        val isSuccess = writableDatabase.update(TABLE_NAME, contentValues, "$ID = '${moduleData.id}'", null) > 0
+        val isSuccess = writableDatabase.update(TABLE_NAME, contentValues, "$ID = '${module.id}'", null) > 0
         if (isSuccess) _myModulesList.value = getModulesList()
         return isSuccess
     }
@@ -204,7 +223,7 @@ class MyModulesDatabaseHelper(val context: Context?) : SQLiteOpenHelper(context,
     //Save modules to database when logout
     fun doOnSignOut(task : () -> Unit) {
         saveModulesToFirebase {
-            UserDB(context, null).deleteUser()
+            UserDatabase(context, null).deleteUser()
             deleteAllMyModules()
             Firebase.auth.signOut()
             task()
@@ -221,32 +240,36 @@ class MyModulesDatabaseHelper(val context: Context?) : SQLiteOpenHelper(context,
     }
 
     //get all my modules list
-    private fun getModulesList() : List<ModuleData> {
+    private fun getModulesList() : List<Module> {
         val query = "SELECT * FROM $TABLE_NAME"
         val cursor = writableDatabase.rawQuery(query, null)
 
-        val listData = mutableListOf<ModuleData>()
+        val listData = mutableListOf<Module>()
         while (cursor.moveToNext()) {
             listData.add(
-                ModuleData(
+                Module(
                     cursor.getString(0),
                     cursor.getString(1),
                     cursor.getString(2),
                     cursor.getStringOrNull(3),
                     Timestamp(cursor.getLong(4),0),
-                    cursor.getString(5),
-                    cursor.getString(6),
-                    Timestamp(cursor.getLong(7),0),
-                    cursor.getString(8).toBoolean(),
-                    cursor.getString(9)
+                    UserInfo(cursor.getString(5),
+                        cursor.getString(6),
+                        cursor.getString(7),
+                        cursor.getInt(8)),
+                    cursor.getString(9).toBoolean(),
+                    UserInfo(cursor.getStringOrNull(10)?:"",
+                        cursor.getStringOrNull(11)?:"",
+                        cursor.getStringOrNull(12)?:"",
+                        cursor.getIntOrNull(13)?:-1)
                 ))
         }
         cursor.close()
 
         return listData
     }
-    private val _myModulesList = MutableLiveData<List<ModuleData>?>().also {
+    private val _myModulesList = MutableLiveData<List<Module>?>().also {
         it.value = getModulesList()
     }
-    val myModulesList: LiveData<List<ModuleData>?> = _myModulesList
+    val myModulesList: LiveData<List<Module>?> = _myModulesList
 }

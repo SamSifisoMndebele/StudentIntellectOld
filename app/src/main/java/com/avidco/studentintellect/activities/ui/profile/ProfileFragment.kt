@@ -14,8 +14,8 @@ import com.avidco.studentintellect.databinding.FragmentProfileBinding
 import com.avidco.studentintellect.databinding.SheetAboutAppBinding
 import com.avidco.studentintellect.models.UserType
 import com.avidco.studentintellect.activities.ui.MainActivity
-import com.avidco.studentintellect.activities.ui.database.UserDB
-import com.avidco.studentintellect.activities.ui.modules.MyModulesDatabaseHelper
+import com.avidco.studentintellect.activities.ui.database.UserDatabase
+import com.avidco.studentintellect.activities.ui.database.MyModulesLocalDatabase
 import com.avidco.studentintellect.utils.LoadingDialog
 import com.avidco.studentintellect.utils.OpenPicturesContract
 import com.avidco.studentintellect.utils.Utils.hideKeyboard
@@ -133,7 +133,7 @@ class ProfileFragment : Fragment() {
         }
     }
 
-    private lateinit var userDB : UserDB
+    private lateinit var userDB : UserDatabase
 
     override fun onCreateView (
         inflater: LayoutInflater,
@@ -141,7 +141,7 @@ class ProfileFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View {
         binding = FragmentProfileBinding.inflate(inflater, container, false)
-        userDB = UserDB(context, null)
+        userDB = UserDatabase(context, null)
         binding.userEmail.text = userDB.email.value
 
         /*profileViewModel.modulesList.observe(viewLifecycleOwner) { list ->
@@ -238,7 +238,7 @@ class ProfileFragment : Fragment() {
                 }
                 .setPositiveButton(getString(R.string.logout)){d,_->
                     d.dismiss()
-                    MyModulesDatabaseHelper(requireContext()).doOnSignOut {
+                    MyModulesLocalDatabase(requireContext()).doOnSignOut {
                         startActivity(Intent(requireActivity(), AuthActivity::class.java))
                         requireActivity().finishAffinity()
                     }
